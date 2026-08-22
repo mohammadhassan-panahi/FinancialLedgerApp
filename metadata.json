@@ -1,0 +1,6 @@
+{
+  "name": "دفتر محاسبات مالی",
+  "description": "دفتر محاسبات مالی (Financial Ledger App) with Credify UI, Live Market Rates, Encrypted Room DB, Biometrics, and Financial Analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

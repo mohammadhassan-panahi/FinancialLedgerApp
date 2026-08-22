@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Shield Outline -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M54,24 L30,34 V52 C30,68 40.5,81.5 54,86 C67.5,81.5 78,68 78,52 V34 L54,24 Z" />
+        
+    <!-- Credit Card / Ledger Badge inside Shield -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,42 C36.3,42 35,43.3 35,45 V63 C35,64.7 36.3,66 38,66 H70 C71.7,66 73,64.7 73,63 V45 C73,43.3 71.7,42 70,42 H38 Z M35,49 H73 V53 H35 V49 Z M40,58 H48 V61 H40 V58 Z M52,58 H60 V61 H52 V58 Z" />
+</vector>

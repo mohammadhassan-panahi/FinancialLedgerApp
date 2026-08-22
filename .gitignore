@@ -1,0 +1,8 @@
+.env
+*.jks
+local.properties
+/build/
+/app/build/
+
+# Project exclude paths
+/.gradle/
