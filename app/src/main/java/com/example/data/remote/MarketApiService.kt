@@ -85,7 +85,7 @@ data class BrsApiGoldCurrencyResponse(
  */
 interface MarketApiService {
 
-    @GET("Market/Gold_Currency_Free.php")
+    @GET("Market/Gold_Currency.php")
     suspend fun getGoldCurrency(@Query("key") apiKey: String): Response<BrsApiGoldCurrencyResponse>
 
     companion object {
