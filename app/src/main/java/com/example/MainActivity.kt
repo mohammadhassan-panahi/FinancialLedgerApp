@@ -79,10 +79,6 @@ class MainActivity : FragmentActivity() {
             alertDao = database.priceAlertDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
-        // Phase 1 of the crypto analysis feature (see project plan): market data only,
-        // sourced from CoinMarketCap's free tier. Not yet wired to a ViewModel/UI — that's
-        // the next step once this compiles and the data layer is confirmed working.
-        @Suppress("UNUSED_VARIABLE")
         val cryptoRepository = CryptoRepository(
             cryptoDao = database.cryptoDao(),
             apiKey = BuildConfig.CMC_API_KEY
@@ -98,6 +94,9 @@ class MainActivity : FragmentActivity() {
         val factory = PortfolioViewModelFactory(repository)
         viewModel = ViewModelProvider(this, factory)[PortfolioViewModel::class.java]
 
+        val cryptoFactory = com.example.ui.viewmodel.CryptoViewModelFactory(cryptoRepository)
+        val cryptoViewModel = ViewModelProvider(this, cryptoFactory)[com.example.ui.viewmodel.CryptoViewModel::class.java]
+
         com.example.worker.PriceAlertScheduler.schedule(applicationContext)
 
         val biometricAuthManager = BiometricAuthManager(this)
@@ -108,6 +107,7 @@ class MainActivity : FragmentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     PortfolioApp(
                         viewModel = viewModel,
+                        cryptoViewModel = cryptoViewModel,
                         userPreferencesRepository = userPreferencesRepository,
                         biometricAuthManager = biometricAuthManager,
                         pinManager = pinManager,

@@ -20,12 +20,14 @@ import com.example.ui.components.PortfolioTab
 import com.example.ui.components.ProvidePrivacyMode
 import com.example.ui.screens.AddPurchaseScreen
 import com.example.ui.screens.BiometricEnableScreen
+import com.example.ui.screens.CryptoScreen
 import com.example.ui.screens.GoldDollarScreen
 import com.example.ui.screens.OnboardingScreen
 import com.example.ui.screens.PinEntryScreen
 import com.example.ui.screens.PinSetupScreen
 import com.example.ui.screens.PortfolioHomeScreen
 import com.example.ui.screens.StockMarketScreen
+import com.example.ui.viewmodel.CryptoViewModel
 import com.example.ui.viewmodel.PortfolioViewModel
 import kotlinx.coroutines.launch
 
@@ -42,6 +44,7 @@ private enum class LockStep { PIN_SETUP, BIOMETRIC_OPT_IN, PIN_ENTRY, UNLOCKED }
 @Composable
 fun PortfolioApp(
     viewModel: PortfolioViewModel,
+    cryptoViewModel: CryptoViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
     pinManager: PinManager,
@@ -134,6 +137,7 @@ fun PortfolioApp(
                     )
                     PortfolioTab.GOLD_DOLLAR -> GoldDollarScreen(viewModel)
                     PortfolioTab.STOCK -> StockMarketScreen(viewModel)
+                    PortfolioTab.CRYPTO -> CryptoScreen(cryptoViewModel)
                     PortfolioTab.ADD_PURCHASE -> AddPurchaseScreen(viewModel)
                 }
             }

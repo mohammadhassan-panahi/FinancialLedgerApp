@@ -250,6 +250,11 @@ class PortfolioRepository(
         )
     }
 
+    /** Removes a symbol from the watchlist (keeps the cached row, just stops showing/refreshing it). */
+    suspend fun removeSymbolFromWatchlist(symbol: String) {
+        stockDao.setWatchlist(symbol, false)
+    }
+
     /** Fetches شاخص کل / شاخص هم‌وزن. Returns true on a successful live fetch. */
     suspend fun refreshIndices(): Boolean {
         val service = tsetmcApiService ?: return false
