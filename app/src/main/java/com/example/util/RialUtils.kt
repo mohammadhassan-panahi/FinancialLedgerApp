@@ -26,3 +26,10 @@ fun formatPercentSigned(percent: Double): String {
     val formatted = DecimalFormat("#,##0.##").format(percent)
     return PersianNumberUtils.toPersianDigits("$sign$formatted%")
 }
+
+fun formatUsd(amountUsd: Double, showSuffix: Boolean = true, decimalPlaces: Int = 2): String {
+    val pattern = if (decimalPlaces > 0) "#,##0." + "0".repeat(decimalPlaces) else "#,##0"
+    val formatted = DecimalFormat(pattern).format(amountUsd)
+    val persian = PersianNumberUtils.toPersianDigits(formatted)
+    return if (showSuffix) "$persian دلار" else persian
+}
