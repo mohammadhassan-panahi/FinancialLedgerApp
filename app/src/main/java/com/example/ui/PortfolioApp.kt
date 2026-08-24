@@ -45,6 +45,7 @@ private enum class LockStep { PIN_SETUP, BIOMETRIC_OPT_IN, PIN_ENTRY, UNLOCKED }
 fun PortfolioApp(
     viewModel: PortfolioViewModel,
     cryptoViewModel: CryptoViewModel,
+    calculatorViewModel: com.example.ui.viewmodel.CalculatorViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
     pinManager: PinManager,
@@ -120,7 +121,19 @@ fun PortfolioApp(
 
     val isPrivacyModeEnabled by userPreferencesRepository.isPrivacyModeEnabled.collectAsStateWithLifecycle(initialValue = false)
 
+    // Full-screen calculators hub (opened from the Home menu) — rendered inside
+    // ProvidePrivacyMode so scenario amounts stay masked in privacy mode.
+    var showCalculators by remember { mutableStateOf(false) }
+    val holdings by viewModel.holdings.collectAsStateWithLifecycle(initialValue = emptyList())
+
     ProvidePrivacyMode(enabled = isPrivacyModeEnabled) {
+        if (showCalculators) {
+            com.example.ui.screens.CalculatorsHubScreen(
+                viewModel = calculatorViewModel,
+                onBack = { showCalculators = false },
+                holdings = holdings
+            )
+        } else {
         Scaffold(
             bottomBar = { PortfolioBottomNav(currentTab = currentTab, onTabSelected = { currentTab = it }) }
         ) { padding ->
@@ -133,7 +146,8 @@ fun PortfolioApp(
                         isPrivacyModeEnabled = isPrivacyModeEnabled,
                         onTogglePrivacyMode = {
                             scope.launch { userPreferencesRepository.setPrivacyModeEnabled(!isPrivacyModeEnabled) }
-                        }
+                        },
+                        onOpenCalculators = { showCalculators = true }
                     )
                     PortfolioTab.GOLD_DOLLAR -> GoldDollarScreen(viewModel)
                     PortfolioTab.STOCK -> StockMarketScreen(viewModel)
@@ -141,6 +155,7 @@ fun PortfolioApp(
                     PortfolioTab.ADD_PURCHASE -> AddPurchaseScreen(viewModel)
                 }
             }
+        }
         }
     }
 }

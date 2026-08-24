@@ -28,9 +28,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.DeviceThermostat
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Paid
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.PriceChange
+import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,7 +75,8 @@ fun CalculatorsHubScreen(
     onBack: () -> Unit = {},
     currencyUnit: String = "تومان",
     defaultInflation: Double = 40.0,
-    defaultTax: Double = 0.0
+    defaultTax: Double = 0.0,
+    holdings: List<com.example.data.repository.HoldingSummary> = emptyList()
 ) {
     var activeCalculatorIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -124,6 +129,34 @@ fun CalculatorsHubScreen(
             category = "تحلیلی",
             icon = Icons.Default.CompareArrows,
             iconBgColor = Color(0xFF0891B2)
+        ),
+        CalculatorItemInfo(
+            title = "۸. حباب سکه و طلا",
+            description = "مقایسه قیمت بازار با ارزش ذاتی بر مبنای انس جهانی و دلار — کی خرید منطقیه؟",
+            category = "بازار",
+            icon = Icons.Default.QueryStats,
+            iconBgColor = Color(0xFFB45309)
+        ),
+        CalculatorItemInfo(
+            title = "۹. اجرت و مالیات طلا",
+            description = "قیمت تمام‌شده طلای نو و دست‌دوم بر اساس فرمول اتحادیه طلا",
+            category = "بازار",
+            icon = Icons.Default.Paid,
+            iconBgColor = Color(0xFF15803D)
+        ),
+        CalculatorItemInfo(
+            title = "۱۰. اگر آن روز می‌خریدی",
+            description = "محاسبه سود فرضی: اگر فلان تاریخ سرمایه‌ات را خرج فلان دارایی می‌کردی",
+            category = "تحلیلی",
+            icon = Icons.Default.History,
+            iconBgColor = Color(0xFF7E22CE)
+        ),
+        CalculatorItemInfo(
+            title = "۱۱. شبیه‌ساز سناریو",
+            description = "اگر دلار یا طلا رشد/ریزد، ارزش سبد تو چقدر می‌شود؟ (متصل به سبد واقعی)",
+            category = "تحلیلی",
+            icon = Icons.Default.DeviceThermostat,
+            iconBgColor = Color(0xFFBE123C)
         )
     )
 
@@ -182,7 +215,7 @@ fun CalculatorsHubScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "جهت انجام محاسبات دقیق، یکی از ۷ ابزار هوشمند زیر را انتخاب کنید:",
+                            text = "جهت انجام محاسبات دقیق، یکی از ۱۱ ابزار هوشمند زیر را انتخاب کنید:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -398,6 +431,46 @@ fun CalculatorsHubScreen(
                             onAddHistory = { viewModel.addHistory(it) },
                             onDeleteHistory = { viewModel.deleteHistory(it) },
                             onClearHistory = { viewModel.clearSectionHistory("comparison") }
+                        )
+                    }
+                    7 -> {
+                        val history by viewModel.getHistoryForSection("gold_bubble").collectAsStateWithLifecycle(emptyList())
+                        GoldBubbleScreen(
+                            historyList = history,
+                            currencyUnit = currencyUnit,
+                            onAddHistory = { viewModel.addHistory(it) },
+                            onDeleteHistory = { viewModel.deleteHistory(it) },
+                            onClearHistory = { viewModel.clearSectionHistory("gold_bubble") }
+                        )
+                    }
+                    8 -> {
+                        val history by viewModel.getHistoryForSection("gold_wage").collectAsStateWithLifecycle(emptyList())
+                        GoldWageScreen(
+                            historyList = history,
+                            currencyUnit = currencyUnit,
+                            onAddHistory = { viewModel.addHistory(it) },
+                            onDeleteHistory = { viewModel.deleteHistory(it) },
+                            onClearHistory = { viewModel.clearSectionHistory("gold_wage") }
+                        )
+                    }
+                    9 -> {
+                        val history by viewModel.getHistoryForSection("retrospective").collectAsStateWithLifecycle(emptyList())
+                        RetrospectiveScreen(
+                            historyList = history,
+                            currencyUnit = currencyUnit,
+                            onAddHistory = { viewModel.addHistory(it) },
+                            onDeleteHistory = { viewModel.deleteHistory(it) },
+                            onClearHistory = { viewModel.clearSectionHistory("retrospective") }
+                        )
+                    }
+                    10 -> {
+                        val history by viewModel.getHistoryForSection("scenario").collectAsStateWithLifecycle(emptyList())
+                        ScenarioScreen(
+                            holdings = holdings,
+                            historyList = history,
+                            onAddHistory = { viewModel.addHistory(it) },
+                            onDeleteHistory = { viewModel.deleteHistory(it) },
+                            onClearHistory = { viewModel.clearSectionHistory("scenario") }
                         )
                     }
                 }

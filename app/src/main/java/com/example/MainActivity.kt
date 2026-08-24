@@ -97,6 +97,9 @@ class MainActivity : FragmentActivity() {
         val cryptoFactory = com.example.ui.viewmodel.CryptoViewModelFactory(cryptoRepository)
         val cryptoViewModel = ViewModelProvider(this, cryptoFactory)[com.example.ui.viewmodel.CryptoViewModel::class.java]
 
+        val calculatorFactory = com.example.ui.viewmodel.CalculatorViewModelFactory(database.calculationHistoryDao())
+        val calculatorViewModel = ViewModelProvider(this, calculatorFactory)[com.example.ui.viewmodel.CalculatorViewModel::class.java]
+
         com.example.worker.PriceAlertScheduler.schedule(applicationContext)
 
         val biometricAuthManager = BiometricAuthManager(this)
@@ -108,6 +111,7 @@ class MainActivity : FragmentActivity() {
                     PortfolioApp(
                         viewModel = viewModel,
                         cryptoViewModel = cryptoViewModel,
+                        calculatorViewModel = calculatorViewModel,
                         userPreferencesRepository = userPreferencesRepository,
                         biometricAuthManager = biometricAuthManager,
                         pinManager = pinManager,

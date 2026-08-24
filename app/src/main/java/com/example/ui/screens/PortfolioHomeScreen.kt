@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Visibility
@@ -56,7 +57,8 @@ fun PortfolioHomeScreen(
     onExportRequested: () -> Unit = {},
     onImportRequested: () -> Unit = {},
     isPrivacyModeEnabled: Boolean = false,
-    onTogglePrivacyMode: () -> Unit = {}
+    onTogglePrivacyMode: () -> Unit = {},
+    onOpenCalculators: () -> Unit = {}
 ) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     val totalRealizedPnl by viewModel.totalRealizedPnlRial.collectAsStateWithLifecycle()
@@ -97,6 +99,11 @@ fun PortfolioHomeScreen(
                             Icon(Icons.Default.MoreVert, contentDescription = "پشتیبان‌گیری")
                         }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("ماشین‌حساب‌های مالی") },
+                                leadingIcon = { Icon(Icons.Default.Calculate, contentDescription = null) },
+                                onClick = { menuExpanded = false; onOpenCalculators() }
+                            )
                             DropdownMenuItem(
                                 text = { Text("خروجی گرفتن از داده‌ها") },
                                 leadingIcon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
