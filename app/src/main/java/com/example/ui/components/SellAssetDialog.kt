@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,11 +39,18 @@ fun SellAssetDialog(
         title = { Text("فروش ${holding.assetName}") },
         text = {
             Column {
-                Text(
-                    "موجودی فعلی: ${formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row {
+                    Text(
+                        "موجودی فعلی: ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    PrivacyAwareAmountText(
+                        text = formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 OutlinedTextField(
                     value = quantityText,
                     onValueChange = { quantityText = it },
