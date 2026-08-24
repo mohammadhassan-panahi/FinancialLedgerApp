@@ -3,6 +3,7 @@ package com.example.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.CryptoAssetEntity
+import com.example.data.local.CryptoInfoEntity
 import com.example.data.repository.CryptoRepository
 import com.example.data.repository.GlobalMarketSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,16 @@ class CryptoViewModel(private val repository: CryptoRepository) : ViewModel() {
 
     private val _globalSnapshot = MutableStateFlow<GlobalMarketSnapshot?>(null)
     val globalSnapshot: StateFlow<GlobalMarketSnapshot?> = _globalSnapshot.asStateFlow()
+
+    // --- Detail screen state (Phase 2: per-coin info) ---
+    private val _selectedAsset = MutableStateFlow<CryptoAssetEntity?>(null)
+    val selectedAsset: StateFlow<CryptoAssetEntity?> = _selectedAsset.asStateFlow()
+
+    private val _selectedInfo = MutableStateFlow<CryptoInfoEntity?>(null)
+    val selectedInfo: StateFlow<CryptoInfoEntity?> = _selectedInfo.asStateFlow()
+
+    private val _isLoadingInfo = MutableStateFlow(false)
+    val isLoadingInfo: StateFlow<Boolean> = _isLoadingInfo.asStateFlow()
 
     fun refreshMarketData() {
         viewModelScope.launch {
@@ -60,5 +71,26 @@ class CryptoViewModel(private val repository: CryptoRepository) : ViewModel() {
     
     fun clearError() {
         _error.value = null
+    }
+
+    /** Opens the detail screen for [asset] and loads its static info (cache-first). */
+    fun selectAsset(asset: CryptoAssetEntity) {
+        _selectedAsset.value = asset
+        _selectedInfo.value = null
+        viewModelScope.launch {
+            _isLoadingInfo.value = true
+            val cached = repository.getCachedInfo(asset.cmcId)
+            if (cached != null) {
+                _selectedInfo.value = cached
+            } else {
+                repository.refreshInfo(asset.cmcId, asset.symbol).onSuccess { _selectedInfo.value = it }
+            }
+            _isLoadingInfo.value = false
+        }
+    }
+
+    fun closeDetail() {
+        _selectedAsset.value = null
+        _selectedInfo.value = null
     }
 }
