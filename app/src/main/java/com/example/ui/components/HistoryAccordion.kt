@@ -37,10 +37,9 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.CalculationHistoryEntity
 import com.example.ui.theme.AccentGold
 import com.example.ui.theme.LossRed
+import com.example.util.PersianDateUtils
 import com.example.util.PersianNumberUtils
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @Composable
 fun HistoryAccordion(
@@ -142,12 +141,8 @@ fun HistoryAccordion(
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
-                                        val dateStr = SimpleDateFormat(
-                                            "HH:mm - yyyy/MM/dd",
-                                            Locale.getDefault()
-                                        ).format(Date(history.timestamp))
                                         Text(
-                                            text = PersianNumberUtils.toPersianDigits(dateStr),
+                                            text = PersianDateUtils.formatJalaliDateTime(Date(history.timestamp)),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = AccentGold
                                         )

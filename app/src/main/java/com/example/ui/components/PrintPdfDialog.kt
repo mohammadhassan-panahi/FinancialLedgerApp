@@ -38,10 +38,9 @@ import androidx.compose.ui.window.Dialog
 import com.example.ui.theme.AccentGold
 import com.example.ui.theme.PaperCardSurface
 import com.example.ui.theme.PrimaryNavy
+import com.example.util.PersianDateUtils
 import com.example.util.PersianNumberUtils
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @Composable
 fun PrintPdfDialog(
@@ -51,7 +50,7 @@ fun PrintPdfDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val currentDateStr = SimpleDateFormat("yyyy/MM/dd - HH:mm", Locale.getDefault()).format(Date())
+    val currentDateStr = PersianDateUtils.formatJalaliDateTime(Date())
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
