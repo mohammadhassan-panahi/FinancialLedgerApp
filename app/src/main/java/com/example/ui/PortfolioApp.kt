@@ -128,13 +128,17 @@ fun PortfolioApp(
     var showReminders by remember { mutableStateOf(false) }
     var showGoals by remember { mutableStateOf(false) }
     val holdings by viewModel.holdings.collectAsStateWithLifecycle(initialValue = emptyList())
+    val marketRates by viewModel.marketRates.collectAsStateWithLifecycle(initialValue = emptyList())
+    val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle(initialValue = emptyList())
 
     ProvidePrivacyMode(enabled = isPrivacyModeEnabled) {
         if (showCalculators) {
             com.example.ui.screens.CalculatorsHubScreen(
                 viewModel = calculatorViewModel,
                 onBack = { showCalculators = false },
-                holdings = holdings
+                holdings = holdings,
+                marketRates = marketRates,
+                cryptoAssets = cryptoAssets
             )
         } else if (showBankAccounts) {
             com.example.ui.screens.BankAccountsScreen(

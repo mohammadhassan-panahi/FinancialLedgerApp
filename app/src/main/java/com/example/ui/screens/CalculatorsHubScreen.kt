@@ -76,7 +76,9 @@ fun CalculatorsHubScreen(
     currencyUnit: String = "تومان",
     defaultInflation: Double = 40.0,
     defaultTax: Double = 0.0,
-    holdings: List<com.example.data.repository.HoldingSummary> = emptyList()
+    holdings: List<com.example.data.repository.HoldingSummary> = emptyList(),
+    marketRates: List<com.example.data.local.MarketRateEntity> = emptyList(),
+    cryptoAssets: List<com.example.data.local.CryptoAssetEntity> = emptyList()
 ) {
     var activeCalculatorIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -414,13 +416,11 @@ fun CalculatorsHubScreen(
                     }
                     5 -> {
                         val history by viewModel.getHistoryForSection("gold_fx").collectAsStateWithLifecycle(emptyList())
-                        val rates by viewModel.marketRates.collectAsStateWithLifecycle()
-                        val cryptos by viewModel.cryptoAssets.collectAsStateWithLifecycle()
                         GoldFxScreen(
                             historyList = history,
                             currencyUnit = currencyUnit,
-                            marketRates = rates,
-                            cryptoAssets = cryptos,
+                            marketRates = marketRates,
+                            cryptoAssets = cryptoAssets,
                             onAddHistory = { viewModel.addHistory(it) },
                             onDeleteHistory = { viewModel.deleteHistory(it) },
                             onClearHistory = { viewModel.clearSectionHistory("gold_fx") }

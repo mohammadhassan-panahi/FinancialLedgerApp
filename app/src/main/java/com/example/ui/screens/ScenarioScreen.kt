@@ -44,6 +44,7 @@ private fun PortfolioAssetType.displayName(): String = when (this) {
     PortfolioAssetType.USD -> "دلار"
     PortfolioAssetType.STOCK -> "سهام"
     PortfolioAssetType.CASH -> "نقد"
+    PortfolioAssetType.CRYPTO -> "کریپتو"
 }
 
 /**
@@ -87,6 +88,7 @@ fun ScenarioScreen(
                 PortfolioAssetType.GOLD -> goldPct
                 PortfolioAssetType.USD -> usdPct
                 PortfolioAssetType.STOCK -> stockPct
+                PortfolioAssetType.CRYPTO -> 0f // Or add a cryptoPct slider if needed later
                 PortfolioAssetType.CASH -> 0f // Cash doesn't usually change price in a "what-if" scenario relative to itself
             }
             Triple(name, value, pct.toDouble())
