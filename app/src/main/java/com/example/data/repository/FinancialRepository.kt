@@ -1,5 +1,7 @@
 package com.example.data.repository
 
+import com.example.data.local.BankAccountDao
+import com.example.data.local.BankAccountEntity
 import com.example.data.local.MarketDao
 import com.example.data.local.MarketRateEntity
 import com.example.data.local.MutualFundEntity
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 
 class FinancialRepository(
     private val transactionDao: TransactionDao,
+    private val bankAccountDao: BankAccountDao,
     private val marketDao: MarketDao,
     private val apiKey: String = "",
     private val marketApiService: MarketApiService? = if (apiKey.isNotBlank()) MarketApiService.create() else null
@@ -22,12 +25,39 @@ class FinancialRepository(
     val marketRates: Flow<List<MarketRateEntity>> = marketDao.getAllMarketRates()
     val mutualFunds: Flow<List<MutualFundEntity>> = marketDao.getAllMutualFunds()
 
+    val allBankAccounts: Flow<List<BankAccountEntity>> = bankAccountDao.getAllAccounts()
+    val totalLiquidity: Flow<Double?> = bankAccountDao.getTotalLiquidity()
+
     suspend fun addTransaction(transaction: TransactionEntity) {
         transactionDao.insertTransaction(transaction)
+        // Automatically update bank account balance if accountId is provided
+        transaction.accountId?.let { accountId ->
+            val change = when (transaction.type) {
+                TransactionType.DEPOSIT -> transaction.amount
+                TransactionType.EXPENSE -> -transaction.amount
+                else -> 0.0
+            }
+            if (change != 0.0) {
+                bankAccountDao.updateBalance(accountId, change)
+            }
+        }
     }
 
     suspend fun removeTransaction(id: Long) {
+        // Note: Reverting the balance on delete is safer, but requires fetching the txn first
         transactionDao.deleteTransaction(id)
+    }
+
+    suspend fun addBankAccount(account: BankAccountEntity) {
+        bankAccountDao.insertAccount(account)
+    }
+
+    suspend fun updateBankAccount(account: BankAccountEntity) {
+        bankAccountDao.updateAccount(account)
+    }
+
+    suspend fun deleteBankAccount(account: BankAccountEntity) {
+        bankAccountDao.deleteAccount(account)
     }
 
     /**

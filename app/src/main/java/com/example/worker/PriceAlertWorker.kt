@@ -27,6 +27,7 @@ class PriceAlertWorker(
         val repository = PortfolioRepository(
             purchaseDao = database.assetPurchaseDao(),
             saleDao = database.assetSaleDao(),
+            bankAccountDao = database.bankAccountDao(),
             marketDao = database.marketDao(),
             stockDao = database.stockDao(),
             alertDao = database.priceAlertDao(),

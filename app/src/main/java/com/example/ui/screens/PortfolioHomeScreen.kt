@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.MoreVert
@@ -50,6 +51,7 @@ import com.example.util.formatRial
 private val GoldColor = Color(0xFFC9A24B)
 private val UsdColor = Color(0xFF4C7A5C)
 private val StockColor = Color(0xFF5B85AA)
+private val CashColor = Color(0xFF8B5CF6) // Purple for Cash/Bank
 
 @Composable
 fun PortfolioHomeScreen(
@@ -58,7 +60,8 @@ fun PortfolioHomeScreen(
     onImportRequested: () -> Unit = {},
     isPrivacyModeEnabled: Boolean = false,
     onTogglePrivacyMode: () -> Unit = {},
-    onOpenCalculators: () -> Unit = {}
+    onOpenCalculators: () -> Unit = {},
+    onOpenBankAccounts: () -> Unit = {}
 ) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     val totalRealizedPnl by viewModel.totalRealizedPnlRial.collectAsStateWithLifecycle()
@@ -71,6 +74,7 @@ fun PortfolioHomeScreen(
     val goldValue = holdings.filter { it.assetType == PortfolioAssetType.GOLD }.sumOf { it.currentValueRial }
     val usdValue = holdings.filter { it.assetType == PortfolioAssetType.USD }.sumOf { it.currentValueRial }
     val stockValue = holdings.filter { it.assetType == PortfolioAssetType.STOCK }.sumOf { it.currentValueRial }
+    val cashValue = holdings.filter { it.assetType == PortfolioAssetType.CASH }.sumOf { it.currentValueRial }
 
     var menuExpanded by remember { mutableStateOf(false) }
     var sellTarget by remember { mutableStateOf<HoldingSummary?>(null) }
@@ -99,6 +103,11 @@ fun PortfolioHomeScreen(
                             Icon(Icons.Default.MoreVert, contentDescription = "پشتیبان‌گیری")
                         }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(
+                                text = { Text("مدیریت حساب‌های بانکی") },
+                                leadingIcon = { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null) },
+                                onClick = { menuExpanded = false; onOpenBankAccounts() }
+                            )
                             DropdownMenuItem(
                                 text = { Text("ماشین‌حساب‌های مالی") },
                                 leadingIcon = { Icon(Icons.Default.Calculate, contentDescription = null) },
@@ -164,7 +173,8 @@ fun PortfolioHomeScreen(
                         slices = listOf(
                             DonutSlice("طلا", goldValue, GoldColor),
                             DonutSlice("دلار", usdValue, UsdColor),
-                            DonutSlice("سهام", stockValue, StockColor)
+                            DonutSlice("سهام", stockValue, StockColor),
+                            DonutSlice("نقد", cashValue, CashColor)
                         )
                     )
                 }
@@ -221,7 +231,9 @@ private fun HoldingCard(holding: HoldingSummary, onSellClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(holding.assetName, fontWeight = FontWeight.Bold)
-                TextButton(onClick = onSellClick) { Text("فروش") }
+                if (holding.assetType != PortfolioAssetType.CASH) {
+                    TextButton(onClick = onSellClick) { Text("فروش") }
+                }
             }
             com.example.ui.components.PrivacyAwareAmountText(
                 text = formatRial(holding.currentValueRial),

@@ -47,6 +47,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
             PortfolioAssetType.GOLD -> { assetCode = "GOLD_18K"; assetName = "طلا ۱۸ عیار (گرم)" }
             PortfolioAssetType.USD -> { assetCode = "USD"; assetName = "دلار آمریکا" }
             PortfolioAssetType.STOCK -> { assetCode = ""; assetName = "" }
+            PortfolioAssetType.CASH -> { assetCode = "CASH_RIAL"; assetName = "نقدینگی (ریال)" }
         }
     }
 
@@ -81,6 +82,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                     PortfolioAssetType.STOCK -> "تعداد سهم"
                     PortfolioAssetType.GOLD -> "مقدار (گرم)"
                     PortfolioAssetType.USD -> "مقدار (دلار)"
+                    PortfolioAssetType.CASH -> "مقدار (ریال)"
                 },
                 isDecimalAllowed = true
             )

@@ -15,6 +15,7 @@ data class TransactionEntity(
     val amount: Double, // Amount in Toman
     val type: TransactionType,
     val category: String,
+    val accountId: Long? = null,
     val timestamp: Long = System.currentTimeMillis(),
     val note: String = ""
 )

@@ -111,6 +111,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.biometric)
+  implementation("androidx.appcompat:appcompat:1.7.0")
   implementation(libs.androidx.security.crypto)
   api("net.zetetic:android-database-sqlcipher:4.5.4")
   implementation(libs.androidx.work.runtime.ktx)

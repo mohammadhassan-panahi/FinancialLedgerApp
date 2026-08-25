@@ -3,6 +3,7 @@ package com.example.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.data.local.BankAccountEntity
 import com.example.data.local.MarketRateEntity
 import com.example.data.local.MutualFundEntity
 import com.example.data.local.TransactionEntity
@@ -56,12 +57,29 @@ class MarketPortfolioViewModel(
             initialValue = emptyList()
         )
 
+    val bankAccounts: StateFlow<List<BankAccountEntity>> = repository.allBankAccounts
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val totalLiquidity: StateFlow<Double> = repository.totalLiquidity
+        .map { it ?: 0.0 }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0.0
+        )
+
     // Total calculated portfolio balance (Sum of deposits + market investments - expenses)
+    // Now also includes actual bank liquidity
     val portfolioBalance: StateFlow<Double> = combine(
         transactions,
         marketRates,
-        mutualFunds
-    ) { txList, rates, funds ->
+        mutualFunds,
+        totalLiquidity
+    ) { txList, rates, funds, liquidity ->
         val initialCapital = 150000000.0 // Baseline capital
         val netTransactions = txList.sumOf { tx ->
             when (tx.type) {
@@ -71,7 +89,7 @@ class MarketPortfolioViewModel(
                 TransactionType.SWAP -> 0.0
             }
         }
-        initialCapital + netTransactions
+        initialCapital + netTransactions + liquidity
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -84,7 +102,7 @@ class MarketPortfolioViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 12.4
+        initialValue = 0.0
     )
 
     init {
@@ -100,13 +118,14 @@ class MarketPortfolioViewModel(
         }
     }
 
-    fun addTransaction(title: String, amount: Double, type: TransactionType, category: String) {
+    fun addTransaction(title: String, amount: Double, type: TransactionType, category: String, accountId: Long? = null) {
         viewModelScope.launch {
             val tx = TransactionEntity(
                 title = title,
                 amount = amount,
                 type = type,
-                category = category
+                category = category,
+                accountId = accountId
             )
             repository.addTransaction(tx)
         }
@@ -115,6 +134,26 @@ class MarketPortfolioViewModel(
     fun deleteTransaction(id: Long) {
         viewModelScope.launch {
             repository.removeTransaction(id)
+        }
+    }
+
+    fun addBankAccount(name: String, bankName: String, initialBalance: Double, colorHex: String) {
+        viewModelScope.launch {
+            repository.addBankAccount(
+                BankAccountEntity(
+                    name = name,
+                    bankName = bankName,
+                    initialBalance = initialBalance,
+                    currentBalance = initialBalance,
+                    colorHex = colorHex
+                )
+            )
+        }
+    }
+
+    fun deleteBankAccount(account: BankAccountEntity) {
+        viewModelScope.launch {
+            repository.deleteBankAccount(account)
         }
     }
 

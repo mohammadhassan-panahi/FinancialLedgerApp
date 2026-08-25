@@ -121,9 +121,9 @@ fun PortfolioApp(
 
     val isPrivacyModeEnabled by userPreferencesRepository.isPrivacyModeEnabled.collectAsStateWithLifecycle(initialValue = false)
 
-    // Full-screen calculators hub (opened from the Home menu) — rendered inside
-    // ProvidePrivacyMode so scenario amounts stay masked in privacy mode.
+    // Full-screen calculators hub (opened from the Home menu)
     var showCalculators by remember { mutableStateOf(false) }
+    var showBankAccounts by remember { mutableStateOf(false) }
     val holdings by viewModel.holdings.collectAsStateWithLifecycle(initialValue = emptyList())
 
     ProvidePrivacyMode(enabled = isPrivacyModeEnabled) {
@@ -133,22 +133,28 @@ fun PortfolioApp(
                 onBack = { showCalculators = false },
                 holdings = holdings
             )
+        } else if (showBankAccounts) {
+            com.example.ui.screens.BankAccountsScreen(
+                viewModel = viewModel,
+                onBack = { showBankAccounts = false }
+            )
         } else {
         Scaffold(
             bottomBar = { PortfolioBottomNav(currentTab = currentTab, onTabSelected = { currentTab = it }) }
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 when (currentTab) {
-                    PortfolioTab.HOME -> PortfolioHomeScreen(
-                        viewModel = viewModel,
-                        onExportRequested = onExportRequested,
-                        onImportRequested = onImportRequested,
-                        isPrivacyModeEnabled = isPrivacyModeEnabled,
-                        onTogglePrivacyMode = {
-                            scope.launch { userPreferencesRepository.setPrivacyModeEnabled(!isPrivacyModeEnabled) }
-                        },
-                        onOpenCalculators = { showCalculators = true }
-                    )
+                        PortfolioTab.HOME -> PortfolioHomeScreen(
+                            viewModel = viewModel,
+                            onExportRequested = onExportRequested,
+                            onImportRequested = onImportRequested,
+                            isPrivacyModeEnabled = isPrivacyModeEnabled,
+                            onTogglePrivacyMode = {
+                                scope.launch { userPreferencesRepository.setPrivacyModeEnabled(!isPrivacyModeEnabled) }
+                            },
+                            onOpenCalculators = { showCalculators = true },
+                            onOpenBankAccounts = { showBankAccounts = true }
+                        )
                     PortfolioTab.GOLD_DOLLAR -> GoldDollarScreen(viewModel)
                     PortfolioTab.STOCK -> StockMarketScreen(viewModel)
                     PortfolioTab.CRYPTO -> CryptoScreen(cryptoViewModel)

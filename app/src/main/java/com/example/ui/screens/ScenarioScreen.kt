@@ -35,6 +35,7 @@ import com.example.ui.theme.LossRed
 import com.example.ui.theme.ProfitGreen
 import com.example.util.GoldMarketFormulas
 import com.example.util.PersianNumberUtils
+import com.example.util.formatPercentSigned
 import com.example.util.formatRial
 import kotlin.math.roundToInt
 
@@ -42,6 +43,7 @@ private fun PortfolioAssetType.displayName(): String = when (this) {
     PortfolioAssetType.GOLD -> "طلا"
     PortfolioAssetType.USD -> "دلار"
     PortfolioAssetType.STOCK -> "سهام"
+    PortfolioAssetType.CASH -> "نقد"
 }
 
 /**
@@ -85,6 +87,7 @@ fun ScenarioScreen(
                 PortfolioAssetType.GOLD -> goldPct
                 PortfolioAssetType.USD -> usdPct
                 PortfolioAssetType.STOCK -> stockPct
+                PortfolioAssetType.CASH -> 0f // Cash doesn't usually change price in a "what-if" scenario relative to itself
             }
             Triple(name, value, pct.toDouble())
         }
@@ -184,7 +187,7 @@ fun ScenarioScreen(
                     ) {
                         Text("تغییر", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         PrivacyAwareAmountText(
-                            text = "${formatRial(result.changeAmount)} (${PersianNumberUtils.formatPercentSigned(result.changePercent)})",
+                            text = "${formatRial(result.changeAmount)} (${formatPercentSigned(result.changePercent)})",
                             color = if (positive) ProfitGreen else LossRed,
                             fontWeight = FontWeight.Bold
                         )
@@ -196,7 +199,7 @@ fun ScenarioScreen(
                                 CalculationHistoryEntity(
                                     sectionKey = "scenario",
                                     title = "سناریو: طلا ${goldPct.roundToInt()}٪ / دلار ${usdPct.roundToInt()}٪ / سهام ${stockPct.roundToInt()}٪",
-                                    summary = "ارزش سبد: ${formatRial(result.currentValue, showSuffix = false)} → ${formatRial(result.simulatedValue, showSuffix = false)} ریال (${PersianNumberUtils.formatPercentSigned(result.changePercent)})",
+                                    summary = "ارزش سبد: ${formatRial(result.currentValue, showSuffix = false)} → ${formatRial(result.simulatedValue, showSuffix = false)} ریال (${formatPercentSigned(result.changePercent)})",
                                     paramsJson = "$manualMode|$goldManual|$usdManual|$stockManual|$goldPct|$usdPct|$stockPct"
                                 )
                             )
@@ -251,7 +254,7 @@ private fun ScenarioSlider(label: String, value: Float, onChange: (Float) -> Uni
         ) {
             Text(label, fontWeight = FontWeight.Bold)
             Text(
-                PersianNumberUtils.formatPercentSigned(value.toDouble()),
+                formatPercentSigned(value.toDouble()),
                 color = if (value >= 0) ProfitGreen else LossRed,
                 fontWeight = FontWeight.Bold
             )

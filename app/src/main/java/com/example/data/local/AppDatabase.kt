@@ -24,9 +24,10 @@ import net.sqlcipher.database.SupportFactory
         MarketIndexEntity::class,
         PriceAlertEntity::class,
         CryptoAssetEntity::class,
-        CryptoInfoEntity::class
+        CryptoInfoEntity::class,
+        BankAccountEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -39,6 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun stockDao(): StockDao
     abstract fun priceAlertDao(): PriceAlertDao
     abstract fun cryptoDao(): CryptoDao
+    abstract fun bankAccountDao(): BankAccountDao
 
     companion object {
         @Volatile

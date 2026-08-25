@@ -5,6 +5,8 @@ import com.example.data.local.AssetPurchaseDao
 import com.example.data.local.AssetPurchaseEntity
 import com.example.data.local.AssetSaleDao
 import com.example.data.local.AssetSaleEntity
+import com.example.data.local.BankAccountDao
+import com.example.data.local.BankAccountEntity
 import com.example.data.local.MarketDao
 import com.example.data.local.MarketIndexEntity
 import com.example.data.local.MarketRateEntity
@@ -49,6 +51,7 @@ data class HoldingSummary(
 class PortfolioRepository(
     private val purchaseDao: AssetPurchaseDao,
     private val saleDao: AssetSaleDao,
+    private val bankAccountDao: BankAccountDao,
     private val marketDao: MarketDao,
     private val stockDao: StockDao,
     private val alertDao: PriceAlertDao,
@@ -66,18 +69,45 @@ class PortfolioRepository(
     val watchlist: Flow<List<StockSymbolEntity>> = stockDao.getWatchlist()
     val indices: Flow<List<MarketIndexEntity>> = stockDao.getIndices()
     val alerts: Flow<List<PriceAlertEntity>> = alertDao.getAllAlerts()
+    val bankAccounts: Flow<List<BankAccountEntity>> = bankAccountDao.getAllAccounts()
 
     /** Sum of realized profit/loss across every sale ever recorded — the "سود محقق‌شده" figure. */
     val totalRealizedPnlRial: Flow<Double> = sales.map { list -> list.sumOf { it.realizedPnlRial } }
+    val totalLiquidityRial: Flow<Double> = bankAccountDao.getTotalLiquidity().map { (it ?: 0.0) * 10.0 }
 
     /**
      * Combines purchases MINUS sold quantity/cost-basis + latest market rates into a
      * per-asset holdings summary, all in Rial. A holding disappears once its net quantity
      * reaches ~0 (fully sold) rather than showing a zero/negative row.
      */
-    val holdings: Flow<List<HoldingSummary>> = combine(purchases, sales, marketRates, watchlist) { txns, soldTxns, rates, stocks ->
+    val holdings: Flow<List<HoldingSummary>> = combine(
+        purchases,
+        sales,
+        marketRates,
+        watchlist,
+        totalLiquidityRial
+    ) { txns, soldTxns, rates, stocks, liquidityRial ->
+        val result = mutableListOf<HoldingSummary>()
+
+        // Add Bank Liquidity as the first holding if it's > 0
+        if (liquidityRial > 0) {
+            result.add(
+                HoldingSummary(
+                    assetType = PortfolioAssetType.CASH,
+                    assetCode = "CASH_RIAL",
+                    assetName = "نقدینگی (ریال)",
+                    quantity = liquidityRial,
+                    totalPaidRial = liquidityRial,
+                    currentPriceRial = 1.0,
+                    currentValueRial = liquidityRial,
+                    profitLossRial = 0.0,
+                    profitLossPercent = 0.0
+                )
+            )
+        }
+
         val soldByCode = soldTxns.groupBy { it.assetCode }
-        txns.groupBy { it.assetCode }.mapNotNull { (code, group) ->
+        val holdingsList = txns.groupBy { it.assetCode }.mapNotNull { (code, group) ->
             val type = group.first().assetType
             val purchasedQty = group.sumOf { it.quantity }
             val purchasedCost = group.sumOf { it.totalPaidRial }
@@ -106,6 +136,8 @@ class PortfolioRepository(
                 profitLossPercent = if (totalPaid > 0) (pnl / totalPaid) * 100.0 else 0.0
             )
         }
+        result.addAll(holdingsList)
+        result
     }
 
     suspend fun addPurchase(purchase: AssetPurchaseEntity) {
@@ -183,6 +215,14 @@ class PortfolioRepository(
 
     suspend fun addAlert(alert: PriceAlertEntity) = alertDao.insertAlert(alert)
     suspend fun deleteAlert(id: Long) = alertDao.deleteAlert(id)
+
+    suspend fun addBankAccount(account: BankAccountEntity) {
+        bankAccountDao.insertAccount(account)
+    }
+
+    suspend fun deleteBankAccount(account: BankAccountEntity) {
+        bankAccountDao.deleteAccount(account)
+    }
 
     /** Fetches live gold/USD rates. Returns true on a successful live fetch, false if offline fallback used. */
     suspend fun refreshGoldAndDollar(): Boolean {
