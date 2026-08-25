@@ -22,6 +22,7 @@ import com.example.util.RIAL_PER_TOMAN
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /** One row of the "خانه" / "افزودن خرید" holdings summary: everything the user owns of one asset. */
@@ -34,7 +35,9 @@ data class HoldingSummary(
     val currentPriceRial: Double,
     val currentValueRial: Double,
     val profitLossRial: Double,
-    val profitLossPercent: Double
+    val profitLossPercent: Double,
+    val dailyChangePercent: Double = 0.0,
+    val dailyChangeRial: Double = 0.0
 )
 
 /**
@@ -56,6 +59,10 @@ class PortfolioRepository(
     private val marketDao: MarketDao,
     private val stockDao: StockDao,
     private val alertDao: PriceAlertDao,
+    private val debtCreditDao: com.example.data.local.DebtCreditDao,
+    private val reminderDao: com.example.data.local.ReminderDao,
+    private val goalDao: com.example.data.local.GoalDao,
+    private val cryptoDao: com.example.data.local.CryptoDao,
     private val apiKey: String = "",
     private val marketApiService: MarketApiService? = if (apiKey.isNotBlank()) MarketApiService.create() else null,
     private val tsetmcApiService: TsetmcApiClient? = if (apiKey.isNotBlank()) TsetmcApiClient(TsetmcApiService.create(), apiKey) else null
@@ -71,6 +78,13 @@ class PortfolioRepository(
     val indices: Flow<List<MarketIndexEntity>> = stockDao.getIndices()
     val alerts: Flow<List<PriceAlertEntity>> = alertDao.getAllAlerts()
     val bankAccounts: Flow<List<BankAccountEntity>> = bankAccountDao.getAllAccounts()
+    val cryptoAssets: Flow<List<com.example.data.local.CryptoAssetEntity>> = cryptoDao.getAllAssets()
+    val debtCredits: Flow<List<com.example.data.local.DebtCreditEntity>> = debtCreditDao.getAll()
+    val reminders: Flow<List<com.example.data.local.ReminderEntity>> = reminderDao.getAll()
+    val goals: Flow<List<com.example.data.local.GoalEntity>> = goalDao.getAll()
+
+    val totalDebtRial: Flow<Double> = debtCreditDao.getTotalDebt().map { it ?: 0.0 }
+    val totalCreditRial: Flow<Double> = debtCreditDao.getTotalCredit().map { it ?: 0.0 }
 
     /** Sum of realized profit/loss across every sale ever recorded — the "سود محقق‌شده" figure. */
     val totalRealizedPnlRial: Flow<Double> = sales.map { list -> list.sumOf { it.realizedPnlRial } }
@@ -86,9 +100,21 @@ class PortfolioRepository(
         sales,
         marketRates,
         watchlist,
+        cryptoAssets,
         totalLiquidityRial
-    ) { txns, soldTxns, rates, stocks, liquidityRial ->
+    ) { array ->
+        val txns = array[0] as List<AssetPurchaseEntity>
+        val soldTxns = array[1] as List<AssetSaleEntity>
+        val rates = array[2] as List<MarketRateEntity>
+        val stocks = array[3] as List<StockSymbolEntity>
+        val cryptos = array[4] as List<com.example.data.local.CryptoAssetEntity>
+        val liquidityRial = array[5] as Double
+        
         val result = mutableListOf<HoldingSummary>()
+        
+        // Find latest USD rate for crypto conversion (USD to Rial)
+        val usdRateToman = rates.find { it.assetCode == "USD" }?.priceToman ?: 60000.0
+        val usdToRial = usdRateToman * RIAL_PER_TOMAN
 
         // Add Bank Liquidity as the first holding if it's > 0
         if (liquidityRial > 0) {
@@ -119,12 +145,37 @@ class PortfolioRepository(
             val totalPaid = purchasedCost - soldCostBasis
             if (quantity <= 0.0001) return@mapNotNull null
 
-            val currentPriceRial = when (type) {
-                PortfolioAssetType.STOCK -> stocks.find { it.symbol == code }?.lastPriceRial
-                else -> rates.find { it.assetCode == code }?.let { it.priceToman * RIAL_PER_TOMAN }
-            } ?: (totalPaid / quantity.coerceAtLeast(0.0001)) // fallback: no live price yet, use cost basis
+            val currentPriceRial: Double
+            val dailyChangePercent: Double
+            
+            val stockMatch = stocks.find { it.symbol == code }
+            val rateMatch = rates.find { it.assetCode == code }
+            val cryptoMatch = cryptos.find { it.symbol == code }
+
+            if (type == PortfolioAssetType.STOCK && stockMatch != null) {
+                currentPriceRial = stockMatch.lastPriceRial
+                dailyChangePercent = stockMatch.changePercent
+            } else if (type == PortfolioAssetType.CRYPTO && cryptoMatch != null) {
+                currentPriceRial = (cryptoMatch.priceUsd ?: 0.0) * usdToRial
+                dailyChangePercent = cryptoMatch.percentChange24h ?: 0.0
+            } else if (rateMatch != null) {
+                currentPriceRial = rateMatch.priceToman * RIAL_PER_TOMAN
+                dailyChangePercent = rateMatch.changePercent
+            } else {
+                currentPriceRial = totalPaid / quantity.coerceAtLeast(0.0001)
+                dailyChangePercent = 0.0
+            }
+
             val currentValue = quantity * currentPriceRial
             val pnl = currentValue - totalPaid
+            
+            // Daily change calculation
+            // If current price is P, and change is C%, then previous price P0 = P / (1 + C/100)
+            // Daily change amount = quantity * (P - P0) = quantity * P * (1 - 1/(1 + C/100))
+            val dailyChangeRial = if (dailyChangePercent != 0.0) {
+                currentValue * (1.0 - 1.0 / (1.0 + dailyChangePercent / 100.0))
+            } else 0.0
+
             HoldingSummary(
                 assetType = type,
                 assetCode = code,
@@ -134,7 +185,9 @@ class PortfolioRepository(
                 currentPriceRial = currentPriceRial,
                 currentValueRial = currentValue,
                 profitLossRial = pnl,
-                profitLossPercent = if (totalPaid > 0) (pnl / totalPaid) * 100.0 else 0.0
+                profitLossPercent = if (totalPaid > 0) (pnl / totalPaid) * 100.0 else 0.0,
+                dailyChangePercent = dailyChangePercent,
+                dailyChangeRial = dailyChangeRial
             )
         }
         result.addAll(holdingsList)
@@ -228,6 +281,21 @@ class PortfolioRepository(
     suspend fun updateBankAccount(account: BankAccountEntity) {
         bankAccountDao.updateAccount(account)
     }
+
+    // Debt & Credit
+    suspend fun addDebtCredit(entity: com.example.data.local.DebtCreditEntity) = debtCreditDao.insert(entity)
+    suspend fun updateDebtCredit(entity: com.example.data.local.DebtCreditEntity) = debtCreditDao.update(entity)
+    suspend fun deleteDebtCredit(entity: com.example.data.local.DebtCreditEntity) = debtCreditDao.delete(entity)
+
+    // Reminders
+    suspend fun addReminder(entity: com.example.data.local.ReminderEntity) = reminderDao.insert(entity)
+    suspend fun updateReminder(entity: com.example.data.local.ReminderEntity) = reminderDao.update(entity)
+    suspend fun deleteReminder(entity: com.example.data.local.ReminderEntity) = reminderDao.delete(entity)
+
+    // Goals
+    suspend fun addGoal(entity: com.example.data.local.GoalEntity) = goalDao.insert(entity)
+    suspend fun updateGoal(entity: com.example.data.local.GoalEntity) = goalDao.update(entity)
+    suspend fun deleteGoal(entity: com.example.data.local.GoalEntity) = goalDao.delete(entity)
 
     /** Fetches live gold/USD rates. Returns true on a successful live fetch, false if offline fallback used. */
     suspend fun refreshGoldAndDollar(): Boolean {

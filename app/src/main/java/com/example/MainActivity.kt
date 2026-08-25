@@ -81,6 +81,10 @@ class MainActivity : FragmentActivity() {
             marketDao = database.marketDao(),
             stockDao = database.stockDao(),
             alertDao = database.priceAlertDao(),
+            debtCreditDao = database.debtCreditDao(),
+            reminderDao = database.reminderDao(),
+            goalDao = database.goalDao(),
+            cryptoDao = database.cryptoDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
         val cryptoRepository = CryptoRepository(

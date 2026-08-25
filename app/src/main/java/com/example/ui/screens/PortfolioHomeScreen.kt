@@ -61,15 +61,27 @@ fun PortfolioHomeScreen(
     isPrivacyModeEnabled: Boolean = false,
     onTogglePrivacyMode: () -> Unit = {},
     onOpenCalculators: () -> Unit = {},
-    onOpenBankAccounts: () -> Unit = {}
+    onOpenBankAccounts: () -> Unit = {},
+    onOpenDebtCredits: () -> Unit = {},
+    onOpenReminders: () -> Unit = {},
+    onOpenGoals: () -> Unit = {}
 ) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     val totalRealizedPnl by viewModel.totalRealizedPnlRial.collectAsStateWithLifecycle()
+    val totalDebt by viewModel.totalDebtRial.collectAsStateWithLifecycle()
+    val totalCredit by viewModel.totalCreditRial.collectAsStateWithLifecycle()
     val sellError by viewModel.sellError.collectAsStateWithLifecycle()
+    
     val totalValue = holdings.sumOf { it.currentValueRial }
     val totalPaid = holdings.sumOf { it.totalPaidRial }
     val totalPnl = totalValue - totalPaid
     val totalPnlPercent = if (totalPaid > 0) (totalPnl / totalPaid) * 100.0 else 0.0
+    
+    val totalDailyChangeRial = holdings.sumOf { it.dailyChangeRial }
+    // Weighted average daily change percent
+    val totalDailyChangePercent = if (totalValue > 0) (totalDailyChangeRial / totalValue) * 100.0 else 0.0
+
+    val netWorth = totalValue + totalCredit - totalDebt
 
     val goldValue = holdings.filter { it.assetType == PortfolioAssetType.GOLD }.sumOf { it.currentValueRial }
     val usdValue = holdings.filter { it.assetType == PortfolioAssetType.USD }.sumOf { it.currentValueRial }
@@ -109,6 +121,18 @@ fun PortfolioHomeScreen(
                                 onClick = { menuExpanded = false; onOpenBankAccounts() }
                             )
                             DropdownMenuItem(
+                                text = { Text("بده و بستان (طلب/بدهی)") },
+                                onClick = { menuExpanded = false; onOpenDebtCredits() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("یادآور اقساط و چک") },
+                                onClick = { menuExpanded = false; onOpenReminders() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("هدف‌گذاری مالی") },
+                                onClick = { menuExpanded = false; onOpenGoals() }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("ماشین‌حساب‌های مالی") },
                                 leadingIcon = { Icon(Icons.Default.Calculate, contentDescription = null) },
                                 onClick = { menuExpanded = false; onOpenCalculators() }
@@ -130,16 +154,33 @@ fun PortfolioHomeScreen(
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(20.dp)) {
-                    Text("ارزش کل پرتفوی", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("خالص دارایی (Net Worth)", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     com.example.ui.components.PrivacyAwareAmountText(
-                        text = formatRial(totalValue),
+                        text = formatRial(netWorth),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    com.example.ui.components.PrivacyAwareAmountText(
-                        text = "${formatPercentSigned(totalPnlPercent)} (${formatRial(totalPnl)})",
-                        color = if (totalPnl >= 0) EmeraldProfit else RoseLoss
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text("سود/زیان کل", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            com.example.ui.components.PrivacyAwareAmountText(
+                                text = "${formatPercentSigned(totalPnlPercent)} (${formatRial(totalPnl)})",
+                                color = if (totalPnl >= 0) EmeraldProfit else RoseLoss,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("تغییر امروز", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            com.example.ui.components.PrivacyAwareAmountText(
+                                text = "${formatPercentSigned(totalDailyChangePercent)} (${formatRial(totalDailyChangeRial)})",
+                                color = if (totalDailyChangeRial >= 0) EmeraldProfit else RoseLoss,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -239,10 +280,18 @@ private fun HoldingCard(holding: HoldingSummary, onSellClick: () -> Unit) {
                 text = formatRial(holding.currentValueRial),
                 style = MaterialTheme.typography.titleMedium
             )
-            com.example.ui.components.PrivacyAwareAmountText(
-                text = "${formatPercentSigned(holding.profitLossPercent)} (${formatRial(holding.profitLossRial)})",
-                color = if (holding.profitLossRial >= 0) EmeraldProfit else RoseLoss
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                com.example.ui.components.PrivacyAwareAmountText(
+                    text = "سود کل: ${formatPercentSigned(holding.profitLossPercent)}",
+                    color = if (holding.profitLossRial >= 0) EmeraldProfit else RoseLoss,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                com.example.ui.components.PrivacyAwareAmountText(
+                    text = "امروز: ${formatPercentSigned(holding.dailyChangePercent)}",
+                    color = if (holding.dailyChangeRial >= 0) EmeraldProfit else RoseLoss,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }

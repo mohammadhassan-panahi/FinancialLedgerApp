@@ -18,11 +18,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.TextButton
 import com.example.data.local.CalculationHistoryEntity
 import com.example.ui.components.HistoryAccordion
 import com.example.ui.components.NotebookCard
@@ -34,11 +38,17 @@ import com.example.ui.theme.LossRed
 import com.example.ui.theme.ProfitGreen
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
+import com.example.data.local.MarketRateEntity
+import com.example.data.local.CryptoAssetEntity
+import com.example.ui.components.PersianNumberTextField
+import com.example.util.RIAL_PER_TOMAN
 
 @Composable
 fun GoldFxScreen(
     historyList: List<CalculationHistoryEntity>,
     currencyUnit: String = "تومان",
+    marketRates: List<MarketRateEntity> = emptyList(),
+    cryptoAssets: List<CryptoAssetEntity> = emptyList(),
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
     onClearHistory: () -> Unit
@@ -47,6 +57,7 @@ fun GoldFxScreen(
     val unitLabel = PersianNumberUtils.getCurrencyUnitLabel(isRial)
 
     var isReverseMode by remember { mutableStateOf(false) }
+    var showLiveSelector by remember { mutableStateOf(false) }
 
     var assetNameInput by remember { mutableStateOf("طلا ۱۸ عیار") }
     var buyPriceInput by remember { mutableStateOf(if (isRial) "43500000" else "4350000") }
@@ -55,6 +66,8 @@ fun GoldFxScreen(
     var targetProfitPercentInput by remember { mutableStateOf("15") }
 
     var showPrintDialog by remember { mutableStateOf(false) }
+    
+    val usdRate = marketRates.find { it.assetCode == "USD" }?.priceToman ?: 60000.0
 
     val buyP = PersianNumberUtils.parseAmountToToman(buyPriceInput, isRial)
     val sellP = PersianNumberUtils.parseAmountToToman(sellPriceInput, isRial)
@@ -180,6 +193,13 @@ fun GoldFxScreen(
         // Form
         item {
             NotebookCard {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("اطلاعات دارایی", fontWeight = FontWeight.Bold)
+                    androidx.compose.material3.TextButton(onClick = { showLiveSelector = true }) {
+                        Text("انتخاب از نرخ‌های زنده بازار", fontSize = 11.sp)
+                    }
+                }
+                
                 OutlinedTextField(
                     value = assetNameInput,
                     onValueChange = { assetNameInput = it },
@@ -313,6 +333,47 @@ fun GoldFxScreen(
             summaryContent = copySummaryText,
             detailsList = detailsList,
             onDismiss = { showPrintDialog = false }
+        )
+    }
+
+    if (showLiveSelector) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showLiveSelector = false },
+            title = { Text("انتخاب نرخ زنده") },
+            text = {
+                LazyColumn(modifier = Modifier.height(300.dp)) {
+                    item { Text("طلا و ارز", fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                    items(marketRates) { rate ->
+                        androidx.compose.material3.ListItem(
+                            headlineContent = { Text(rate.name) },
+                            supportingContent = { Text(PersianNumberUtils.formatCurrency(rate.priceToman, isRial = false) + " تومان") },
+                            modifier = Modifier.clickable {
+                                assetNameInput = rate.name
+                                val price = if (isRial) rate.priceToman * 10 else rate.priceToman
+                                sellPriceInput = price.toLong().toString()
+                                showLiveSelector = false
+                            }
+                        )
+                    }
+                    item { Text("رمزارزها (به تومان)", fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
+                    items(cryptoAssets) { crypto ->
+                        val priceToman = (crypto.priceUsd ?: 0.0) * usdRate
+                        androidx.compose.material3.ListItem(
+                            headlineContent = { Text("${crypto.name} (${crypto.symbol})") },
+                            supportingContent = { Text(PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان") },
+                            modifier = Modifier.clickable {
+                                assetNameInput = crypto.name
+                                val price = if (isRial) priceToman * 10 else priceToman
+                                sellPriceInput = price.toLong().toString()
+                                showLiveSelector = false
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLiveSelector = false }) { Text("بستن") }
+            }
         )
     }
 }

@@ -11,7 +11,7 @@ import com.squareup.moshi.JsonClass
  * mixing units with the legacy ledger tables (MarketRateEntity.priceToman, TransactionEntity)
  * that predate this module. Use PersianNumberUtils.formatRial() to display these values.
  */
-enum class PortfolioAssetType { GOLD, USD, STOCK, CASH }
+enum class PortfolioAssetType { GOLD, USD, STOCK, CASH, CRYPTO }
 
 /**
  * A single "خرید" (purchase) the user logged for something they own: grams of gold, USD

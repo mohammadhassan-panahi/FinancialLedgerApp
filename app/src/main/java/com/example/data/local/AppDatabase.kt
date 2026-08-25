@@ -25,9 +25,12 @@ import net.sqlcipher.database.SupportFactory
         PriceAlertEntity::class,
         CryptoAssetEntity::class,
         CryptoInfoEntity::class,
-        BankAccountEntity::class
+        BankAccountEntity::class,
+        DebtCreditEntity::class,
+        ReminderEntity::class,
+        GoalEntity::class
     ],
-    version = 8,
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -41,6 +44,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun priceAlertDao(): PriceAlertDao
     abstract fun cryptoDao(): CryptoDao
     abstract fun bankAccountDao(): BankAccountDao
+    abstract fun debtCreditDao(): DebtCreditDao
+    abstract fun reminderDao(): ReminderDao
+    abstract fun goalDao(): GoalDao
 
     companion object {
         @Volatile

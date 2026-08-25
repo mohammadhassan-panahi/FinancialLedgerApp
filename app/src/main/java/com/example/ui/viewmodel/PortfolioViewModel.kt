@@ -39,7 +39,10 @@ class PortfolioViewModel(private val repository: PortfolioRepository) : ViewMode
     val totalRealizedPnlRial: StateFlow<Double> = repository.totalRealizedPnlRial
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    val marketRates = repository.marketRates
+    val marketRates: StateFlow<List<com.example.data.local.MarketRateEntity>> = repository.marketRates
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val cryptoAssets: StateFlow<List<com.example.data.local.CryptoAssetEntity>> = repository.cryptoAssets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val watchlist = repository.watchlist
@@ -51,6 +54,21 @@ class PortfolioViewModel(private val repository: PortfolioRepository) : ViewMode
     val alerts = repository.alerts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val debtCredits = repository.debtCredits
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val reminders = repository.reminders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val goals = repository.goals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val totalDebtRial: StateFlow<Double> = repository.totalDebtRial
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    val totalCreditRial: StateFlow<Double> = repository.totalCreditRial
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -58,13 +76,8 @@ class PortfolioViewModel(private val repository: PortfolioRepository) : ViewMode
     val isOfflineMode: StateFlow<Boolean> = _isOfflineMode.asStateFlow()
 
     val totalPortfolioValueRial: StateFlow<Double> = holdings
-        .let { flow ->
-            MutableStateFlow(0.0).also { out ->
-                viewModelScope.launch {
-                    flow.collect { list -> out.value = list.sumOf { it.currentValueRial } }
-                }
-            }
-        }
+        .map { list -> list.sumOf { it.currentValueRial } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     fun refreshAll(watchlistSymbols: List<String> = emptyList()) {
         viewModelScope.launch {
@@ -156,6 +169,54 @@ class PortfolioViewModel(private val repository: PortfolioRepository) : ViewMode
 
     fun removeSymbolFromWatchlist(symbol: String) =
         viewModelScope.launch { repository.removeSymbolFromWatchlist(symbol) }
+
+    // Debt & Credit
+    fun addDebtCredit(personName: String, amountRial: Double, type: com.example.data.local.DebtCreditType, description: String = "") {
+        viewModelScope.launch {
+            repository.addDebtCredit(
+                com.example.data.local.DebtCreditEntity(
+                    personName = personName,
+                    amountRial = amountRial,
+                    type = type,
+                    description = description
+                )
+            )
+        }
+    }
+
+    fun deleteDebtCredit(entity: com.example.data.local.DebtCreditEntity) = viewModelScope.launch { repository.deleteDebtCredit(entity) }
+    fun settleDebtCredit(entity: com.example.data.local.DebtCreditEntity) = viewModelScope.launch { repository.updateDebtCredit(entity.copy(isSettled = true)) }
+
+    // Reminders
+    fun addReminder(title: String, amountRial: Double, type: com.example.data.local.ReminderType, dueDate: Long, note: String = "") {
+        viewModelScope.launch {
+            repository.addReminder(
+                com.example.data.local.ReminderEntity(
+                    title = title,
+                    amountRial = amountRial,
+                    type = type,
+                    dueDate = dueDate,
+                    note = note
+                )
+            )
+        }
+    }
+
+    fun deleteReminder(entity: com.example.data.local.ReminderEntity) = viewModelScope.launch { repository.deleteReminder(entity) }
+    fun markReminderAsPaid(entity: com.example.data.local.ReminderEntity) = viewModelScope.launch { repository.updateReminder(entity.copy(isPaid = true)) }
+
+    // Goals
+    fun addGoal(title: String, targetAmountRial: Double, category: String = "سایر") {
+        viewModelScope.launch {
+            repository.addGoal(com.example.data.local.GoalEntity(title = title, targetAmountRial = targetAmountRial, category = category))
+        }
+    }
+    fun updateGoalProgress(entity: com.example.data.local.GoalEntity, savedAmount: Double) {
+        viewModelScope.launch {
+            repository.updateGoal(entity.copy(currentSavedRial = savedAmount, isCompleted = savedAmount >= entity.targetAmountRial))
+        }
+    }
+    fun deleteGoal(entity: com.example.data.local.GoalEntity) = viewModelScope.launch { repository.deleteGoal(entity) }
 }
 
 class PortfolioViewModelFactory(private val repository: PortfolioRepository) : ViewModelProvider.Factory {

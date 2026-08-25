@@ -414,9 +414,13 @@ fun CalculatorsHubScreen(
                     }
                     5 -> {
                         val history by viewModel.getHistoryForSection("gold_fx").collectAsStateWithLifecycle(emptyList())
+                        val rates by viewModel.marketRates.collectAsStateWithLifecycle()
+                        val cryptos by viewModel.cryptoAssets.collectAsStateWithLifecycle()
                         GoldFxScreen(
                             historyList = history,
                             currencyUnit = currencyUnit,
+                            marketRates = rates,
+                            cryptoAssets = cryptos,
                             onAddHistory = { viewModel.addHistory(it) },
                             onDeleteHistory = { viewModel.deleteHistory(it) },
                             onClearHistory = { viewModel.clearSectionHistory("gold_fx") }

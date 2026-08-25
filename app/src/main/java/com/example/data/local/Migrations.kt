@@ -174,5 +174,57 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
     }
 }
 
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `debt_credits` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `personName` TEXT NOT NULL,
+                `amountRial` REAL NOT NULL,
+                `type` TEXT NOT NULL,
+                `dueDate` INTEGER,
+                `description` TEXT NOT NULL,
+                `isSettled` INTEGER NOT NULL,
+                `createdAt` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `reminders` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `title` TEXT NOT NULL,
+                `amountRial` REAL NOT NULL,
+                `type` TEXT NOT NULL,
+                `dueDate` INTEGER NOT NULL,
+                `isPaid` INTEGER NOT NULL,
+                `note` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `financial_goals` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `title` TEXT NOT NULL,
+                `targetAmountRial` REAL NOT NULL,
+                `currentSavedRial` REAL NOT NULL,
+                `deadline` INTEGER,
+                `category` TEXT NOT NULL,
+                `isCompleted` INTEGER NOT NULL,
+                `createdAt` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
 /** All migrations in order — pass this whole array to `.addMigrations(...)`. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+val ALL_MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)

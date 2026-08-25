@@ -124,6 +124,9 @@ fun PortfolioApp(
     // Full-screen calculators hub (opened from the Home menu)
     var showCalculators by remember { mutableStateOf(false) }
     var showBankAccounts by remember { mutableStateOf(false) }
+    var showDebtCredits by remember { mutableStateOf(false) }
+    var showReminders by remember { mutableStateOf(false) }
+    var showGoals by remember { mutableStateOf(false) }
     val holdings by viewModel.holdings.collectAsStateWithLifecycle(initialValue = emptyList())
 
     ProvidePrivacyMode(enabled = isPrivacyModeEnabled) {
@@ -137,6 +140,21 @@ fun PortfolioApp(
             com.example.ui.screens.BankAccountsScreen(
                 viewModel = viewModel,
                 onBack = { showBankAccounts = false }
+            )
+        } else if (showDebtCredits) {
+            com.example.ui.screens.DebtCreditsScreen(
+                viewModel = viewModel,
+                onBack = { showDebtCredits = false }
+            )
+        } else if (showReminders) {
+            com.example.ui.screens.RemindersScreen(
+                viewModel = viewModel,
+                onBack = { showReminders = false }
+            )
+        } else if (showGoals) {
+            com.example.ui.screens.GoalsScreen(
+                viewModel = viewModel,
+                onBack = { showGoals = false }
             )
         } else {
         Scaffold(
@@ -153,7 +171,10 @@ fun PortfolioApp(
                                 scope.launch { userPreferencesRepository.setPrivacyModeEnabled(!isPrivacyModeEnabled) }
                             },
                             onOpenCalculators = { showCalculators = true },
-                            onOpenBankAccounts = { showBankAccounts = true }
+                            onOpenBankAccounts = { showBankAccounts = true },
+                            onOpenDebtCredits = { showDebtCredits = true },
+                            onOpenReminders = { showReminders = true },
+                            onOpenGoals = { showGoals = true }
                         )
                     PortfolioTab.GOLD_DOLLAR -> GoldDollarScreen(viewModel)
                     PortfolioTab.STOCK -> StockMarketScreen(viewModel)

@@ -1,14 +1,19 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
@@ -28,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,6 +53,18 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
     val indices by viewModel.indices.collectAsStateWithLifecycle()
     val watchlist by viewModel.watchlist.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    
+    // Breadth analysis (for simulated heatmap feel)
+    val advancedStats = remember(watchlist) {
+        if (watchlist.isEmpty()) null else {
+            val gainers = watchlist.count { it.changePercent > 0 }
+            val losers = watchlist.count { it.changePercent < 0 }
+            val neutral = watchlist.size - gainers - losers
+            val avgChange = watchlist.map { it.changePercent }.average()
+            MarketBreadth(gainers, losers, neutral, avgChange)
+        }
+    }
+
     var newSymbol by remember { mutableStateOf("") }
     var alertTarget by remember { mutableStateOf<StockSymbolEntity?>(null) }
     var removeTarget by remember { mutableStateOf<StockSymbolEntity?>(null) }
@@ -69,6 +88,13 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
             }
         }
         items(indices) { index -> IndexCard(index) }
+
+        advancedStats?.let { stats ->
+            item {
+                MarketBreadthCard(stats)
+            }
+        }
+
         item {
             Text(
                 "واچ‌لیست من",
@@ -144,6 +170,50 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
                 TextButton(onClick = { removeTarget = null }) { Text("انصراف") }
             }
         )
+    }
+}
+
+data class MarketBreadth(val gainers: Int, val losers: Int, val neutral: Int, val avgChange: Double)
+
+@Composable
+fun MarketBreadthCard(stats: MarketBreadth) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("تحلیل وضعیت واچ‌لیست", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    Text("مثبت", color = EmeraldProfit, style = MaterialTheme.typography.labelSmall)
+                    Text("${stats.gainers}", fontWeight = FontWeight.Bold)
+                }
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    Text("منفی", color = RoseLoss, style = MaterialTheme.typography.labelSmall)
+                    Text("${stats.losers}", fontWeight = FontWeight.Bold)
+                }
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    Text("ثابت", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                    Text("${stats.neutral}", fontWeight = FontWeight.Bold)
+                }
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    Text("میانگین تغییر", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        com.example.util.formatPercentSigned(stats.avgChange),
+                        color = if (stats.avgChange >= 0) EmeraldProfit else RoseLoss,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            // Simple bar chart for gainers/losers
+            val total = stats.gainers + stats.losers + stats.neutral
+            if (total > 0) {
+                Row(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))) {
+                    Box(modifier = Modifier.weight(stats.gainers.toFloat().coerceAtLeast(0.1f)).fillMaxSize().background(EmeraldProfit))
+                    Box(modifier = Modifier.weight(stats.neutral.toFloat().coerceAtLeast(0.1f)).fillMaxSize().background(Color.Gray))
+                    Box(modifier = Modifier.weight(stats.losers.toFloat().coerceAtLeast(0.1f)).fillMaxSize().background(RoseLoss))
+                }
+            }
+        }
     }
 }
 

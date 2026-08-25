@@ -48,6 +48,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
             PortfolioAssetType.USD -> { assetCode = "USD"; assetName = "دلار آمریکا" }
             PortfolioAssetType.STOCK -> { assetCode = ""; assetName = "" }
             PortfolioAssetType.CASH -> { assetCode = "CASH_RIAL"; assetName = "نقدینگی (ریال)" }
+            PortfolioAssetType.CRYPTO -> { assetCode = ""; assetName = "" }
         }
     }
 
@@ -62,14 +63,15 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                 FilterChip(selected = assetType == PortfolioAssetType.GOLD, onClick = { selectType(PortfolioAssetType.GOLD) }, label = { Text("طلا") })
                 FilterChip(selected = assetType == PortfolioAssetType.USD, onClick = { selectType(PortfolioAssetType.USD) }, label = { Text("دلار") })
                 FilterChip(selected = assetType == PortfolioAssetType.STOCK, onClick = { selectType(PortfolioAssetType.STOCK) }, label = { Text("سهام") })
+                FilterChip(selected = assetType == PortfolioAssetType.CRYPTO, onClick = { selectType(PortfolioAssetType.CRYPTO) }, label = { Text("کریپتو") })
             }
         }
-        if (assetType == PortfolioAssetType.STOCK) {
+        if (assetType == PortfolioAssetType.STOCK || assetType == PortfolioAssetType.CRYPTO) {
             item {
                 androidx.compose.material3.OutlinedTextField(
                     value = assetCode,
                     onValueChange = { assetCode = it; assetName = it },
-                    label = { Text("نماد بورسی (مثلاً فولاد)") },
+                    label = { Text(if (assetType == PortfolioAssetType.STOCK) "نماد بورسی (مثلاً فولاد)" else "نماد رمزارز (مثلاً BTC)") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -83,6 +85,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                     PortfolioAssetType.GOLD -> "مقدار (گرم)"
                     PortfolioAssetType.USD -> "مقدار (دلار)"
                     PortfolioAssetType.CASH -> "مقدار (ریال)"
+                    PortfolioAssetType.CRYPTO -> "مقدار (واحد)"
                 },
                 isDecimalAllowed = true
             )
