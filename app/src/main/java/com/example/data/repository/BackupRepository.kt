@@ -4,6 +4,8 @@ import com.example.data.local.AssetPurchaseDao
 import com.example.data.local.AssetPurchaseEntity
 import com.example.data.local.AssetSaleDao
 import com.example.data.local.AssetSaleEntity
+import com.example.data.local.BankAccountDao
+import com.example.data.local.BankAccountEntity
 import com.example.data.local.PriceAlertDao
 import com.example.data.local.PriceAlertEntity
 import com.example.data.local.StockDao
@@ -23,12 +25,13 @@ import kotlinx.coroutines.flow.first
  */
 @JsonClass(generateAdapter = true)
 data class BackupPayload(
-    val version: Int = 2,
+    val version: Int = 3,
     val exportedAt: Long = System.currentTimeMillis(),
     val purchases: List<AssetPurchaseEntity>,
     val sales: List<AssetSaleEntity> = emptyList(),
     val watchlist: List<StockSymbolEntity>,
-    val alerts: List<PriceAlertEntity>
+    val alerts: List<PriceAlertEntity>,
+    val bankAccounts: List<BankAccountEntity> = emptyList()
 )
 
 class BackupRepository(
@@ -36,6 +39,7 @@ class BackupRepository(
     private val saleDao: AssetSaleDao,
     private val stockDao: StockDao,
     private val alertDao: PriceAlertDao,
+    private val bankAccountDao: BankAccountDao,
     private val database: AppDatabase
 ) {
     private val moshi = Moshi.Builder().build()
@@ -46,7 +50,8 @@ class BackupRepository(
             purchases = purchaseDao.getAllPurchases().first(),
             sales = saleDao.getAllSales().first(),
             watchlist = stockDao.getWatchlistOnce(),
-            alerts = alertDao.getAllAlerts().first()
+            alerts = alertDao.getAllAlerts().first(),
+            bankAccounts = bankAccountDao.getAllAccounts().first()
         )
         return moshi.adapter<BackupPayload>().indent("  ").toJson(payload)
     }
@@ -57,7 +62,7 @@ class BackupRepository(
         val payload = moshi.adapter<BackupPayload>().fromJson(json)
             ?: throw IllegalArgumentException("فایل پشتیبان نامعتبر است")
 
-        require(payload.version in 1..2) { "نسخه پشتیبان پشتیبانی نمی‌شود" }
+        require(payload.version in 1..3) { "نسخه پشتیبان پشتیبانی نمی‌شود" }
         require(payload.purchases.all { it.quantity > 0.0 && it.unitPriceRial > 0.0 }) {
             "فایل پشتیبان شامل خرید نامعتبر است"
         }
@@ -68,14 +73,19 @@ class BackupRepository(
         require(payload.alerts.all { it.assetCode.isNotBlank() && it.targetPriceRial > 0.0 }) {
             "هشدار قیمت نامعتبر است"
         }
+        require(payload.bankAccounts.all { it.name.isNotBlank() && it.bankName.isNotBlank() }) {
+            "حساب بانکی نامعتبر است"
+        }
 
         database.withTransaction {
             payload.purchases.forEach { purchaseDao.insertPurchase(it) }
             payload.sales.forEach { saleDao.insertSale(it) }
             payload.watchlist.forEach { stockDao.insertSymbol(it) }
             payload.alerts.forEach { alertDao.insertAlert(it) }
+            payload.bankAccounts.forEach { bankAccountDao.insertAccount(it) }
         }
 
-        return payload.purchases.size + payload.sales.size + payload.watchlist.size + payload.alerts.size
+        return payload.purchases.size + payload.sales.size + payload.watchlist.size +
+            payload.alerts.size + payload.bankAccounts.size
     }
 }

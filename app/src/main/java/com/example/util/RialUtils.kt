@@ -1,5 +1,6 @@
 package com.example.util
 
+import com.example.data.local.BankAccountEntity
 import com.example.data.local.MarketRateEntity
 import java.text.DecimalFormat
 
@@ -12,6 +13,9 @@ const val RIAL_PER_TOMAN = 10.0
 
 /** MarketRateEntity.priceToman converted to Rial — use this everywhere in the portfolio module. */
 val MarketRateEntity.priceRial: Double get() = priceToman * RIAL_PER_TOMAN
+
+/** BankAccountEntity.currentBalance (Toman) converted to Rial — the single boundary for bank balances. */
+val BankAccountEntity.currentBalanceRial: Double get() = currentBalance * RIAL_PER_TOMAN
 
 /** Formats an amount that is ALREADY in Rial (no unit conversion), with Persian digits + grouping. */
 fun formatRial(amountRial: Double, showSuffix: Boolean = true, decimalPlaces: Int = 0): String {

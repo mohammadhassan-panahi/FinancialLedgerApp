@@ -18,6 +18,7 @@ import com.example.data.local.StockSymbolEntity
 import com.example.data.remote.MarketApiService
 import com.example.data.remote.TsetmcApiClient
 import com.example.data.remote.TsetmcApiService
+import com.example.util.RIAL_PER_TOMAN
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -73,7 +74,7 @@ class PortfolioRepository(
 
     /** Sum of realized profit/loss across every sale ever recorded — the "سود محقق‌شده" figure. */
     val totalRealizedPnlRial: Flow<Double> = sales.map { list -> list.sumOf { it.realizedPnlRial } }
-    val totalLiquidityRial: Flow<Double> = bankAccountDao.getTotalLiquidity().map { (it ?: 0.0) * 10.0 }
+    val totalLiquidityRial: Flow<Double> = bankAccountDao.getTotalLiquidity().map { (it ?: 0.0) * RIAL_PER_TOMAN }
 
     /**
      * Combines purchases MINUS sold quantity/cost-basis + latest market rates into a
@@ -222,6 +223,10 @@ class PortfolioRepository(
 
     suspend fun deleteBankAccount(account: BankAccountEntity) {
         bankAccountDao.deleteAccount(account)
+    }
+
+    suspend fun updateBankAccount(account: BankAccountEntity) {
+        bankAccountDao.updateAccount(account)
     }
 
     /** Fetches live gold/USD rates. Returns true on a successful live fetch, false if offline fallback used. */

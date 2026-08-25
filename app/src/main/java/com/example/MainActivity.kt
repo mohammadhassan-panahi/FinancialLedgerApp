@@ -92,6 +92,7 @@ class MainActivity : FragmentActivity() {
             saleDao = database.assetSaleDao(),
             stockDao = database.stockDao(),
             alertDao = database.priceAlertDao(),
+            bankAccountDao = database.bankAccountDao(),
             database = database
         )
 
