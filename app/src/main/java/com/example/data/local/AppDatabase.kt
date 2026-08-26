@@ -28,9 +28,11 @@ import net.sqlcipher.database.SupportFactory
         BankAccountEntity::class,
         DebtCreditEntity::class,
         ReminderEntity::class,
-        GoalEntity::class
+        GoalEntity::class,
+        IpoEntity::class,
+        CodalEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -47,6 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun debtCreditDao(): DebtCreditDao
     abstract fun reminderDao(): ReminderDao
     abstract fun goalDao(): GoalDao
+    abstract fun bourseDao(): BourseDao
 
     companion object {
         @Volatile

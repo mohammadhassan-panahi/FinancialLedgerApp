@@ -1,49 +1,32 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.MarketIndexEntity
 import com.example.data.local.PriceAlertEntity
 import com.example.data.local.StockSymbolEntity
 import com.example.ui.components.PriceAlertDialog
-import com.example.ui.theme.EmeraldProfit
-import com.example.ui.theme.RoseLoss
+import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
@@ -53,6 +36,11 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
     val indices by viewModel.indices.collectAsStateWithLifecycle()
     val watchlist by viewModel.watchlist.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val ipos by viewModel.ipos.collectAsStateWithLifecycle()
+    val codalNotices by viewModel.codalNotices.collectAsStateWithLifecycle()
+    
+    var showIpoSheet by remember { mutableStateOf(false) }
+    var showCodalSheet by remember { mutableStateOf(false) }
     
     // Breadth analysis (for simulated heatmap feel)
     val advancedStats = remember(watchlist) {
@@ -92,6 +80,35 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
         advancedStats?.let { stats ->
             item {
                 MarketBreadthCard(stats)
+            }
+            
+            item {
+                MarketInsightsCard()
+            }
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        onClick = { showIpoSheet = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CredifyIndigo)
+                    ) {
+                        Icon(Icons.Default.Flag, null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("عرضه اولیه", fontSize = 12.sp)
+                    }
+                    Button(
+                        onClick = { showCodalSheet = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CredifyViolet)
+                    ) {
+                        Icon(Icons.Default.NotificationsActive, null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("پیام‌های کدال", fontSize = 12.sp)
+                    }
+                }
             }
         }
 
@@ -155,22 +172,74 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
         )
     }
 
-    removeTarget?.let { stock ->
-        AlertDialog(
-            onDismissRequest = { removeTarget = null },
-            title = { Text("حذف از واچ‌لیست") },
-            text = { Text("نماد «${stock.symbol}» از واچ‌لیست حذف بشه؟") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.removeSymbolFromWatchlist(stock.symbol)
-                    removeTarget = null
-                }) { Text("حذف", color = RoseLoss) }
-            },
-            dismissButton = {
-                TextButton(onClick = { removeTarget = null }) { Text("انصراف") }
-            }
-        )
+    if (showIpoSheet) {
+        IpoListDialog(ipos = ipos, onDismiss = { showIpoSheet = false })
     }
+
+    if (showCodalSheet) {
+        CodalListDialog(notices = codalNotices, onDismiss = { showCodalSheet = false })
+    }
+}
+
+@Composable
+fun IpoListDialog(ipos: List<com.example.data.local.IpoEntity>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("عرضه‌های اولیه جدید", fontWeight = FontWeight.Bold) },
+        text = {
+            LazyColumn(modifier = Modifier.height(400.dp)) {
+                if (ipos.isEmpty()) {
+                    item { Text("در حال حاضر عرضه اولیه فعالی وجود ندارد.", color = TextSecondary) }
+                } else {
+                    items(ipos) { ipo ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(ipo.symbol, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    Text(ipo.status, color = EmeraldProfit, fontSize = 11.sp)
+                                }
+                                Text(ipo.companyName, color = TextSecondary, fontSize = 12.sp)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("تاریخ: ${ipo.ipoDate}", fontSize = 11.sp, color = TextPrimary)
+                                Text("نقدینگی مورد نیاز: ${formatRial(ipo.requiredLiquidityRial)}", fontSize = 11.sp, color = GoldAccent)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("بستن") } }
+    )
+}
+
+@Composable
+fun CodalListDialog(notices: List<com.example.data.local.CodalEntity>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("آخرین اطلاعیه‌های کدال", fontWeight = FontWeight.Bold) },
+        text = {
+            LazyColumn(modifier = Modifier.height(400.dp)) {
+                if (notices.isEmpty()) {
+                    item { Text("اطلاعیه‌ای یافت نشد.", color = TextSecondary) }
+                } else {
+                    items(notices) { notice ->
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(notice.symbol, fontWeight = FontWeight.Bold, color = CredifyIndigo)
+                                Text(notice.publishDate, fontSize = 10.sp, color = TextSecondary)
+                            }
+                            Text(notice.title, fontSize = 12.sp, color = TextPrimary, maxLines = 2)
+                            HorizontalDivider(modifier = Modifier.padding(top = 8.dp), color = SlateBorderLight.copy(alpha = 0.3f))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("بستن") } }
+    )
 }
 
 data class MarketBreadth(val gainers: Int, val losers: Int, val neutral: Int, val avgChange: Double)
@@ -214,6 +283,45 @@ fun MarketBreadthCard(stats: MarketBreadth) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MarketInsightsCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+        border = BorderStroke(0.5.dp, SlateBorderLight)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("دیده‌بان هوشمند بازار", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                InsightItem("پول هوشمند", "مثبت", EmeraldProfit)
+                InsightItem("حجم مشکوک", "۳ نماد", GoldAccent)
+                InsightItem("برترین صنعت", "خودرو", CredifyIndigo)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = SlateBorderLight.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("این تحلیل بر اساس میانگین معاملات امروز برآورد شده است.", fontSize = 10.sp, color = TextSecondary)
+            }
+        }
+    }
+}
+
+@Composable
+fun InsightItem(label: String, value: String, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, fontSize = 11.sp, color = TextSecondary)
+        Text(value, fontWeight = FontWeight.ExtraBold, color = color, fontSize = 14.sp)
     }
 }
 

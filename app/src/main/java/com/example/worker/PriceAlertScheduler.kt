@@ -8,14 +8,18 @@ import java.util.concurrent.TimeUnit
 
 object PriceAlertScheduler {
     private const val WORK_NAME = "price_alert_check"
+    private const val BOURSE_WORK_NAME = "bourse_monitor"
 
-    /** Schedules a periodic (every 30 min — WorkManager's practical minimum is 15) background price check. */
+    /** Schedules a periodic background check for prices and bourse alerts. */
     fun schedule(context: Context) {
-        val request = PeriodicWorkRequestBuilder<PriceAlertWorker>(30, TimeUnit.MINUTES).build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            request
-        )
+        val wm = WorkManager.getInstance(context)
+
+        // Price Alert Check (30 min)
+        val alertRequest = PeriodicWorkRequestBuilder<PriceAlertWorker>(30, TimeUnit.MINUTES).build()
+        wm.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, alertRequest)
+
+        // Bourse/IPO Monitor (3 hours)
+        val bourseRequest = PeriodicWorkRequestBuilder<BourseWorker>(3, TimeUnit.HOURS).build()
+        wm.enqueueUniquePeriodicWork(BOURSE_WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, bourseRequest)
     }
 }

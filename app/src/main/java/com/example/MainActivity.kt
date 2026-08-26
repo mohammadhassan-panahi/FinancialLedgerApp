@@ -85,6 +85,7 @@ class MainActivity : FragmentActivity() {
             reminderDao = database.reminderDao(),
             goalDao = database.goalDao(),
             cryptoDao = database.cryptoDao(),
+            bourseDao = database.bourseDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
         val cryptoRepository = CryptoRepository(

@@ -52,6 +52,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
     val purchases by viewModel.purchases.collectAsStateWithLifecycle()
     val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
     val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle()
+    val mutualFunds by viewModel.mutualFunds.collectAsStateWithLifecycle()
     
     val usdRateToman = marketRates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0
     val rialPerToman = 10.0
@@ -61,6 +62,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
             PortfolioAssetType.GOLD -> marketRates.find { it.assetCode == assetCode }?.priceToman?.let { it * rialPerToman }
             PortfolioAssetType.USD -> marketRates.find { it.assetCode == assetCode }?.priceToman?.let { it * rialPerToman }
             PortfolioAssetType.CRYPTO -> cryptoAssets.find { it.symbol == assetCode }?.priceUsd?.let { it * usdRateToman * rialPerToman }
+            PortfolioAssetType.FUND -> mutualFunds.find { it.id == assetCode }?.navToman?.let { it * rialPerToman }
             PortfolioAssetType.STOCK -> null // Tsetmc doesn't easily map to purchase screen without a search
             PortfolioAssetType.CASH -> 1.0
         }
@@ -83,6 +85,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
             PortfolioAssetType.STOCK -> { assetCode = ""; assetName = "" }
             PortfolioAssetType.CASH -> { assetCode = "CASH_RIAL"; assetName = "نقدینگی (ریال)" }
             PortfolioAssetType.CRYPTO -> { assetCode = ""; assetName = "" }
+            PortfolioAssetType.FUND -> { assetCode = ""; assetName = "" }
         }
     }
 
@@ -125,7 +128,8 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                                 PortfolioAssetType.GOLD to "طلا",
                                 PortfolioAssetType.USD to "ارز",
                                 PortfolioAssetType.STOCK to "بورس",
-                                PortfolioAssetType.CRYPTO to "کریپتو"
+                                PortfolioAssetType.CRYPTO to "کریپتو",
+                                PortfolioAssetType.FUND to "صندوق"
                             ).forEach { (type, label) ->
                                 FilterChip(
                                     selected = assetType == type,
@@ -142,11 +146,17 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                             }
                         }
 
-                        if (assetType == PortfolioAssetType.STOCK || assetType == PortfolioAssetType.CRYPTO) {
+                        if (assetType == PortfolioAssetType.STOCK || assetType == PortfolioAssetType.CRYPTO || assetType == PortfolioAssetType.FUND) {
                             OutlinedTextField(
                                 value = assetCode,
                                 onValueChange = { assetCode = it; assetName = it },
-                                label = { Text(if (assetType == PortfolioAssetType.STOCK) "نماد بورسی (فولاد، خودرو...)" else "نماد رمزارز (BTC, ETH...)") },
+                                label = { 
+                                    Text(when(assetType) {
+                                        PortfolioAssetType.STOCK -> "نماد بورسی (فولاد، خودرو...)"
+                                        PortfolioAssetType.CRYPTO -> "نماد رمزارز (BTC, ETH...)"
+                                        else -> "شناسه صندوق (ETEMAD, MOFID...)"
+                                    })
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
@@ -167,6 +177,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                                 PortfolioAssetType.USD -> "مقدار (واحد ارز)"
                                 PortfolioAssetType.CASH -> "مقدار (ریال)"
                                 PortfolioAssetType.CRYPTO -> "مقدار (واحد)"
+                                PortfolioAssetType.FUND -> "تعداد واحد صندوق"
                             },
                             isDecimalAllowed = true
                         )

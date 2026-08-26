@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class PortfolioViewModel(private val repository: PortfolioRepository) : ViewModel() {
+class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
 
     val holdings: StateFlow<List<HoldingSummary>> = repository.holdings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -42,6 +42,9 @@ class PortfolioViewModel(private val repository: PortfolioRepository) : ViewMode
     val marketRates: StateFlow<List<com.example.data.local.MarketRateEntity>> = repository.marketRates
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val mutualFunds: StateFlow<List<com.example.data.local.MutualFundEntity>> = repository.mutualFunds
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val cryptoAssets: StateFlow<List<com.example.data.local.CryptoAssetEntity>> = repository.cryptoAssets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -61,6 +64,12 @@ class PortfolioViewModel(private val repository: PortfolioRepository) : ViewMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val goals = repository.goals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val ipos = repository.ipos
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val codalNotices = repository.codalNotices
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val totalDebtRial: StateFlow<Double> = repository.totalDebtRial

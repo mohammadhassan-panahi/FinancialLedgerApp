@@ -52,6 +52,11 @@ fun PortfolioApp(
     onExportRequested: () -> Unit,
     onImportRequested: () -> Unit
 ) {
+    val aiRepository = remember { com.example.data.repository.AiRepository(com.example.BuildConfig.GEMINI_API_KEY) }
+    val aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = com.example.ui.viewmodel.AiAnalysisViewModelFactory(aiRepository, viewModel.repository)
+    )
+
     val isOnboardingCompleted by userPreferencesRepository.isOnboardingCompleted.collectAsStateWithLifecycle(initialValue = false)
     var currentTab by remember { mutableStateOf(PortfolioTab.HOME) }
     val scope = rememberCoroutineScopeCompat()
@@ -127,6 +132,10 @@ fun PortfolioApp(
     var showDebtCredits by remember { mutableStateOf(false) }
     var showReminders by remember { mutableStateOf(false) }
     var showGoals by remember { mutableStateOf(false) }
+    var showMutualFunds by remember { mutableStateOf(false) }
+    var showAiAnalysis by remember { mutableStateOf(false) }
+    var showOcrScanner by remember { mutableStateOf(false) }
+
     val holdings by viewModel.holdings.collectAsStateWithLifecycle(initialValue = emptyList())
     val marketRates by viewModel.marketRates.collectAsStateWithLifecycle(initialValue = emptyList())
     val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -160,6 +169,21 @@ fun PortfolioApp(
                 viewModel = viewModel,
                 onBack = { showGoals = false }
             )
+        } else if (showMutualFunds) {
+            com.example.ui.screens.MutualFundsScreen(
+                viewModel = viewModel,
+                onBack = { showMutualFunds = false }
+            )
+        } else if (showAiAnalysis) {
+            com.example.ui.screens.AiAnalysisScreen(
+                viewModel = aiAnalysisViewModel,
+                onBack = { showAiAnalysis = false }
+            )
+        } else if (showOcrScanner) {
+            com.example.ui.screens.OcrScannerScreen(
+                viewModel = aiAnalysisViewModel,
+                onBack = { showOcrScanner = false }
+            )
         } else {
         Scaffold(
             bottomBar = { PortfolioBottomNav(currentTab = currentTab, onTabSelected = { currentTab = it }) }
@@ -178,7 +202,10 @@ fun PortfolioApp(
                             onOpenBankAccounts = { showBankAccounts = true },
                             onOpenDebtCredits = { showDebtCredits = true },
                             onOpenReminders = { showReminders = true },
-                            onOpenGoals = { showGoals = true }
+                            onOpenGoals = { showGoals = true },
+                            onOpenMutualFunds = { showMutualFunds = true },
+                            onOpenAiAnalysis = { showAiAnalysis = true },
+                            onOpenOcrScanner = { showOcrScanner = true }
                         )
                     PortfolioTab.GOLD_DOLLAR -> GoldDollarScreen(viewModel)
                     PortfolioTab.STOCK -> StockMarketScreen(viewModel)

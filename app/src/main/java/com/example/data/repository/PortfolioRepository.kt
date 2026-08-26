@@ -63,6 +63,7 @@ class PortfolioRepository(
     private val reminderDao: com.example.data.local.ReminderDao,
     private val goalDao: com.example.data.local.GoalDao,
     private val cryptoDao: com.example.data.local.CryptoDao,
+    private val bourseDao: com.example.data.local.BourseDao,
     private val apiKey: String = "",
     private val marketApiService: MarketApiService? = if (apiKey.isNotBlank()) MarketApiService.create() else null,
     private val tsetmcApiService: TsetmcApiClient? = if (apiKey.isNotBlank()) TsetmcApiClient(TsetmcApiService.create(), apiKey) else null
@@ -74,6 +75,7 @@ class PortfolioRepository(
     val purchases: Flow<List<AssetPurchaseEntity>> = purchaseDao.getAllPurchases()
     val sales: Flow<List<AssetSaleEntity>> = saleDao.getAllSales()
     val marketRates: Flow<List<MarketRateEntity>> = marketDao.getAllMarketRates()
+    val mutualFunds: Flow<List<com.example.data.local.MutualFundEntity>> = marketDao.getAllMutualFunds()
     val watchlist: Flow<List<StockSymbolEntity>> = stockDao.getWatchlist()
     val indices: Flow<List<MarketIndexEntity>> = stockDao.getIndices()
     val alerts: Flow<List<PriceAlertEntity>> = alertDao.getAllAlerts()
@@ -82,6 +84,8 @@ class PortfolioRepository(
     val debtCredits: Flow<List<com.example.data.local.DebtCreditEntity>> = debtCreditDao.getAll()
     val reminders: Flow<List<com.example.data.local.ReminderEntity>> = reminderDao.getAll()
     val goals: Flow<List<com.example.data.local.GoalEntity>> = goalDao.getAll()
+    val ipos: Flow<List<com.example.data.local.IpoEntity>> = bourseDao.getAllIpos()
+    val codalNotices: Flow<List<com.example.data.local.CodalEntity>> = bourseDao.getAllCodalNotices()
 
     val totalDebtRial: Flow<Double> = debtCreditDao.getTotalDebt().map { it ?: 0.0 }
     val totalCreditRial: Flow<Double> = debtCreditDao.getTotalCredit().map { it ?: 0.0 }
@@ -99,6 +103,7 @@ class PortfolioRepository(
         purchases,
         sales,
         marketRates,
+        mutualFunds,
         watchlist,
         cryptoAssets,
         totalLiquidityRial
@@ -106,9 +111,10 @@ class PortfolioRepository(
         val txns = array[0] as List<AssetPurchaseEntity>
         val soldTxns = array[1] as List<AssetSaleEntity>
         val rates = array[2] as List<MarketRateEntity>
-        val stocks = array[3] as List<StockSymbolEntity>
-        val cryptos = array[4] as List<com.example.data.local.CryptoAssetEntity>
-        val liquidityRial = array[5] as Double
+        val funds = array[3] as List<com.example.data.local.MutualFundEntity>
+        val stocks = array[4] as List<StockSymbolEntity>
+        val cryptos = array[5] as List<com.example.data.local.CryptoAssetEntity>
+        val liquidityRial = array[6] as Double
         
         val result = mutableListOf<HoldingSummary>()
         
@@ -151,6 +157,7 @@ class PortfolioRepository(
             val stockMatch = stocks.find { it.symbol == code }
             val rateMatch = rates.find { it.assetCode == code }
             val cryptoMatch = cryptos.find { it.symbol == code }
+            val fundMatch = funds.find { it.id == code }
 
             if (type == PortfolioAssetType.STOCK && stockMatch != null) {
                 currentPriceRial = stockMatch.lastPriceRial
@@ -158,6 +165,9 @@ class PortfolioRepository(
             } else if (type == PortfolioAssetType.CRYPTO && cryptoMatch != null) {
                 currentPriceRial = (cryptoMatch.priceUsd ?: 0.0) * usdToRial
                 dailyChangePercent = cryptoMatch.percentChange24h ?: 0.0
+            } else if (type == PortfolioAssetType.FUND && fundMatch != null) {
+                currentPriceRial = fundMatch.navToman * RIAL_PER_TOMAN
+                dailyChangePercent = fundMatch.returnPercent / 30.0 // Daily proxy from monthly return
             } else if (rateMatch != null) {
                 currentPriceRial = rateMatch.priceToman * RIAL_PER_TOMAN
                 dailyChangePercent = rateMatch.changePercent

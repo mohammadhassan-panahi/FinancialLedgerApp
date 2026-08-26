@@ -35,6 +35,9 @@ android {
     // CMC_API_KEY: CoinMarketCap API key for the crypto analysis module (see
     // CoinMarketCapApiService). Same APK-exposure caveat as BRSAPI_KEY applies — see README.
     buildConfigField("String", "CMC_API_KEY", "\"\"")
+
+    // GEMINI_API_KEY: Google AI SDK API key (from Google AI Studio).
+    buildConfigField("String", "GEMINI_API_KEY", "\"\"")
   }
 
   signingConfigs {
@@ -120,7 +123,8 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  implementation(libs.firebase.ai)
+    // implementation(libs.firebase.ai)
+    implementation(libs.google.generativeai)
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
 

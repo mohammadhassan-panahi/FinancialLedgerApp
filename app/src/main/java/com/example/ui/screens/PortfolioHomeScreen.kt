@@ -48,7 +48,10 @@ fun PortfolioHomeScreen(
     onOpenBankAccounts: () -> Unit = {},
     onOpenDebtCredits: () -> Unit = {},
     onOpenReminders: () -> Unit = {},
-    onOpenGoals: () -> Unit = {}
+    onOpenGoals: () -> Unit = {},
+    onOpenMutualFunds: () -> Unit = {},
+    onOpenAiAnalysis: () -> Unit = {},
+    onOpenOcrScanner: () -> Unit = {}
 ) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     val totalRealizedPnl by viewModel.totalRealizedPnlRial.collectAsStateWithLifecycle()
@@ -103,7 +106,7 @@ fun PortfolioHomeScreen(
                         }
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = null, tint = TextPrimary)
+                                Icon(Icons.Default.Menu, contentDescription = null, tint = TextPrimary)
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
@@ -129,6 +132,22 @@ fun PortfolioHomeScreen(
                                     text = { Text("هدف‌ها", color = TextPrimary) },
                                     leadingIcon = { Icon(Icons.Default.Flag, null, tint = EmeraldProfit) },
                                     onClick = { menuExpanded = false; onOpenGoals() }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("صندوق‌های سرمایه‌گذاری", color = TextPrimary) },
+                                    leadingIcon = { Icon(Icons.Default.PieChart, null, tint = CredifySky) },
+                                    onClick = { menuExpanded = false; onOpenMutualFunds() }
+                                )
+                                HorizontalDivider(color = SlateBorder)
+                                DropdownMenuItem(
+                                    text = { Text("تحلیل هوشمند (AI)", color = TextPrimary) },
+                                    leadingIcon = { Icon(Icons.Default.AutoAwesome, null, tint = CredifyIndigo) },
+                                    onClick = { menuExpanded = false; onOpenAiAnalysis() }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("اسکن فاکتور", color = TextPrimary) },
+                                    leadingIcon = { Icon(Icons.Default.DocumentScanner, null, tint = CredifyViolet) },
+                                    onClick = { menuExpanded = false; onOpenOcrScanner() }
                                 )
                                 HorizontalDivider(color = SlateBorder)
                                 DropdownMenuItem(
@@ -317,6 +336,7 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
         PortfolioAssetType.STOCK -> Icons.Default.Analytics
         PortfolioAssetType.CASH -> Icons.Default.AccountBalanceWallet
         PortfolioAssetType.CRYPTO -> Icons.Default.CurrencyBitcoin
+        PortfolioAssetType.FUND -> Icons.Default.PieChart
     }
     val iconColor = when (holding.assetType) {
         PortfolioAssetType.GOLD -> GoldColor
@@ -324,6 +344,7 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
         PortfolioAssetType.STOCK -> StockColor
         PortfolioAssetType.CASH -> CashColor
         PortfolioAssetType.CRYPTO -> CryptoColor
+        PortfolioAssetType.FUND -> CredifySky
     }
 
     Card(
