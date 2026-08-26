@@ -1,53 +1,19 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.CompareArrows
-import androidx.compose.material.icons.filled.DeviceThermostat
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Paid
-import androidx.compose.material.icons.filled.Percent
-import androidx.compose.material.icons.filled.PriceChange
-import androidx.compose.material.icons.filled.QueryStats
-import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,8 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ui.components.NotebookCard
-import com.example.ui.theme.AccentGold
+import com.example.ui.theme.*
 import com.example.ui.viewmodel.CalculatorViewModel
 
 data class CalculatorItemInfo(
@@ -166,6 +131,7 @@ fun CalculatorsHubScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(DarkSlateSurface)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -175,145 +141,107 @@ fun CalculatorsHubScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "بازگشت",
-                        tint = AccentGold
+                        tint = TextPrimary
                     )
                 }
                 Text(
                     text = "بازگشت",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = AccentGold,
+                    fontSize = 14.sp,
+                    color = TextPrimary,
                     modifier = Modifier.clickable { onBack() }
                 )
             }
 
             // Header Banner
-            NotebookCard {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+                border = BorderStroke(0.5.dp, SlateBorderLight)
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = AccentGold.copy(alpha = 0.2f),
-                        modifier = Modifier.size(44.dp)
+                        color = CredifyIndigo.copy(alpha = 0.1f),
+                        modifier = Modifier.size(56.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Calculate,
                                 contentDescription = null,
-                                tint = AccentGold,
-                                modifier = Modifier.size(24.dp)
+                                tint = CredifyIndigo,
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "مرکز ماشین‌حساب‌های مالی تخصصی",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentGold
+                            text = "ابزارهای هوشمند مالی",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "جهت انجام محاسبات دقیق، یکی از ۱۱ ابزار هوشمند زیر را انتخاب کنید:",
+                            text = "محاسبات دقیق بازار در دستان شما",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = TextSecondary
                         )
                     }
                 }
             }
 
-            // Grid of 7 Calculators
+            // Grid
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 280.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 itemsIndexed(calculatorsList) { index, calc ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { activeCalculatorIndex = index }
-                            .testTag("calculator_hub_item_$index"),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            .height(180.dp)
+                            .clickable { activeCalculatorIndex = index },
+                        shape = RoundedCornerShape(28.dp),
+                        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+                        border = BorderStroke(0.5.dp, SlateBorderLight)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(20.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = calc.iconBgColor.copy(alpha = 0.15f),
-                                modifier = Modifier.size(46.dp)
+                                shape = RoundedCornerShape(16.dp),
+                                color = calc.iconBgColor.copy(alpha = 0.1f),
+                                modifier = Modifier.size(48.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = calc.icon,
-                                        contentDescription = calc.title,
-                                        tint = calc.iconBgColor,
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                                    Icon(calc.icon, null, tint = calc.iconBgColor, modifier = Modifier.size(24.dp))
                                 }
                             }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = calc.title,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = MaterialTheme.colorScheme.surfaceVariant
-                                    ) {
-                                        Text(
-                                            text = calc.category,
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
+                            
+                            Column {
                                 Text(
-                                    text = calc.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 2
+                                    text = calc.title,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = TextPrimary,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = calc.category,
+                                    fontSize = 10.sp,
+                                    color = calc.iconBgColor,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Open",
-                                tint = AccentGold,
-                                modifier = Modifier.size(18.dp)
-                            )
                         }
                     }
                 }
@@ -321,38 +249,38 @@ fun CalculatorsHubScreen(
         }
     } else {
         // Active Sub-Calculator View
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().background(DarkSlateSurface)) {
             // Top Navigation Back Bar
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                color = DarkSlateSecondary
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { activeCalculatorIndex = null }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "بازگشت",
-                            tint = AccentGold
+                            tint = TextPrimary
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "بازگشت به فهرست ماشین‌حساب‌ها",
+                        text = "بازگشت به فهرست",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = AccentGold,
+                        fontSize = 14.sp,
+                        color = TextPrimary,
                         modifier = Modifier.clickable { activeCalculatorIndex = null }
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = calculatorsList.getOrNull(activeCalculatorIndex ?: 0)?.title ?: "",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.labelLarge,
+                        color = TextSecondary
                     )
                 }
             }

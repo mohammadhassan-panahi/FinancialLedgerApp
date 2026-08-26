@@ -1,7 +1,6 @@
 package com.example.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -19,9 +18,10 @@ private val DarkColorScheme = darkColorScheme(
     surface = DarkSlateSecondary,
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onBackground = TextLight,
-    onSurface = TextLight,
-    surfaceVariant = SlateBorder
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
+    surfaceVariant = DarkSlateTertiary,
+    outline = SlateBorderLight
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -40,7 +40,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun FinancialLedgerTheme(
     darkTheme: Boolean = true,
-    dynamicColor: Boolean = false, // Use strict Credify fintech theme
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
@@ -58,13 +58,3 @@ fun FinancialLedgerTheme(
         content = content
     )
 }
-
-@Composable
-fun MyApplicationTheme(
-    darkTheme: Boolean = true,
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
-) {
-    FinancialLedgerTheme(darkTheme = darkTheme, dynamicColor = dynamicColor, content = content)
-}
-

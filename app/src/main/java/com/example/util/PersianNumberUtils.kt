@@ -103,6 +103,12 @@ object PersianNumberUtils {
         return if (usePersianDigits) toPersianDigits(formatted) else formatted
     }
 
+    fun formatDecimal(value: Double, usePersianDigits: Boolean = true): String {
+        val formatter = DecimalFormat("#,##0.###")
+        val formatted = formatter.format(value)
+        return if (usePersianDigits) toPersianDigits(formatted) else formatted
+    }
+
     private val ones = arrayOf("", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه")
     private val teens = arrayOf("ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده")
     private val tens = arrayOf("", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود")
