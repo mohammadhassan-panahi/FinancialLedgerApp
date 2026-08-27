@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -87,8 +88,18 @@ fun AiAnalysisScreen(
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                     } else {
-                        Text("شروع تحلیل هوشمند")
+                        Text("تحلیل هوشمند سبد دارایی")
                     }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = { /* TODO: Call generate roadmap in VM */ },
+                    enabled = !isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("تولید نقشه راه سرمایه‌گذاری (۱ ساله)")
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

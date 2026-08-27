@@ -46,6 +46,8 @@ private fun PortfolioAssetType.displayName(): String = when (this) {
     PortfolioAssetType.CASH -> "نقد"
     PortfolioAssetType.CRYPTO -> "کریپتو"
     PortfolioAssetType.FUND -> "صندوق"
+    PortfolioAssetType.REAL_ESTATE -> "ملک"
+    PortfolioAssetType.VEHICLE -> "خودرو"
 }
 
 /**
@@ -76,12 +78,16 @@ fun ScenarioScreen(
     var goldPct by remember { mutableStateOf(0f) }
     var usdPct by remember { mutableStateOf(0f) }
     var stockPct by remember { mutableStateOf(0f) }
+    var realEstatePct by remember { mutableStateOf(0f) }
+    var vehiclePct by remember { mutableStateOf(0f) }
 
     val legs: List<Triple<String, Double, Double>> = if (manualMode) {
         listOf(
             Triple("طلا", PersianNumberUtils.parseAmount(goldManual), goldPct.toDouble()),
             Triple("دلار", PersianNumberUtils.parseAmount(usdManual), usdPct.toDouble()),
-            Triple("سهام", PersianNumberUtils.parseAmount(stockManual), stockPct.toDouble())
+            Triple("سهام", PersianNumberUtils.parseAmount(stockManual), stockPct.toDouble()),
+            Triple("ملک", 0.0, realEstatePct.toDouble()),
+            Triple("خودرو", 0.0, vehiclePct.toDouble())
         )
     } else {
         portfolioLegs.map { (name, value, type) ->
@@ -89,9 +95,11 @@ fun ScenarioScreen(
                 PortfolioAssetType.GOLD -> goldPct
                 PortfolioAssetType.USD -> usdPct
                 PortfolioAssetType.STOCK -> stockPct
-                PortfolioAssetType.CRYPTO -> 0f // Or add a cryptoPct slider if needed later
+                PortfolioAssetType.CRYPTO -> 0f
                 PortfolioAssetType.FUND -> 0f
-                PortfolioAssetType.CASH -> 0f // Cash doesn't usually change price in a "what-if" scenario relative to itself
+                PortfolioAssetType.CASH -> 0f
+                PortfolioAssetType.REAL_ESTATE -> realEstatePct
+                PortfolioAssetType.VEHICLE -> vehiclePct
             }
             Triple(name, value, pct.toDouble())
         }
@@ -159,6 +167,10 @@ fun ScenarioScreen(
                 ScenarioSlider("دلار", usdPct, { usdPct = it })
                 Spacer(modifier = Modifier.height(12.dp))
                 ScenarioSlider("سهام", stockPct, { stockPct = it })
+                Spacer(modifier = Modifier.height(12.dp))
+                ScenarioSlider("ملک", realEstatePct, { realEstatePct = it })
+                Spacer(modifier = Modifier.height(12.dp))
+                ScenarioSlider("خودرو", vehiclePct, { vehiclePct = it })
             }
         }
 

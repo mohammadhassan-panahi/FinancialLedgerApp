@@ -53,6 +53,8 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
     val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
     val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle()
     val mutualFunds by viewModel.mutualFunds.collectAsStateWithLifecycle()
+    val vehicles by viewModel.vehicles.collectAsStateWithLifecycle()
+    val realEstates by viewModel.realEstates.collectAsStateWithLifecycle()
     
     val usdRateToman = marketRates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0
     val rialPerToman = 10.0
@@ -65,6 +67,8 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
             PortfolioAssetType.FUND -> mutualFunds.find { it.id == assetCode }?.navToman?.let { it * rialPerToman }
             PortfolioAssetType.STOCK -> null // Tsetmc doesn't easily map to purchase screen without a search
             PortfolioAssetType.CASH -> 1.0
+            PortfolioAssetType.REAL_ESTATE -> realEstates.find { it.propertyName == assetCode || it.propertyName == assetName }?.valuationRial
+            PortfolioAssetType.VEHICLE -> vehicles.find { it.modelName == assetCode || it.modelName == assetName }?.priceRial
         }
         
         if (livePriceRial != null && livePriceRial > 0) {
@@ -86,6 +90,8 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
             PortfolioAssetType.CASH -> { assetCode = "CASH_RIAL"; assetName = "نقدینگی (ریال)" }
             PortfolioAssetType.CRYPTO -> { assetCode = ""; assetName = "" }
             PortfolioAssetType.FUND -> { assetCode = ""; assetName = "" }
+            PortfolioAssetType.REAL_ESTATE -> { assetCode = ""; assetName = "" }
+            PortfolioAssetType.VEHICLE -> { assetCode = ""; assetName = "" }
         }
     }
 
@@ -129,7 +135,9 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                                 PortfolioAssetType.USD to "ارز",
                                 PortfolioAssetType.STOCK to "بورس",
                                 PortfolioAssetType.CRYPTO to "کریپتو",
-                                PortfolioAssetType.FUND to "صندوق"
+                                PortfolioAssetType.FUND to "صندوق",
+                                PortfolioAssetType.REAL_ESTATE to "ملک",
+                                PortfolioAssetType.VEHICLE to "خودرو"
                             ).forEach { (type, label) ->
                                 FilterChip(
                                     selected = assetType == type,
@@ -146,7 +154,9 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                             }
                         }
 
-                        if (assetType == PortfolioAssetType.STOCK || assetType == PortfolioAssetType.CRYPTO || assetType == PortfolioAssetType.FUND) {
+                        if (assetType == PortfolioAssetType.STOCK || assetType == PortfolioAssetType.CRYPTO || 
+                            assetType == PortfolioAssetType.FUND || assetType == PortfolioAssetType.REAL_ESTATE || 
+                            assetType == PortfolioAssetType.VEHICLE) {
                             OutlinedTextField(
                                 value = assetCode,
                                 onValueChange = { assetCode = it; assetName = it },
@@ -154,7 +164,10 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                                     Text(when(assetType) {
                                         PortfolioAssetType.STOCK -> "نماد بورسی (فولاد، خودرو...)"
                                         PortfolioAssetType.CRYPTO -> "نماد رمزارز (BTC, ETH...)"
-                                        else -> "شناسه صندوق (ETEMAD, MOFID...)"
+                                        PortfolioAssetType.FUND -> "شناسه صندوق (ETEMAD, MOFID...)"
+                                        PortfolioAssetType.REAL_ESTATE -> "نام ملک"
+                                        PortfolioAssetType.VEHICLE -> "مدل خودرو"
+                                        else -> ""
                                     })
                                 },
                                 modifier = Modifier.fillMaxWidth(),
@@ -178,6 +191,8 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                                 PortfolioAssetType.CASH -> "مقدار (ریال)"
                                 PortfolioAssetType.CRYPTO -> "مقدار (واحد)"
                                 PortfolioAssetType.FUND -> "تعداد واحد صندوق"
+                                PortfolioAssetType.REAL_ESTATE -> "متراژ / دانگ"
+                                PortfolioAssetType.VEHICLE -> "تعداد"
                             },
                             isDecimalAllowed = true
                         )

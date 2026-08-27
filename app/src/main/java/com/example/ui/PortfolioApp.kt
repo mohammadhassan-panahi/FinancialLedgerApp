@@ -1,222 +1,89 @@
 package com.example.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.navigation.NavGraph
+import com.example.navigation.Screen
 import com.example.data.repository.UserPreferencesRepository
 import com.example.security.BiometricAuthManager
 import com.example.security.PinManager
-import com.example.ui.components.PortfolioBottomNav
-import com.example.ui.components.PortfolioTab
-import com.example.ui.components.ProvidePrivacyMode
-import com.example.ui.screens.AddPurchaseScreen
-import com.example.ui.screens.BiometricEnableScreen
-import com.example.ui.screens.CryptoScreen
-import com.example.ui.screens.GoldDollarScreen
-import com.example.ui.screens.OnboardingScreen
-import com.example.ui.screens.PinEntryScreen
-import com.example.ui.screens.PinSetupScreen
-import com.example.ui.screens.PortfolioHomeScreen
-import com.example.ui.screens.StockMarketScreen
 import com.example.ui.viewmodel.CryptoViewModel
 import com.example.ui.viewmodel.PortfolioViewModel
-import kotlinx.coroutines.launch
+import com.example.ui.dashboard.MarketScannerViewModel
 
-/** Local (in-app) security flow steps, run once per cold start after onboarding. */
-private enum class LockStep { PIN_SETUP, BIOMETRIC_OPT_IN, PIN_ENTRY, UNLOCKED }
-
-/**
- * Root composable for the portfolio app: onboarding once, then a PIN/biometric security
- * gate every cold start (see LockStep), then a 4-tab bottom nav
- * (Home / Gold & Dollar / Stock market / Add purchase) — matches the approved wireframe.
- * Uses plain tab-switch state instead of Navigation Compose since these 4 destinations
- * are flat and don't need a back stack.
- */
 @Composable
 fun PortfolioApp(
     viewModel: PortfolioViewModel,
     cryptoViewModel: CryptoViewModel,
+    marketScannerViewModel: MarketScannerViewModel,
     calculatorViewModel: com.example.ui.viewmodel.CalculatorViewModel,
+    aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
+    socialHubViewModel: com.example.ui.viewmodel.SocialHubViewModel,
+    riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
     pinManager: PinManager,
     onExportRequested: () -> Unit,
     onImportRequested: () -> Unit
 ) {
-    val aiRepository = remember { com.example.data.repository.AiRepository(com.example.BuildConfig.GEMINI_API_KEY) }
-    val aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = com.example.ui.viewmodel.AiAnalysisViewModelFactory(aiRepository, viewModel.repository)
+    val navController = rememberNavController()
+
+    val bottomNavItems = listOf(
+        BottomNavItem("خانه", Screen.Dashboard, Icons.Default.Dashboard),
+        BottomNavItem("بازار", Screen.MarketPulse, Icons.Default.Build),
+        BottomNavItem("پورتفو", Screen.Portfolio, Icons.Default.PieChart),
+        BottomNavItem("هوشمند", Screen.AiMentor, Icons.Default.AutoAwesome),
+        BottomNavItem("هاب", Screen.SocialHub, Icons.Default.Dashboard)
     )
 
-    val isOnboardingCompleted by userPreferencesRepository.isOnboardingCompleted.collectAsStateWithLifecycle(initialValue = false)
-    var currentTab by remember { mutableStateOf(PortfolioTab.HOME) }
-    val scope = rememberCoroutineScopeCompat()
-
-    var lockStep by remember {
-        mutableStateOf(if (pinManager.isPinSet()) LockStep.PIN_ENTRY else LockStep.PIN_SETUP)
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.refreshAll(watchlistSymbols = emptyList())
-    }
-
-    if (!isOnboardingCompleted) {
-        OnboardingScreen(
-            onFinishOnboarding = {
-                scope.launch { userPreferencesRepository.setOnboardingCompleted(true) }
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                bottomNavItems.forEach { item ->
+                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                    NavigationBarItem(
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) },
+                        selected = isSelected,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
             }
+        }
+    ) { innerPadding ->
+        NavGraph(
+            navController = navController,
+            viewModel = viewModel,
+            aiAnalysisViewModel = aiAnalysisViewModel,
+            socialHubViewModel = socialHubViewModel,
+            riskAssessmentViewModel = riskAssessmentViewModel,
+            marketScannerViewModel = marketScannerViewModel,
+            modifier = Modifier.padding(innerPadding)
         )
-        return
-    }
-
-    when (lockStep) {
-        LockStep.PIN_SETUP -> {
-            PinSetupScreen(
-                onPinCreated = { pin ->
-                    pinManager.setPin(pin)
-                    lockStep = if (biometricAuthManager.isBiometricAvailable()) {
-                        LockStep.BIOMETRIC_OPT_IN
-                    } else {
-                        LockStep.UNLOCKED
-                    }
-                }
-            )
-            return
-        }
-        LockStep.BIOMETRIC_OPT_IN -> {
-            BiometricEnableScreen(
-                onEnable = {
-                    biometricAuthManager.authenticate(
-                        onSuccess = {
-                            pinManager.setBiometricEnabled(true)
-                            lockStep = LockStep.UNLOCKED
-                        },
-                        onError = { /* stay on this screen; person can retry or skip */ }
-                    )
-                },
-                onSkip = { lockStep = LockStep.UNLOCKED }
-            )
-            return
-        }
-        LockStep.PIN_ENTRY -> {
-            PinEntryScreen(
-                biometricEnabled = pinManager.isBiometricEnabled(),
-                onVerifyPin = { pin -> pinManager.verifyPin(pin) },
-                onUnlocked = { lockStep = LockStep.UNLOCKED },
-                onBiometricRequested = {
-                    biometricAuthManager.authenticate(
-                        onSuccess = { lockStep = LockStep.UNLOCKED },
-                        onError = { /* fall back to typing the PIN */ }
-                    )
-                }
-            )
-            return
-        }
-        LockStep.UNLOCKED -> Unit
-    }
-
-    val isPrivacyModeEnabled by userPreferencesRepository.isPrivacyModeEnabled.collectAsStateWithLifecycle(initialValue = false)
-
-    // Full-screen calculators hub (opened from the Home menu)
-    var showCalculators by remember { mutableStateOf(false) }
-    var showBankAccounts by remember { mutableStateOf(false) }
-    var showDebtCredits by remember { mutableStateOf(false) }
-    var showReminders by remember { mutableStateOf(false) }
-    var showGoals by remember { mutableStateOf(false) }
-    var showMutualFunds by remember { mutableStateOf(false) }
-    var showAiAnalysis by remember { mutableStateOf(false) }
-    var showOcrScanner by remember { mutableStateOf(false) }
-
-    val holdings by viewModel.holdings.collectAsStateWithLifecycle(initialValue = emptyList())
-    val marketRates by viewModel.marketRates.collectAsStateWithLifecycle(initialValue = emptyList())
-    val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle(initialValue = emptyList())
-
-    ProvidePrivacyMode(enabled = isPrivacyModeEnabled) {
-        if (showCalculators) {
-            com.example.ui.screens.CalculatorsHubScreen(
-                viewModel = calculatorViewModel,
-                onBack = { showCalculators = false },
-                holdings = holdings,
-                marketRates = marketRates,
-                cryptoAssets = cryptoAssets
-            )
-        } else if (showBankAccounts) {
-            com.example.ui.screens.BankAccountsScreen(
-                viewModel = viewModel,
-                onBack = { showBankAccounts = false }
-            )
-        } else if (showDebtCredits) {
-            com.example.ui.screens.DebtCreditsScreen(
-                viewModel = viewModel,
-                onBack = { showDebtCredits = false }
-            )
-        } else if (showReminders) {
-            com.example.ui.screens.RemindersScreen(
-                viewModel = viewModel,
-                onBack = { showReminders = false }
-            )
-        } else if (showGoals) {
-            com.example.ui.screens.GoalsScreen(
-                viewModel = viewModel,
-                onBack = { showGoals = false }
-            )
-        } else if (showMutualFunds) {
-            com.example.ui.screens.MutualFundsScreen(
-                viewModel = viewModel,
-                onBack = { showMutualFunds = false }
-            )
-        } else if (showAiAnalysis) {
-            com.example.ui.screens.AiAnalysisScreen(
-                viewModel = aiAnalysisViewModel,
-                onBack = { showAiAnalysis = false }
-            )
-        } else if (showOcrScanner) {
-            com.example.ui.screens.OcrScannerScreen(
-                viewModel = aiAnalysisViewModel,
-                onBack = { showOcrScanner = false }
-            )
-        } else {
-        Scaffold(
-            bottomBar = { PortfolioBottomNav(currentTab = currentTab, onTabSelected = { currentTab = it }) }
-        ) { padding ->
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                when (currentTab) {
-                        PortfolioTab.HOME -> PortfolioHomeScreen(
-                            viewModel = viewModel,
-                            onExportRequested = onExportRequested,
-                            onImportRequested = onImportRequested,
-                            isPrivacyModeEnabled = isPrivacyModeEnabled,
-                            onTogglePrivacyMode = {
-                                scope.launch { userPreferencesRepository.setPrivacyModeEnabled(!isPrivacyModeEnabled) }
-                            },
-                            onOpenCalculators = { showCalculators = true },
-                            onOpenBankAccounts = { showBankAccounts = true },
-                            onOpenDebtCredits = { showDebtCredits = true },
-                            onOpenReminders = { showReminders = true },
-                            onOpenGoals = { showGoals = true },
-                            onOpenMutualFunds = { showMutualFunds = true },
-                            onOpenAiAnalysis = { showAiAnalysis = true },
-                            onOpenOcrScanner = { showOcrScanner = true }
-                        )
-                    PortfolioTab.GOLD_DOLLAR -> GoldDollarScreen(viewModel)
-                    PortfolioTab.STOCK -> StockMarketScreen(viewModel)
-                    PortfolioTab.CRYPTO -> CryptoScreen(cryptoViewModel)
-                    PortfolioTab.ADD_PURCHASE -> AddPurchaseScreen(viewModel)
-                }
-            }
-        }
-        }
     }
 }
 
-@Composable
-private fun rememberCoroutineScopeCompat() = androidx.compose.runtime.rememberCoroutineScope()
+private data class BottomNavItem(
+    val label: String,
+    val route: String,
+    val icon: ImageVector
+)

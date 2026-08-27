@@ -1,8 +1,10 @@
 package com.example.data.repository
 
+import com.example.crypto.analysis.CandleStick
 import com.example.data.local.CryptoAssetEntity
 import com.example.data.local.CryptoDao
 import com.example.data.local.CryptoInfoEntity
+import com.example.data.remote.BinanceApiService
 import com.example.data.remote.CmcCoinDto
 import com.example.data.remote.CoinMarketCapApiService
 import kotlinx.coroutines.flow.Flow
@@ -27,10 +29,52 @@ import kotlinx.coroutines.flow.Flow
 class CryptoRepository(
     private val cryptoDao: CryptoDao,
     private val apiKey: String = "",
-    private val apiService: CoinMarketCapApiService? = if (apiKey.isNotBlank()) CoinMarketCapApiService.create() else null
+    private val apiService: CoinMarketCapApiService? = if (apiKey.isNotBlank()) CoinMarketCapApiService.create() else null,
+    private val binanceService: BinanceApiService = BinanceApiService.create()
 ) {
     val allAssets: Flow<List<CryptoAssetEntity>> = cryptoDao.getAllAssets()
     val watchlist: Flow<List<CryptoAssetEntity>> = cryptoDao.getWatchlist()
+
+    /**
+     * Fetches historical OHLC data from Binance for technical analysis.
+     * Maps the symbol (e.g., BTC) to a USDT pair (e.g., BTCUSDT).
+     */
+    suspend fun fetchHistory(symbol: String, interval: String = "1h"): Result<List<CandleStick>> {
+        val binanceSymbol = if (symbol.contains("USDT")) symbol else "${symbol}USDT"
+        return try {
+            val response = binanceService.getKlines(binanceSymbol, interval)
+            val body = response.body()
+            if (!response.isSuccessful || body == null) {
+                return Result.failure(IllegalStateException("خطا در دریافت تاریخچه قیمت از بایننس (HTTP ${response.code()})"))
+            }
+
+            val candles = body.mapNotNull { list ->
+                try {
+                    // Binance returns [OpenTime, Open, High, Low, Close, Volume, ...]
+                    // Moshi/Retrofit with List<Any> often parses numbers as Double
+                    val time = when (val t = list[0]) {
+                        is Double -> t.toLong()
+                        is Long -> t
+                        is String -> t.toLong()
+                        else -> 0L
+                    }
+                    CandleStick(
+                        time = time,
+                        open = (list[1] as String).toDouble(),
+                        high = (list[2] as String).toDouble(),
+                        low = (list[3] as String).toDouble(),
+                        close = (list[4] as String).toDouble(),
+                        volume = (list[5] as String).toDouble()
+                    )
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            Result.success(candles)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     /**
      * Fetches the top [limit] coins by market cap and replaces the cached list. Costs

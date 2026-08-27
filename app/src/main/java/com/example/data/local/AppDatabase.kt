@@ -30,9 +30,14 @@ import net.sqlcipher.database.SupportFactory
         ReminderEntity::class,
         GoalEntity::class,
         IpoEntity::class,
-        CodalEntity::class
+        CodalEntity::class,
+        VehicleEntity::class,
+        RealEstateEntity::class,
+        RiskProfileEntity::class,
+        InvestmentRoadmapEntity::class,
+        SocialPostEntity::class
     ],
-    version = 11,
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -50,6 +55,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun reminderDao(): ReminderDao
     abstract fun goalDao(): GoalDao
     abstract fun bourseDao(): BourseDao
+    abstract fun vehicleDao(): VehicleDao
+    abstract fun realEstateDao(): RealEstateDao
+    abstract fun nexFinDao(): NexFinDao
 
     companion object {
         @Volatile
@@ -151,6 +159,25 @@ abstract class AppDatabase : RoomDatabase() {
                     MutualFundEntity("ETEMAD", "صندوق اعتماد ملی", 3150000.0, 21.8, "کم‌ریسک", "سرمایه‌گذاری اعتماد")
                 )
                 marketDao.insertMutualFunds(defaultFunds)
+            }
+
+            val vehicleDao = db.vehicleDao()
+            if (vehicleDao.getVehicleCount() == 0) {
+                val defaultVehicles = listOf(
+                    VehicleEntity(modelName = "پژو ۲۰۷ MC", priceRial = 9850000000.0, changePercent = 1.2),
+                    VehicleEntity(modelName = "تارا اتوماتیک V4", priceRial = 11200000000.0, changePercent = 0.85),
+                    VehicleEntity(modelName = "هایما S7 پلاس", priceRial = 18500000000.0, changePercent = 2.1)
+                )
+                vehicleDao.insertVehicles(defaultVehicles)
+            }
+
+            val realEstateDao = db.realEstateDao()
+            if (realEstateDao.getPropertyCount() == 0) {
+                val defaultProperties = listOf(
+                    RealEstateEntity(propertyName = "آپارتمان مسکونی (تهران)", valuationRial = 45000000000.0),
+                    RealEstateEntity(propertyName = "باغ مسکونی (دماوند)", valuationRial = 28000000000.0)
+                )
+                defaultProperties.forEach { realEstateDao.insertProperty(it) }
             }
         }
     }

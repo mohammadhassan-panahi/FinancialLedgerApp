@@ -24,6 +24,10 @@ import com.example.ui.PortfolioApp
 import com.example.ui.theme.FinancialLedgerTheme
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.ui.viewmodel.PortfolioViewModelFactory
+import com.example.ui.dashboard.MarketScannerViewModel
+import com.example.ui.dashboard.MarketScannerViewModelFactory
+import com.example.data.repository.AiRepository
+import com.example.domain.usecase.GetCryptoAIReportUseCase
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -86,6 +90,8 @@ class MainActivity : FragmentActivity() {
             goalDao = database.goalDao(),
             cryptoDao = database.cryptoDao(),
             bourseDao = database.bourseDao(),
+            vehicleDao = database.vehicleDao(),
+            realEstateDao = database.realEstateDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
         val cryptoRepository = CryptoRepository(
@@ -110,6 +116,22 @@ class MainActivity : FragmentActivity() {
         val calculatorFactory = com.example.ui.viewmodel.CalculatorViewModelFactory(database.calculationHistoryDao())
         val calculatorViewModel = ViewModelProvider(this, calculatorFactory)[com.example.ui.viewmodel.CalculatorViewModel::class.java]
 
+        val aiRepository = AiRepository(BuildConfig.GEMINI_API_KEY)
+        val nexFinRepository = com.example.data.repository.NexFinRepository(database.nexFinDao(), aiRepository)
+
+        val aiAnalysisFactory = com.example.ui.viewmodel.AiAnalysisViewModelFactory(aiRepository, repository)
+        val aiAnalysisViewModel = ViewModelProvider(this, aiAnalysisFactory)[com.example.ui.viewmodel.AiAnalysisViewModel::class.java]
+
+        val socialHubFactory = com.example.ui.viewmodel.SocialHubViewModelFactory(nexFinRepository)
+        val socialHubViewModel = ViewModelProvider(this, socialHubFactory)[com.example.ui.viewmodel.SocialHubViewModel::class.java]
+
+        val riskAssessmentFactory = com.example.ui.viewmodel.RiskAssessmentViewModelFactory(nexFinRepository)
+        val riskAssessmentViewModel = ViewModelProvider(this, riskAssessmentFactory)[com.example.ui.viewmodel.RiskAssessmentViewModel::class.java]
+
+        val aiReportUseCase = GetCryptoAIReportUseCase(aiRepository)
+        val marketScannerFactory = MarketScannerViewModelFactory(cryptoRepository, aiReportUseCase)
+        val marketScannerViewModel = ViewModelProvider(this, marketScannerFactory)[MarketScannerViewModel::class.java]
+
         com.example.worker.PriceAlertScheduler.schedule(applicationContext)
 
         val biometricAuthManager = BiometricAuthManager(this)
@@ -121,7 +143,11 @@ class MainActivity : FragmentActivity() {
                     PortfolioApp(
                         viewModel = viewModel,
                         cryptoViewModel = cryptoViewModel,
+                        marketScannerViewModel = marketScannerViewModel,
                         calculatorViewModel = calculatorViewModel,
+                        aiAnalysisViewModel = aiAnalysisViewModel,
+                        socialHubViewModel = socialHubViewModel,
+                        riskAssessmentViewModel = riskAssessmentViewModel,
                         userPreferencesRepository = userPreferencesRepository,
                         biometricAuthManager = biometricAuthManager,
                         pinManager = pinManager,

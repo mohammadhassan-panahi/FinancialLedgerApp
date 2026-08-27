@@ -48,6 +48,12 @@ class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
     val cryptoAssets: StateFlow<List<com.example.data.local.CryptoAssetEntity>> = repository.cryptoAssets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val vehicles: StateFlow<List<com.example.data.local.VehicleEntity>> = repository.vehicles
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val realEstates: StateFlow<List<com.example.data.local.RealEstateEntity>> = repository.realEstates
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val watchlist = repository.watchlist
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

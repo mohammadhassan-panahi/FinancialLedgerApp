@@ -36,6 +36,8 @@ class PriceAlertWorker(
             goalDao = database.goalDao(),
             cryptoDao = database.cryptoDao(),
             bourseDao = database.bourseDao(),
+            vehicleDao = database.vehicleDao(),
+            realEstateDao = database.realEstateDao(),
             apiKey = apiKey
         )
 

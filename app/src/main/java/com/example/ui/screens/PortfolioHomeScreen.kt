@@ -238,7 +238,9 @@ fun PortfolioHomeScreen(
                             DonutSlice("دلار", holdings.filter { it.assetType == PortfolioAssetType.USD }.sumOf { it.currentValueRial }, UsdColor),
                             DonutSlice("سهام", holdings.filter { it.assetType == PortfolioAssetType.STOCK }.sumOf { it.currentValueRial }, StockColor),
                             DonutSlice("نقد", holdings.filter { it.assetType == PortfolioAssetType.CASH }.sumOf { it.currentValueRial }, CashColor),
-                            DonutSlice("کریپتو", holdings.filter { it.assetType == PortfolioAssetType.CRYPTO }.sumOf { it.currentValueRial }, CryptoColor)
+                            DonutSlice("کریپتو", holdings.filter { it.assetType == PortfolioAssetType.CRYPTO }.sumOf { it.currentValueRial }, CryptoColor),
+                            DonutSlice("ملک", holdings.filter { it.assetType == PortfolioAssetType.REAL_ESTATE }.sumOf { it.currentValueRial }, Color(0xFFF97316)),
+                            DonutSlice("خودرو", holdings.filter { it.assetType == PortfolioAssetType.VEHICLE }.sumOf { it.currentValueRial }, Color(0xFF6B7280))
                         ),
                         modifier = Modifier.padding(20.dp)
                     )
@@ -337,6 +339,8 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
         PortfolioAssetType.CASH -> Icons.Default.AccountBalanceWallet
         PortfolioAssetType.CRYPTO -> Icons.Default.CurrencyBitcoin
         PortfolioAssetType.FUND -> Icons.Default.PieChart
+        PortfolioAssetType.REAL_ESTATE -> Icons.Default.Home
+        PortfolioAssetType.VEHICLE -> Icons.Default.DirectionsCar
     }
     val iconColor = when (holding.assetType) {
         PortfolioAssetType.GOLD -> GoldColor
@@ -345,6 +349,8 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
         PortfolioAssetType.CASH -> CashColor
         PortfolioAssetType.CRYPTO -> CryptoColor
         PortfolioAssetType.FUND -> CredifySky
+        PortfolioAssetType.REAL_ESTATE -> Color(0xFFF97316)
+        PortfolioAssetType.VEHICLE -> Color(0xFF6B7280)
     }
 
     Card(
