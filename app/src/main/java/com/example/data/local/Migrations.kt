@@ -260,5 +260,78 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     }
 }
 
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `vehicles` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `modelName` TEXT NOT NULL,
+                `priceRial` REAL NOT NULL,
+                `changePercent` REAL NOT NULL,
+                `lastUpdate` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `real_estate` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `propertyName` TEXT NOT NULL,
+                `valuationRial` REAL NOT NULL,
+                `changePercent` REAL NOT NULL,
+                `lastUpdate` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `risk_profiles` (
+                `userId` TEXT PRIMARY KEY NOT NULL,
+                `riskScore` INTEGER NOT NULL,
+                `personalityType` TEXT NOT NULL,
+                `lastAssessmentDate` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `investment_roadmaps` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `title` TEXT NOT NULL,
+                `roadmapJson` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `social_posts` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `authorName` TEXT NOT NULL,
+                `content` TEXT NOT NULL,
+                `assetCode` TEXT,
+                `sentiment` TEXT,
+                `likesCount` INTEGER NOT NULL,
+                `timestamp` INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
 /** All migrations in order — pass this whole array to `.addMigrations(...)`. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+val ALL_MIGRATIONS = arrayOf(
+    MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
+    MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
+)

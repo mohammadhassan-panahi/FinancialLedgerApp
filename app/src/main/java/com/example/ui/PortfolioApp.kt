@@ -39,10 +39,10 @@ fun PortfolioApp(
 
     val bottomNavItems = listOf(
         BottomNavItem("خانه", Screen.Dashboard, Icons.Default.Dashboard),
-        BottomNavItem("بازار", Screen.MarketPulse, Icons.Default.Build),
+        BottomNavItem("بازار", Screen.Market, Icons.Default.ShowChart),
         BottomNavItem("پورتفو", Screen.Portfolio, Icons.Default.PieChart),
-        BottomNavItem("هوشمند", Screen.AiMentor, Icons.Default.AutoAwesome),
-        BottomNavItem("هاب", Screen.SocialHub, Icons.Default.Dashboard)
+        BottomNavItem("ابزارها", Screen.Tools, Icons.Default.Build),
+        BottomNavItem("هاب", Screen.SocialHub, Icons.Default.Groups)
     )
 
     Scaffold(
@@ -73,10 +73,17 @@ fun PortfolioApp(
         NavGraph(
             navController = navController,
             viewModel = viewModel,
+            cryptoViewModel = cryptoViewModel,
+            calculatorViewModel = calculatorViewModel,
             aiAnalysisViewModel = aiAnalysisViewModel,
             socialHubViewModel = socialHubViewModel,
             riskAssessmentViewModel = riskAssessmentViewModel,
             marketScannerViewModel = marketScannerViewModel,
+            userPreferencesRepository = userPreferencesRepository,
+            biometricAuthManager = biometricAuthManager,
+            pinManager = pinManager,
+            onExportRequested = onExportRequested,
+            onImportRequested = onImportRequested,
             modifier = Modifier.padding(innerPadding)
         )
     }

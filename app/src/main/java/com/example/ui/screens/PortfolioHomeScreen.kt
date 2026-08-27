@@ -51,7 +51,9 @@ fun PortfolioHomeScreen(
     onOpenGoals: () -> Unit = {},
     onOpenMutualFunds: () -> Unit = {},
     onOpenAiAnalysis: () -> Unit = {},
-    onOpenOcrScanner: () -> Unit = {}
+    onOpenOcrScanner: () -> Unit = {},
+    onOpenAddPurchase: () -> Unit = {},
+    onOpenSettings: () -> Unit = {}
 ) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     val totalRealizedPnl by viewModel.totalRealizedPnlRial.collectAsStateWithLifecycle()
@@ -160,6 +162,12 @@ fun PortfolioHomeScreen(
                                     leadingIcon = { Icon(Icons.Default.CloudUpload, null, tint = TextSecondary) },
                                     onClick = { menuExpanded = false; onImportRequested() }
                                 )
+                                HorizontalDivider(color = SlateBorder)
+                                DropdownMenuItem(
+                                    text = { Text("تنظیمات و امنیت", color = TextPrimary) },
+                                    leadingIcon = { Icon(Icons.Default.Settings, null, tint = TextSecondary) },
+                                    onClick = { menuExpanded = false; onOpenSettings() }
+                                )
                             }
                         }
                     }
@@ -210,6 +218,7 @@ fun PortfolioHomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    QuickActionCard("افزودن دارایی", Icons.Default.Add, CryptoColor, Modifier.weight(1f), onOpenAddPurchase)
                     QuickActionCard("ماشین‌حساب", Icons.Default.Calculate, CredifyIndigo, Modifier.weight(1f), onOpenCalculators)
                     QuickActionCard("پشتیبان‌گیری", Icons.Default.Backup, CredifyViolet, Modifier.weight(1f), onExportRequested)
                 }
