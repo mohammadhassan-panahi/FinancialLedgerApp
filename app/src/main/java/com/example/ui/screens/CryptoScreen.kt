@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.crypto.ScoringEngine
 import com.example.data.local.CryptoAssetEntity
+import com.example.ui.components.CryptoIcon
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.CryptoViewModel
@@ -148,6 +149,7 @@ fun CryptoAssetCard(asset: CryptoAssetEntity, onToggleWatchlist: () -> Unit, onC
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            CryptoIcon(cmcId = asset.cmcId, symbol = asset.symbol, size = 32.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Text(asset.name, fontWeight = FontWeight.Bold)
                 Text(asset.symbol, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -189,10 +191,14 @@ fun CryptoDetailScreen(viewModel: CryptoViewModel, asset: CryptoAssetEntity, onB
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "بازگشت")
                 }
+                CryptoIcon(cmcId = asset.cmcId, symbol = asset.symbol, size = 48.dp)
                 Column {
                     Text(asset.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(asset.symbol, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

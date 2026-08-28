@@ -25,17 +25,25 @@ class GetCryptoAIReportUseCase(
             - تغییرات ۲۴ ساعته: ${asset.percentChange24h}%
             
             یافته‌های تحلیل تکنیکال:
-            - امتیاز کلی: ${analysis.score} از ۱۰۰
+            - امتیاز فرصت: ${analysis.opportunityScore} از ۱۰۰
+            - امتیاز ریسک: ${analysis.riskScore} از ۱۰۰
             - سیگنال فعلی: ${analysis.signal}
+            - روند: ${analysis.trend}
+            - وضعیت حجم: ${analysis.volumeTrend}
             - شاخص RSI: ${String.format(Locale.US, "%.2f", analysis.rsi)}
-            - میانگین متحرک ۲۰ روزه: ${String.format(Locale.US, "%.2f", analysis.ema20)}
-            - میانگین متحرک ۵۰ روزه: ${String.format(Locale.US, "%.2f", analysis.ema50)}
-            - میانگین متحرک ۲۰۰ روزه: ${String.format(Locale.US, "%.2f", analysis.ema200)}
+            - نقدینگی: ${analysis.liquidity}
             - سطح حمایتی: ${String.format(Locale.US, "%.2f", analysis.support)}
             - سطح مقاومتی: ${String.format(Locale.US, "%.2f", analysis.resistance)}
             
-            دلایل تحلیل:
+            دلایل و هشدارها:
             ${analysis.reasons.joinToString("\n")}
+            ${analysis.warnings.joinToString("\n")}
+            
+            طرح معامله پیشنهادی:
+            - محدوده ورود: ${analysis.entryZone?.let { "${it.first} تا ${it.second}" } ?: "نامشخص"}
+            - حد ضرر: ${analysis.stopLoss ?: "نامشخص"}
+            - حد سود: ${analysis.takeProfit ?: "نامشخص"}
+            - نسبت سود به ریسک: ${analysis.riskReward ?: "نامشخص"}
             
             خروجی مورد انتظار:
             یک تحلیل فارسی روان، حرفه‌ای و خلاصه (حداکثر ۱۰۰ کلمه) که وضعیت روند، نقاط ورود/خروج احتمالی و سطح ریسک را توضیح دهد. لحن گزارش باید شبیه به تحلیلگران بازارهای مالی باشد.

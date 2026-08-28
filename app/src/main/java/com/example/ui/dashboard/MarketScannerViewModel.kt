@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 data class CryptoOpportunity(
     val asset: CryptoAssetEntity,
     val analysis: TechnicalAnalysisResult,
+    val localReport: String,
     val aiReport: String? = null
 )
 
@@ -48,23 +49,39 @@ class MarketScannerViewModel(
             // Ensure we have fresh data for the top 10
             cryptoRepository.refreshTopListings(10)
             
-            // Get the top 10 from local storage
-            val topAssets = cryptoRepository.allAssets.first().take(10)
+            // 1. Get Top Assets
+            val topAssets = cryptoRepository.allAssets.first().take(15)
             
+            // 2. Fetch BTC Context First
+            val btcHistory = cryptoRepository.fetchHistory("BTC", "1h").getOrNull()
+            val btcAsset = topAssets.find { it.symbol == "BTC" }
+            val btcContext = if (btcHistory != null && btcAsset != null) {
+                val btcAnalysis = TechnicalAnalysisEngine.analyze("BTC", btcHistory, btcAsset)
+                com.example.crypto.analysis.MarketContext(
+                    isBullish = btcAnalysis.opportunityScore > 50,
+                    volatility = (btcHistory.last().high - btcHistory.last().low) / btcHistory.last().close
+                )
+            } else null
+
+            // 3. Scan All and Rank
             val results = topAssets.map { asset ->
                 val historyResult = cryptoRepository.fetchHistory(asset.symbol, "1h")
                 val candles = historyResult.getOrNull() ?: emptyList()
-                val analysis = TechnicalAnalysisEngine.analyze(asset.symbol, candles, asset)
-                CryptoOpportunity(asset, analysis)
-            }
+                val analysis = TechnicalAnalysisEngine.analyze(asset.symbol, candles, asset, btcContext)
+                val localReport = generateLocalReport(analysis, asset)
+                CryptoOpportunity(asset, analysis, localReport)
+            }.sortedByDescending { it.analysis.opportunityScore }
             
             _opportunities.value = results
             _isLoading.value = false
         }
     }
 
-    fun fetchAiReport(opportunity: CryptoOpportunity) {
+    fun selectOpportunity(opportunity: CryptoOpportunity) {
         _selectedOpportunity.value = opportunity
+    }
+
+    fun fetchAiDeepAnalysis(opportunity: CryptoOpportunity) {
         if (opportunity.aiReport != null) return
 
         viewModelScope.launch {
@@ -79,9 +96,45 @@ class MarketScannerViewModel(
             }
             
             // Also update selected one to show in UI immediately
-            _selectedOpportunity.value = _selectedOpportunity.value?.copy(aiReport = report)
+            if (_selectedOpportunity.value?.asset?.symbol == opportunity.asset.symbol) {
+                _selectedOpportunity.value = _selectedOpportunity.value?.copy(aiReport = report)
+            }
             
             _aiReportLoading.value = false
+        }
+    }
+
+    private fun generateLocalReport(analysis: TechnicalAnalysisResult, asset: CryptoAssetEntity): String {
+        return buildString {
+            appendLine("🔍 تحلیل دیدبان برای ${asset.symbol}:")
+            appendLine("• روند قیمت: ${analysis.trend}")
+            appendLine("• وضعیت حجم: ${analysis.volumeTrend}")
+            appendLine("• شاخص RSI: ${analysis.rsi.toInt()}")
+            appendLine()
+            
+            if (analysis.reasons.isNotEmpty()) {
+                appendLine("✅ نقاط قوت:")
+                analysis.reasons.forEach { appendLine("  - $it") }
+            }
+            
+            if (analysis.warnings.isNotEmpty()) {
+                appendLine("⚠️ هشدارها:")
+                analysis.warnings.forEach { appendLine("  - $it") }
+            }
+            
+            appendLine()
+            appendLine("📊 سطوح کلیدی:")
+            appendLine("  حمایت: $${String.format("%.2f", analysis.support)}")
+            appendLine("  مقاومت: $${String.format("%.2f", analysis.resistance)}")
+            
+            analysis.entryZone?.let {
+                appendLine()
+                appendLine("🎯 طرح معامله:")
+                appendLine("  محدوده ورود: $${String.format("%.2f", it.first)} - $${String.format("%.2f", it.second)}")
+                appendLine("  حد ضرر (SL): $${String.format("%.2f", analysis.stopLoss)}")
+                appendLine("  حد سود (TP): $${String.format("%.2f", analysis.takeProfit)}")
+                appendLine("  نسبت سود به ریسک: ${String.format("%.2f", analysis.riskReward ?: 0.0)}")
+            }
         }
     }
 

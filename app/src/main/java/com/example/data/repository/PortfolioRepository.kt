@@ -22,7 +22,8 @@ data class HoldingSummary(
     val profitLossPercent: Double,
     val dailyChangePercent: Double = 0.0,
     val dailyChangeRial: Double = 0.0,
-    val inflationAdjustedProfitLossRial: Double = 0.0
+    val inflationAdjustedProfitLossRial: Double = 0.0,
+    val cmcId: Int? = null
 )
 
 class PortfolioRepository(
@@ -179,7 +180,8 @@ class PortfolioRepository(
                     profitLossPercent = if (totalPaid > 0) (pnl / totalPaid) * 100.0 else 0.0,
                     dailyChangePercent = dailyChangePercent,
                     dailyChangeRial = dailyChangeRial,
-                    inflationAdjustedProfitLossRial = realPnl
+                    inflationAdjustedProfitLossRial = realPnl,
+                    cmcId = cryptoMatch?.cmcId
                 )
             )
         }

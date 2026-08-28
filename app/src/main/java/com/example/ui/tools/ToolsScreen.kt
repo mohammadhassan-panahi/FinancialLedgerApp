@@ -76,7 +76,7 @@ fun ToolsScreen(
         ),
         ToolItem(
             "نقشه راه سرمایه‌گذاری",
-            "در حال توسعه",
+            "برنامه زمانی ۱ ساله برای رشد دارایی‌ها",
             Icons.Default.Map,
             Color(0xFF8B5CF6),
             onOpenInvestmentRoadmap

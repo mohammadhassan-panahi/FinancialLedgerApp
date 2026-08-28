@@ -75,7 +75,29 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
                 ) { Text(if (isRefreshing) "در حال بروزرسانی..." else "بروزرسانی") }
             }
         }
-        items(indices) { index -> IndexCard(index) }
+        item {
+            val mainIndex = indices.find { it.indexCode == "TOTAL_INDEX" || it.name.contains("کل") }
+            if (mainIndex != null) {
+                MainIndexHero(mainIndex)
+            } else if (indices.isNotEmpty()) {
+                MiniIndexCard(indices.first())
+            }
+        }
+        
+        item {
+            if (indices.size > 1) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    indices.filter { it.indexCode != "TOTAL_INDEX" && !it.name.contains("کل") }.take(2).forEach { secondaryIndex ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            MiniIndexCard(secondaryIndex)
+                        }
+                    }
+                }
+            }
+        }
 
         advancedStats?.let { stats ->
             item {
@@ -326,21 +348,69 @@ fun InsightItem(label: String, value: String, color: Color) {
 }
 
 @Composable
-private fun IndexCard(index: MarketIndexEntity) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(index.name, color = MaterialTheme.colorScheme.onSurfaceVariant)
+fun MainIndexHero(index: MarketIndexEntity) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = CredifyIndigo),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("شاخص کل بورس", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        formatRial(index.value, showSuffix = false),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = (if (index.changePercent >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)).copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = formatPercentSigned(index.changePercent),
+                        color = if (index.changePercent >= 0) Color(0xFF81C784) else Color(0xFFFF8A80),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MiniIndexCard(index: MarketIndexEntity) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+        border = BorderStroke(0.5.dp, SlateBorderLight)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(index.name, style = MaterialTheme.typography.labelSmall, color = TextSecondary, maxLines = 1)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     formatRial(index.value, showSuffix = false),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
                 Text(
                     formatPercentSigned(index.changePercent),
+                    style = MaterialTheme.typography.labelSmall,
                     color = if (index.changePercent >= 0) EmeraldProfit else RoseLoss
                 )
             }

@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.AssetPurchaseEntity
 import com.example.data.local.PortfolioAssetType
 import com.example.ui.theme.*
+import com.example.ui.components.CryptoIcon
 import com.example.ui.components.PersianNumberTextField
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.PersianNumberUtils
@@ -303,13 +304,21 @@ private fun PurchaseRowPremium(purchase: AssetPurchaseEntity, onDelete: () -> Un
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(purchase.assetName, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text(
-                    "${com.example.util.PersianNumberUtils.formatDecimal(purchase.quantity)} واحد - ${formatRial(purchase.unitPriceRial)}",
-                    color = TextSecondary,
-                    fontSize = 11.sp
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (purchase.assetType == PortfolioAssetType.CRYPTO) {
+                    // Note: AssetPurchaseEntity doesn't have cmcId, so we show placeholder or 
+                    // we could pass it if we had it. For now, first letter.
+                    CryptoIcon(cmcId = null, symbol = purchase.assetCode, size = 32.dp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+                Column {
+                    Text(purchase.assetName, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(
+                        "${com.example.util.PersianNumberUtils.formatDecimal(purchase.quantity)} واحد - ${formatRial(purchase.unitPriceRial)}",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
+                }
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, null, tint = RoseLoss.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))

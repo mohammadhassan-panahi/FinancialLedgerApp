@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crypto.analysis.AnalysisSignal
+import com.example.ui.components.CryptoIcon
 import kotlinx.coroutines.launch
 
 import java.util.Locale
@@ -47,7 +49,12 @@ fun MarketScannerScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("دیده‌بان هوشمند بازار (Scanner)", fontWeight = FontWeight.Bold) },
+                title = { 
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("رتبه‌بندی فرصت‌های بازار", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("تحلیل هوشمند ۱۰ ارز برتر", style = MaterialTheme.typography.labelSmall)
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.scanMarket() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "بروزرسانی")
@@ -66,20 +73,37 @@ fun MarketScannerScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     item {
-                        Text(
-                            text = "تحلیل تکنیکال ۱۰ ارز برتر بازار بر اساس استراتژی میانگین متحرک و RSI",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                            textAlign = TextAlign.Right
-                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        ) {
+                            Text(
+                                text = "ارزها بر اساس امتیاز ترکیبی (روند، حجم، RSI و ریسک) رتبه‌بندی شده‌اند. رتبه ۱ بهترین فرصت فعلی است.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Right
+                            )
+                        }
                     }
 
-                    items(opportunities) { opportunity ->
-                        OpportunityCard(
-                            opportunity = opportunity,
-                            onWhyClick = { viewModel.fetchAiReport(opportunity) }
-                        )
+                    itemsIndexed(opportunities) { index, opportunity ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "${index + 1}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Box(modifier = Modifier.weight(1f)) {
+                                OpportunityCard(
+                                    opportunity = opportunity,
+                                    onWhyClick = { viewModel.selectOpportunity(opportunity) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -98,7 +122,8 @@ fun MarketScannerScreen(
         ) {
             AiReportContent(
                 opportunity = selectedOp,
-                isLoading = aiLoading
+                isLoading = aiLoading,
+                onDeepAnalysisRequested = { selectedOp?.let { viewModel.fetchAiDeepAnalysis(it) } }
             )
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -126,17 +151,21 @@ fun OpportunityCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = asset.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = asset.symbol,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CryptoIcon(cmcId = asset.cmcId, symbol = asset.symbol)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = asset.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = asset.symbol,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 
                 Column(horizontalAlignment = Alignment.End) {
@@ -164,9 +193,18 @@ fun OpportunityCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ScoreIndicator(score = analysis.score)
+                ScoreIndicator(
+                    label = "فرصت",
+                    score = analysis.opportunityScore
+                )
                 
                 SignalBadge(signal = analysis.signal)
+
+                ScoreIndicator(
+                    label = "ریسک",
+                    score = analysis.riskScore,
+                    isRisk = true
+                )
                 
                 Button(
                     onClick = onWhyClick,
@@ -177,9 +215,7 @@ fun OpportunityCard(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("چرا؟", fontSize = 12.sp)
+                    Text("جزئیات", fontSize = 12.sp)
                 }
             }
         }
@@ -187,24 +223,32 @@ fun OpportunityCard(
 }
 
 @Composable
-fun ScoreIndicator(score: Int) {
+fun ScoreIndicator(label: String, score: Int, isRisk: Boolean = false) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("امتیاز", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Box(contentAlignment = Alignment.Center) {
             CircularProgressIndicator(
                 progress = { score / 100f },
-                modifier = Modifier.size(40.dp),
-                strokeWidth = 4.dp,
-                color = when {
-                    score >= 70 -> Color(0xFF4CAF50)
-                    score >= 40 -> Color(0xFFFFC107)
-                    else -> Color(0xFFF44336)
+                modifier = Modifier.size(36.dp),
+                strokeWidth = 3.dp,
+                color = if (isRisk) {
+                    when {
+                        score >= 70 -> Color(0xFFF44336) // High Risk
+                        score >= 40 -> Color(0xFFFFC107)
+                        else -> Color(0xFF4CAF50)
+                    }
+                } else {
+                    when {
+                        score >= 70 -> Color(0xFF4CAF50) // High Opportunity
+                        score >= 40 -> Color(0xFFFFC107)
+                        else -> Color(0xFFF44336)
+                    }
                 },
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
             Text(
                 text = score.toString(),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -215,13 +259,14 @@ fun ScoreIndicator(score: Int) {
 fun SignalBadge(signal: AnalysisSignal) {
     val (text, color) = when (signal) {
         AnalysisSignal.STRONG_BUY -> "خرید قوی" to Color(0xFF2E7D32)
-        AnalysisSignal.BUY_PULLBACK -> "خرید در اصلاح" to Color(0xFF4CAF50)
+        AnalysisSignal.BUY_ON_PULLBACK -> "خرید در اصلاح" to Color(0xFF4CAF50)
         AnalysisSignal.BREAKOUT_WATCH -> "واچ‌لیست شکست" to Color(0xFF8BC34A)
         AnalysisSignal.HOLD -> "نگهداری" to Color(0xFFFFA000)
         AnalysisSignal.WAIT -> "صبر" to Color(0xFF9E9E9E)
         AnalysisSignal.SELL_PARTIAL -> "فروش پله‌ای" to Color(0xFFE64A19)
-        AnalysisSignal.SELL_NOW -> "فروش فوری" to Color(0xFFD32F2F)
+        AnalysisSignal.SELL -> "فروش" to Color(0xFFD32F2F)
         AnalysisSignal.AVOID -> "دوری از معامله" to Color(0xFFB71C1C)
+        AnalysisSignal.INSUFFICIENT_DATA -> "داده ناکافی" to Color(0xFF607D8B)
     }
     
     Surface(
@@ -242,7 +287,8 @@ fun SignalBadge(signal: AnalysisSignal) {
 @Composable
 fun AiReportContent(
     opportunity: CryptoOpportunity?,
-    isLoading: Boolean
+    isLoading: Boolean,
+    onDeepAnalysisRequested: () -> Unit
 ) {
     if (opportunity == null) return
 
@@ -252,7 +298,7 @@ fun AiReportContent(
             .padding(24.dp)
     ) {
         Text(
-            text = "تحلیل هوشمند Gemini برای ${opportunity.asset.symbol}",
+            text = "تحلیل هوشمند برای ${opportunity.asset.symbol}",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -261,38 +307,77 @@ fun AiReportContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        if (isLoading) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator()
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("در حال پردازش داده‌های تکنیکال توسط هوش مصنوعی...", textAlign = TextAlign.Center)
+        // Always show the Local (Algorithmic) Report
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "گزارش الگوریتم (آفلاین)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = opportunity.localReport,
+                    style = MaterialTheme.typography.bodyLarge,
+                    lineHeight = 24.sp
+                )
             }
-        } else {
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (opportunity.aiReport != null) {
+            Text(
+                text = "تحلیل عمیق هوش مصنوعی (Gemini):",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = opportunity.aiReport ?: "خطا در دریافت گزارش",
+                    text = opportunity.aiReport,
                     modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 28.sp,
-                    textAlign = TextAlign.Justify
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 24.sp
                 )
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = "سلب مسئولیت: این تحلیل صرفاً بر اساس داده‌های تکنیکال و هوش مصنوعی بوده و به منزله پیشنهاد قطعی خرید یا فروش نیست.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+        } else if (isLoading) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("در حال دریافت تحلیل عمیق از هوش مصنوعی...", style = MaterialTheme.typography.bodySmall)
+            }
+        } else {
+            Button(
+                onClick = onDeepAnalysisRequested,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Info, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("دریافت تحلیل عمیق‌تر (نیاز به اینترنت)")
+            }
         }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text(
+            text = "سلب مسئولیت: این تحلیل صرفاً بر اساس داده‌های تکنیکال و الگوریتم‌های برنامه بوده و به منزله پیشنهاد قطعی خرید یا فروش نیست.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

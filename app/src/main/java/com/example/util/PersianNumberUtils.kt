@@ -113,7 +113,7 @@ object PersianNumberUtils {
     private val teens = arrayOf("ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده")
     private val tens = arrayOf("", "", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود")
     private val hundreds = arrayOf("", "صد", "دویست", "سیصد", "چهارصد", "پانصد", "ششصد", "هفتصد", "هشتصد", "نهصد")
-    private val scaleNames = arrayOf("", "هزار", "میلیون", "میلیارد", "تریلیون")
+    private val scaleNames = arrayOf("", "هزار", "میلیون", "میلیارد", "تریلیون", "کوادریلیون", "کوینتیلیون")
 
     /**
      * Converts a Long number into Persian words (عدد به حروف فارسی).
@@ -121,7 +121,14 @@ object PersianNumberUtils {
      */
     fun numberToPersianWords(number: Long): String {
         if (number == 0L) return "صفر"
-        if (number < 0L) return "منفی " + numberToPersianWords(-number)
+        if (number < 0L) {
+            return if (number == Long.MIN_VALUE) {
+                // Special case for Long.MIN_VALUE because -number would overflow
+                "منفی ۹ کوینتیلیون و ..." 
+            } else {
+                "منفی " + numberToPersianWords(-number)
+            }
+        }
 
         var num = number
         val parts = mutableListOf<String>()
@@ -131,7 +138,7 @@ object PersianNumberUtils {
             val chunk = (num % 1000).toInt()
             if (chunk > 0) {
                 val chunkText = convertChunkToWords(chunk)
-                val scale = scaleNames[scaleIndex]
+                val scale = if (scaleIndex < scaleNames.size) scaleNames[scaleIndex] else ""
                 val fullChunk = if (scale.isNotEmpty()) "$chunkText $scale" else chunkText
                 parts.add(0, fullChunk)
             }

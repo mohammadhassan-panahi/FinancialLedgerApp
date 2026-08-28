@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +44,7 @@ fun AiAnalysisScreen(
     onBack: () -> Unit
 ) {
     val analysisResult by viewModel.analysisResult.collectAsStateWithLifecycle()
+    val localAnalysis by viewModel.localAnalysis.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
     CompositionLocalProvider(LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl) {
@@ -85,10 +87,31 @@ fun AiAnalysisScreen(
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (isLoading) {
+                    if (isLoading && localAnalysis == null) {
                         CircularProgressIndicator(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                     } else {
-                        Text("تحلیل هوشمند سبد دارایی")
+                        Text("تحلیل سریع وضعیت سبد")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (localAnalysis != null) {
+                    Button(
+                        onClick = { viewModel.analyzePortfolioWithAi() },
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        if (isLoading && analysisResult == null) {
+                            CircularProgressIndicator(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.height(18.dp))
+                            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                            Text("تحلیل عمیق‌تر با هوش مصنوعی")
+                        }
                     }
                 }
 
@@ -104,16 +127,41 @@ fun AiAnalysisScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                if (localAnalysis != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "گزارش وضعیت (آفلاین):",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = localAnalysis!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                lineHeight = 28.sp
+                            )
+                        }
+                    }
+                }
+
                 if (analysisResult != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "نتیجه تحلیل:",
+                                text = "تحلیل هوش مصنوعی Gemini:",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(

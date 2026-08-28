@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.PortfolioAssetType
 import com.example.data.repository.HoldingSummary
+import com.example.ui.components.CryptoIcon
 import com.example.ui.components.DonutSlice
 import com.example.ui.components.PortfolioDonutChart
 import com.example.ui.components.SellAssetDialog
@@ -372,13 +373,17 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
             modifier = Modifier.padding(16.dp).clickable { if (holding.assetType != PortfolioAssetType.CASH) onSellClick() },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = iconColor.copy(alpha = 0.1f),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, null, tint = iconColor, modifier = Modifier.size(24.dp))
+            if (holding.assetType == PortfolioAssetType.CRYPTO) {
+                CryptoIcon(cmcId = holding.cmcId, symbol = holding.assetCode, size = 48.dp)
+            } else {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = iconColor.copy(alpha = 0.1f),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(icon, null, tint = iconColor, modifier = Modifier.size(24.dp))
+                    }
                 }
             }
             
