@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.ReminderEntity
 import com.example.data.local.ReminderType
+import com.example.ui.LocalIsRial
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.PortfolioViewModel
@@ -113,6 +114,7 @@ fun ReminderCard(
     onDelete: () -> Unit,
     onMarkPaid: () -> Unit
 ) {
+    val isRial = LocalIsRial.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -133,7 +135,7 @@ fun ReminderCard(
                 )
             }
             Text(
-                formatRial(item.amountRial),
+                formatRial(item.amountRial, isRial = isRial),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (item.isPaid) Color.Gray else MaterialTheme.colorScheme.onSurface
             )

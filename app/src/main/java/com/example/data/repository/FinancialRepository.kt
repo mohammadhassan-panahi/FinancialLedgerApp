@@ -126,10 +126,10 @@ class FinancialRepository(
     private suspend fun ensureDefaultsSeeded() {
         if (marketDao.getMarketRateCount() == 0) {
             val defaultRates = listOf(
-                MarketRateEntity("USD", "دلار آمریکا", 61500.0, 0.45, isOfflineRate = true),
-                MarketRateEntity("GOLD_18K", "طلا ۱۸ عیار (گرم)", 3650000.0, 1.2, isOfflineRate = true),
-                MarketRateEntity("AZADI", "سکه امامی", 42800000.0, -0.3, isOfflineRate = true),
-                MarketRateEntity("EUR", "یورو", 66200.0, 0.15, isOfflineRate = true)
+                MarketRateEntity("USD", "دلار آمریکا", 61500.0, changePercent = 0.45, isOfflineRate = true),
+                MarketRateEntity("GOLD_18K", "طلا ۱۸ عیار (گرم)", 3650000.0, changePercent = 1.2, isOfflineRate = true),
+                MarketRateEntity("AZADI", "سکه امامی", 42800000.0, changePercent = -0.3, isOfflineRate = true),
+                MarketRateEntity("EUR", "یورو", 66200.0, changePercent = 0.15, isOfflineRate = true)
             )
             marketDao.insertMarketRates(defaultRates)
         }

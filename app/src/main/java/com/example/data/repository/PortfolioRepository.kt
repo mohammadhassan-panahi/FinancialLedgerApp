@@ -4,7 +4,11 @@ import com.example.data.local.*
 import com.example.data.remote.MarketApiService
 import com.example.data.remote.TsetmcApiClient
 import com.example.data.remote.TsetmcApiService
+import com.example.domain.model.AllocationItem
+import com.example.domain.model.GoldPriceAnalysis
+import com.example.domain.model.PortfolioSummary
 import kotlinx.coroutines.flow.Flow
+import java.util.Locale
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -40,6 +44,7 @@ class PortfolioRepository(
     private val bourseDao: BourseDao,
     private val vehicleDao: VehicleDao,
     private val realEstateDao: RealEstateDao,
+    private val snapshotDao: PortfolioSnapshotDao,
     private val apiKey: String = "",
     private val marketApiService: MarketApiService? = if (apiKey.isNotBlank()) MarketApiService.create() else null,
     private val tsetmcApiService: TsetmcApiClient? = if (apiKey.isNotBlank()) TsetmcApiClient(TsetmcApiService.create(), apiKey) else null
@@ -64,6 +69,7 @@ class PortfolioRepository(
     val goals: Flow<List<GoalEntity>> = goalDao.getAll()
     val ipos: Flow<List<IpoEntity>> = bourseDao.getAllIpos()
     val codalNotices: Flow<List<CodalEntity>> = bourseDao.getAllCodalNotices()
+    val snapshots: Flow<List<PortfolioSnapshotEntity>> = snapshotDao.getAllSnapshots()
 
     val totalDebtRial: Flow<Double> = debtCreditDao.getTotalDebt().map { it ?: 0.0 }
     val totalCreditRial: Flow<Double> = debtCreditDao.getTotalCredit().map { it ?: 0.0 }
@@ -188,6 +194,125 @@ class PortfolioRepository(
         result
     }
 
+    /**
+     * Aggregated summary of the entire portfolio.
+     */
+    val portfolioSummary: Flow<PortfolioSummary> = combine(holdings, marketRates) { list, rates ->
+        val totalValue = list.sumOf { it.currentValueRial }
+        val totalPaid = list.sumOf { it.totalPaidRial }
+        val todayChange = list.sumOf { it.dailyChangeRial }
+
+        val usdRateToman = rates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0
+        val gold18kRateToman = rates.find { it.assetCode.contains("GOLD_18K") || it.name.contains("۱۸") }?.priceToman ?: 3500000.0
+
+        val usdRateRial = usdRateToman * RIAL_PER_TOMAN
+        val gold18kRateRial = gold18kRateToman * RIAL_PER_TOMAN
+
+        val totalPnl = totalValue - totalPaid
+        val totalPnlPercent = if (totalPaid > 0) (totalPnl / totalPaid) * 100.0 else 0.0
+        val todayPnlPercent = if ((totalValue - todayChange) > 0) (todayChange / (totalValue - todayChange)) * 100.0 else 0.0
+
+        val marketStatus = when {
+            todayPnlPercent > 1.5 -> "بازار صعودی قدرتمند"
+            todayPnlPercent > 0.5 -> "بازار مثبت"
+            todayPnlPercent < -1.5 -> "بازار ریزشی شدید"
+            todayPnlPercent < -0.5 -> "بازار منفی"
+            else -> "بازار متعادل"
+        }
+
+        val best = list.filter { it.assetType != PortfolioAssetType.CASH }.maxByOrNull { it.dailyChangePercent }
+        val worst = list.filter { it.assetType != PortfolioAssetType.CASH }.minByOrNull { it.dailyChangePercent }
+
+        val byAsset = list.map {
+            AllocationItem(it.assetName, if (totalValue > 0) (it.currentValueRial / totalValue) * 100 else 0.0, it.currentValueRial)
+        }.sortedByDescending { it.valueRial }
+
+        val byType = list.groupBy { it.assetType }.map { (type, group) ->
+            val typeValue = group.sumOf { it.currentValueRial }
+            val label = when(type) {
+                PortfolioAssetType.GOLD -> "طلا و مسکوکات"
+                PortfolioAssetType.USD -> "ارزهای خارجی"
+                PortfolioAssetType.STOCK -> "سهام بورس"
+                PortfolioAssetType.CRYPTO -> "رمزارزها"
+                PortfolioAssetType.CASH -> "نقدینگی"
+                PortfolioAssetType.FUND -> "صندوق‌های سرمایه‌گذاری"
+                PortfolioAssetType.REAL_ESTATE -> "املاک"
+                PortfolioAssetType.VEHICLE -> "خودرو"
+            }
+            AllocationItem(label, if (totalValue > 0) (typeValue / totalValue) * 100 else 0.0, typeValue)
+        }.sortedByDescending { it.valueRial }
+
+        val globalGold = rates.find { it.assetCode.contains("XAU") || it.name.contains("انس") }
+        val usdRate = rates.find { it.assetCode == "USD" }
+        val localGold = rates.find { it.assetCode.contains("GOLD_18K") || it.name.contains("۱۸") }
+
+        val goldAnalysis = if (globalGold != null && usdRate != null && localGold != null) {
+            val driver = if (Math.abs(globalGold.changePercent) > Math.abs(usdRate.changePercent)) "GLOBAL_GOLD" else "USD"
+            GoldPriceAnalysis(
+                globalGoldChangePercent = globalGold.changePercent,
+                usdChangePercent = usdRate.changePercent,
+                localGoldChangePercent = localGold.changePercent,
+                primaryDriver = driver
+            )
+        } else null
+
+        val insights = mutableListOf<String>()
+        best?.let { insights.add("بهترین دارایی امروز شما ${it.assetName} با ${String.format(Locale.US, "%.1f", it.dailyChangePercent)}٪ رشد بوده است.") }
+        byAsset.firstOrNull()?.let { insights.add("بیشترین سهم پورتفوی شما متعلق به ${it.label} است (${String.format(Locale.US, "%.1f", it.percentage)}٪).") }
+
+        val goldEffect = list.find { it.assetType == PortfolioAssetType.GOLD }?.dailyChangeRial ?: 0.0
+        val totalAbsChange = Math.abs(todayChange)
+        if (totalAbsChange > 0 && Math.abs(goldEffect) / totalAbsChange > 0.5) {
+            insights.add("تغییرات قیمت طلا بیشترین تأثیر را روی ارزش پورتفوی شما در امروز داشته است.")
+        }
+
+        val staleHours = (System.currentTimeMillis() - (rates.maxOfOrNull { it.updatedAt } ?: 0L)) / (1000 * 60 * 60)
+        if (staleHours > 3) {
+            insights.add("⚠️ قیمت‌های بازار بیش از ${com.example.util.PersianNumberUtils.toPersianDigits(staleHours.toString())} ساعت است که بروزرسانی نشده‌اند.")
+        }
+
+        PortfolioSummary(
+            totalValueRial = totalValue,
+            totalProfitLossRial = totalPnl,
+            totalProfitLossPercent = totalPnlPercent,
+            todayProfitLossRial = todayChange,
+            todayProfitLossPercent = todayPnlPercent,
+            lastUpdated = rates.maxOfOrNull { it.updatedAt } ?: System.currentTimeMillis(),
+            marketStatus = marketStatus,
+            usdRateRial = usdRateRial,
+            gold18kPriceRial = gold18kRateRial,
+            bestPerformer = best,
+            worstPerformer = worst,
+            allocationByAsset = byAsset,
+            allocationByType = byType,
+            goldAnalysis = goldAnalysis,
+            insights = insights
+        )
+    }
+
+    suspend fun saveSnapshot() {
+        val summary = portfolioSummary.first()
+        val moshi = com.squareup.moshi.Moshi.Builder()
+            .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+            .build()
+        val adapter = moshi.adapter(List::class.java) // Simple way for now
+
+        // More robust: use specific types or a wrapper
+        val assetJson = moshi.adapter(List::class.java).toJson(summary.allocationByAsset)
+        val typeJson = moshi.adapter(List::class.java).toJson(summary.allocationByType)
+
+        val snapshot = PortfolioSnapshotEntity(
+            totalValueRial = summary.totalValueRial,
+            totalProfitLossRial = summary.totalProfitLossRial,
+            goldPriceRial = summary.gold18kPriceRial,
+            usdPriceRial = summary.usdRateRial,
+            stockIndexValue = indices.first().find { it.indexCode == "TOTAL_INDEX" || it.name.contains("کل") }?.value ?: 0.0,
+            allocationByAssetJson = assetJson,
+            allocationByTypeJson = typeJson
+        )
+        snapshotDao.insertSnapshot(snapshot)
+    }
+
     suspend fun addPurchase(purchase: AssetPurchaseEntity) = purchaseDao.insertPurchase(purchase)
     suspend fun deletePurchase(id: Long) = purchaseDao.deletePurchase(id)
 
@@ -234,11 +359,13 @@ class PortfolioRepository(
         val response = marketApiService?.getGoldCurrency(apiKey) ?: return false
         return if (response.isSuccessful && response.body() != null) {
             val body = response.body()!!
-            val liveRates = (body.gold + body.currency).filter { it.unit == "تومان" }.map {
+            val liveRates = (body.gold + body.currency).map {
                 MarketRateEntity(
                     assetCode = it.symbol,
                     name = it.name,
-                    priceToman = it.price,
+                    priceToman = if (it.unit == "تومان") it.price else 0.0,
+                    priceGlobal = if (it.unit != "تومان") it.price else 0.0,
+                    currency = it.unit,
                     changePercent = it.changePercent,
                     isOfflineRate = false
                 )

@@ -40,11 +40,12 @@ import com.example.ui.components.CryptoIcon
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.CryptoViewModel
+import com.example.util.PersianNumberUtils
 import com.example.util.formatPercentSigned
 import com.example.util.formatUsd
 
 @Composable
-fun CryptoScreen(viewModel: CryptoViewModel) {
+fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: Double = 65000.0) {
     val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
     val watchlist by viewModel.watchlist.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -58,7 +59,12 @@ fun CryptoScreen(viewModel: CryptoViewModel) {
     }
 
     if (selectedAsset != null) {
-        CryptoDetailScreen(viewModel = viewModel, asset = selectedAsset!!, onBack = { viewModel.closeDetail() })
+        CryptoDetailScreen(
+            viewModel = viewModel, 
+            asset = selectedAsset!!, 
+            usdRateToman = usdRateToman,
+            onBack = { viewModel.closeDetail() }
+        )
         return
     }
 
@@ -98,6 +104,7 @@ fun CryptoScreen(viewModel: CryptoViewModel) {
             items(watchlist) { asset ->
                 CryptoAssetCard(
                     asset,
+                    usdRateToman = usdRateToman,
                     onToggleWatchlist = { viewModel.toggleWatchlist(asset) },
                     onClick = { viewModel.selectAsset(asset) }
                 )
@@ -115,6 +122,7 @@ fun CryptoScreen(viewModel: CryptoViewModel) {
         items(allAssets) { asset ->
             CryptoAssetCard(
                 asset,
+                usdRateToman = usdRateToman,
                 onToggleWatchlist = { viewModel.toggleWatchlist(asset) },
                 onClick = { viewModel.selectAsset(asset) }
             )
@@ -142,7 +150,12 @@ fun GlobalMetricsCard(snapshot: com.example.data.repository.GlobalMarketSnapshot
 }
 
 @Composable
-fun CryptoAssetCard(asset: CryptoAssetEntity, onToggleWatchlist: () -> Unit, onClick: () -> Unit = {}) {
+fun CryptoAssetCard(
+    asset: CryptoAssetEntity, 
+    usdRateToman: Double,
+    onToggleWatchlist: () -> Unit, 
+    onClick: () -> Unit = {}
+) {
     Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -156,6 +169,12 @@ fun CryptoAssetCard(asset: CryptoAssetEntity, onToggleWatchlist: () -> Unit, onC
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(formatUsd(asset.priceUsd ?: 0.0), fontWeight = FontWeight.Bold)
+                val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
+                Text(
+                    PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
                 Text(
                     formatPercentSigned(asset.percentChange24h ?: 0.0),
                     color = if ((asset.percentChange24h ?: 0.0) >= 0) EmeraldProfit else RoseLoss,
@@ -178,7 +197,12 @@ fun CryptoAssetCard(asset: CryptoAssetEntity, onToggleWatchlist: () -> Unit, onC
  * ScoringEngine's doc comment), for one crypto asset.
  */
 @Composable
-fun CryptoDetailScreen(viewModel: CryptoViewModel, asset: CryptoAssetEntity, onBack: () -> Unit) {
+fun CryptoDetailScreen(
+    viewModel: CryptoViewModel, 
+    asset: CryptoAssetEntity, 
+    usdRateToman: Double,
+    onBack: () -> Unit
+) {
     val info by viewModel.selectedInfo.collectAsStateWithLifecycle()
     val isLoadingInfo by viewModel.isLoadingInfo.collectAsStateWithLifecycle()
 
@@ -209,11 +233,29 @@ fun CryptoDetailScreen(viewModel: CryptoViewModel, asset: CryptoAssetEntity, onB
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(formatUsd(asset.priceUsd ?: 0.0), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(
-                        "تغییر ۲۴ ساعته: ${formatPercentSigned(asset.percentChange24h ?: 0.0)}",
-                        color = if ((asset.percentChange24h ?: 0.0) >= 0) EmeraldProfit else RoseLoss
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Column {
+                            Text(formatUsd(asset.priceUsd ?: 0.0), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
+                            Text(
+                                PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Text(
+                            "تغییر ۲۴ ساعته: ${formatPercentSigned(asset.percentChange24h ?: 0.0)}",
+                            color = if ((asset.percentChange24h ?: 0.0) >= 0) EmeraldProfit else RoseLoss,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("رتبه بازار", style = MaterialTheme.typography.labelSmall)
                         Text("#${asset.cmcRank ?: "—"}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)

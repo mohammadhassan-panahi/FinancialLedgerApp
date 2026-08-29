@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.LocalIsRial
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatRial
@@ -25,6 +26,7 @@ import com.example.util.formatRial
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InflationCalculatorScreen(viewModel: PortfolioViewModel) {
+    val isRial = LocalIsRial.current
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     val totalRealGrowth = holdings.sumOf { it.inflationAdjustedProfitLossRial }
 
@@ -48,7 +50,7 @@ fun InflationCalculatorScreen(viewModel: PortfolioViewModel) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text("مجموع رشد ثروت (پس از کسر تورم)", color = TextSecondary, fontSize = 14.sp)
                             Text(
-                                formatRial(totalRealGrowth),
+                                formatRial(totalRealGrowth, isRial = isRial),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = if (totalRealGrowth >= 0) EmeraldProfit else RoseLoss
@@ -70,7 +72,7 @@ fun InflationCalculatorScreen(viewModel: PortfolioViewModel) {
                     ) {
                         Text(holding.assetName, color = TextPrimary)
                         Text(
-                            formatRial(holding.inflationAdjustedProfitLossRial),
+                            formatRial(holding.inflationAdjustedProfitLossRial, isRial = isRial),
                             color = if (holding.inflationAdjustedProfitLossRial >= 0) EmeraldProfit else RoseLoss,
                             fontWeight = FontWeight.Bold
                         )

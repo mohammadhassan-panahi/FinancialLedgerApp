@@ -57,6 +57,7 @@ fun NavGraph(
     aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
     socialHubViewModel: com.example.ui.viewmodel.SocialHubViewModel,
     riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
+    settingsViewModel: com.example.ui.viewmodel.SettingsViewModel,
     marketScannerViewModel: MarketScannerViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
@@ -120,7 +121,12 @@ fun NavGraph(
         }
 
         composable(Screen.MarketScanner) {
-            MarketScannerScreen(viewModel = marketScannerViewModel)
+            val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
+            val usdRateToman = marketRates.find { it.assetCode == "USD" || it.assetCode == "IR_USD" }?.priceToman ?: 65000.0
+            MarketScannerScreen(
+                viewModel = marketScannerViewModel,
+                usdRateToman = usdRateToman
+            )
         }
 
         composable(Screen.RiskAssessment) {
@@ -202,6 +208,7 @@ fun NavGraph(
 
         composable(Screen.Settings) {
             com.example.ui.screens.SettingsScreen(
+                viewModel = settingsViewModel,
                 biometricEnabled = pinManager.isBiometricEnabled(),
                 onOpenPinSetup = { navController.navigate(Screen.PinSetup) },
                 onOpenBiometricEnable = { navController.navigate(Screen.BiometricEnable) },

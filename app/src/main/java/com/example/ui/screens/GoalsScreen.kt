@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.GoalEntity
+import com.example.ui.LocalIsRial
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.PortfolioViewModel
@@ -114,6 +115,7 @@ fun GoalCard(
     onDelete: () -> Unit,
     onUpdateProgress: (Double) -> Unit
 ) {
+    val isRial = LocalIsRial.current
     var showUpdateDialog by remember { mutableStateOf(false) }
     val progress = if (goal.targetAmountRial > 0) (goal.currentSavedRial / goal.targetAmountRial).toFloat().coerceIn(0f, 1f) else 0f
 
@@ -132,8 +134,8 @@ fun GoalCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("هدف: ${formatRial(goal.targetAmountRial)}", style = MaterialTheme.typography.bodySmall)
-                Text("پس‌انداز: ${formatRial(goal.currentSavedRial)}", style = MaterialTheme.typography.bodySmall)
+                Text("هدف: ${formatRial(goal.targetAmountRial, isRial = isRial)}", style = MaterialTheme.typography.bodySmall)
+                Text("پس‌انداز: ${formatRial(goal.currentSavedRial, isRial = isRial)}", style = MaterialTheme.typography.bodySmall)
             }
             Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(

@@ -18,11 +18,18 @@ val MarketRateEntity.priceRial: Double get() = priceToman * RIAL_PER_TOMAN
 val BankAccountEntity.currentBalanceRial: Double get() = currentBalance * RIAL_PER_TOMAN
 
 /** Formats an amount that is ALREADY in Rial (no unit conversion), with Persian digits + grouping. */
-fun formatRial(amountRial: Double, showSuffix: Boolean = true, decimalPlaces: Int = 0): String {
+fun formatRial(
+    amountRial: Double,
+    showSuffix: Boolean = true,
+    decimalPlaces: Int = 0,
+    isRial: Boolean = false
+): String {
+    val displayAmount = if (isRial) amountRial else amountRial / 10.0
+    val suffix = if (isRial) "ریال" else "تومان"
     val pattern = if (decimalPlaces > 0) "#,##0." + "0".repeat(decimalPlaces) else "#,##0"
-    val formatted = DecimalFormat(pattern).format(amountRial)
+    val formatted = DecimalFormat(pattern).format(displayAmount)
     val persian = PersianNumberUtils.toPersianDigits(formatted)
-    return if (showSuffix) "$persian ریال" else persian
+    return if (showSuffix) "$persian $suffix" else persian
 }
 
 fun formatPercentSigned(percent: Double): String {

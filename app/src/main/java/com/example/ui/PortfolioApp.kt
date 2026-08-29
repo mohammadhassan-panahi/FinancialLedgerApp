@@ -17,8 +17,10 @@ import com.example.data.repository.UserPreferencesRepository
 import com.example.security.BiometricAuthManager
 import com.example.security.PinManager
 import com.example.ui.viewmodel.CryptoViewModel
-import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.ui.dashboard.MarketScannerViewModel
+import com.example.ui.viewmodel.SettingsViewModel
+import com.example.ui.viewmodel.PortfolioViewModel
+import com.example.ui.LocalIsRial
 
 @Composable
 fun PortfolioApp(
@@ -29,6 +31,7 @@ fun PortfolioApp(
     aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
     socialHubViewModel: com.example.ui.viewmodel.SocialHubViewModel,
     riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
+    settingsViewModel: SettingsViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
     pinManager: PinManager,
@@ -36,6 +39,8 @@ fun PortfolioApp(
     onImportRequested: () -> Unit
 ) {
     val navController = rememberNavController()
+    val currencyUnit by settingsViewModel.currencyUnit.collectAsState()
+    val isRial = currencyUnit == "RIAL"
 
     val bottomNavItems = listOf(
         BottomNavItem("خانه", Screen.Dashboard, Icons.Default.Dashboard),
@@ -45,47 +50,50 @@ fun PortfolioApp(
         BottomNavItem("هاب", Screen.SocialHub, Icons.Default.Groups)
     )
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                bottomNavItems.forEach { item ->
-                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                    NavigationBarItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                        selected = isSelected,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+    CompositionLocalProvider(LocalIsRial provides isRial) {
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
+                    bottomNavItems.forEach { item ->
+                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        NavigationBarItem(
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = { Text(item.label) },
+                            selected = isSelected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
+        ) { innerPadding ->
+            NavGraph(
+                navController = navController,
+                viewModel = viewModel,
+                cryptoViewModel = cryptoViewModel,
+                calculatorViewModel = calculatorViewModel,
+                aiAnalysisViewModel = aiAnalysisViewModel,
+                socialHubViewModel = socialHubViewModel,
+                riskAssessmentViewModel = riskAssessmentViewModel,
+                settingsViewModel = settingsViewModel,
+                marketScannerViewModel = marketScannerViewModel,
+                userPreferencesRepository = userPreferencesRepository,
+                biometricAuthManager = biometricAuthManager,
+                pinManager = pinManager,
+                onExportRequested = onExportRequested,
+                onImportRequested = onImportRequested,
+                modifier = Modifier.padding(innerPadding)
+            )
         }
-    ) { innerPadding ->
-        NavGraph(
-            navController = navController,
-            viewModel = viewModel,
-            cryptoViewModel = cryptoViewModel,
-            calculatorViewModel = calculatorViewModel,
-            aiAnalysisViewModel = aiAnalysisViewModel,
-            socialHubViewModel = socialHubViewModel,
-            riskAssessmentViewModel = riskAssessmentViewModel,
-            marketScannerViewModel = marketScannerViewModel,
-            userPreferencesRepository = userPreferencesRepository,
-            biometricAuthManager = biometricAuthManager,
-            pinManager = pinManager,
-            onExportRequested = onExportRequested,
-            onImportRequested = onImportRequested,
-            modifier = Modifier.padding(innerPadding)
-        )
     }
 }
 

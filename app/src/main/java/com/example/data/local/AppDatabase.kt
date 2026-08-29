@@ -35,9 +35,10 @@ import net.sqlcipher.database.SupportFactory
         RealEstateEntity::class,
         RiskProfileEntity::class,
         InvestmentRoadmapEntity::class,
-        SocialPostEntity::class
+        SocialPostEntity::class,
+        PortfolioSnapshotEntity::class
     ],
-    version = 14,
+    version = 16,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -58,6 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun vehicleDao(): VehicleDao
     abstract fun realEstateDao(): RealEstateDao
     abstract fun nexFinDao(): NexFinDao
+    abstract fun portfolioSnapshotDao(): PortfolioSnapshotDao
 
     companion object {
         @Volatile
@@ -144,10 +146,10 @@ abstract class AppDatabase : RoomDatabase() {
 
             if (marketDao.getMarketRateCount() == 0) {
                 val defaultRates = listOf(
-                    MarketRateEntity("USD", "دلار آمریکا", 61850.0, 0.65, isOfflineRate = true),
-                    MarketRateEntity("GOLD_18K", "طلا ۱۸ عیار (گرم)", 3685000.0, 1.45, isOfflineRate = true),
-                    MarketRateEntity("AZADI", "سکه امامی", 43100000.0, 0.8, isOfflineRate = true),
-                    MarketRateEntity("EUR", "یورو", 66550.0, 0.35, isOfflineRate = true)
+                    MarketRateEntity("USD", "دلار آمریکا", 61850.0, changePercent = 0.65, isOfflineRate = true),
+                    MarketRateEntity("GOLD_18K", "طلا ۱۸ عیار (گرم)", 3685000.0, changePercent = 1.45, isOfflineRate = true),
+                    MarketRateEntity("AZADI", "سکه امامی", 43100000.0, changePercent = 0.8, isOfflineRate = true),
+                    MarketRateEntity("EUR", "یورو", 66550.0, changePercent = 0.35, isOfflineRate = true)
                 )
                 marketDao.insertMarketRates(defaultRates)
             }

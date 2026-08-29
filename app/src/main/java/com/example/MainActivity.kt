@@ -92,6 +92,7 @@ class MainActivity : FragmentActivity() {
             bourseDao = database.bourseDao(),
             vehicleDao = database.vehicleDao(),
             realEstateDao = database.realEstateDao(),
+            snapshotDao = database.portfolioSnapshotDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
         val cryptoRepository = CryptoRepository(
@@ -128,6 +129,9 @@ class MainActivity : FragmentActivity() {
         val riskAssessmentFactory = com.example.ui.viewmodel.RiskAssessmentViewModelFactory(nexFinRepository)
         val riskAssessmentViewModel = ViewModelProvider(this, riskAssessmentFactory)[com.example.ui.viewmodel.RiskAssessmentViewModel::class.java]
 
+        val settingsFactory = com.example.ui.viewmodel.SettingsViewModelFactory(userPreferencesRepository)
+        val settingsViewModel = ViewModelProvider(this, settingsFactory)[com.example.ui.viewmodel.SettingsViewModel::class.java]
+
         val aiReportUseCase = GetCryptoAIReportUseCase(aiRepository)
         val marketScannerFactory = MarketScannerViewModelFactory(cryptoRepository, aiReportUseCase)
         val marketScannerViewModel = ViewModelProvider(this, marketScannerFactory)[MarketScannerViewModel::class.java]
@@ -148,6 +152,7 @@ class MainActivity : FragmentActivity() {
                         aiAnalysisViewModel = aiAnalysisViewModel,
                         socialHubViewModel = socialHubViewModel,
                         riskAssessmentViewModel = riskAssessmentViewModel,
+                        settingsViewModel = settingsViewModel,
                         userPreferencesRepository = userPreferencesRepository,
                         biometricAuthManager = biometricAuthManager,
                         pinManager = pinManager,

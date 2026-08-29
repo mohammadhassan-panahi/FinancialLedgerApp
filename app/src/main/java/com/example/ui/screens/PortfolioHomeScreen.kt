@@ -1,8 +1,6 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,26 +15,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.PortfolioAssetType
 import com.example.data.repository.HoldingSummary
-import com.example.ui.components.CryptoIcon
-import com.example.ui.components.DonutSlice
-import com.example.ui.components.PortfolioDonutChart
-import com.example.ui.components.SellAssetDialog
+import com.example.ui.LocalIsRial
+import com.example.domain.model.AllocationItem
+import com.example.domain.model.GoldPriceAnalysis
+import com.example.domain.model.PortfolioSummary
+import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
+import com.example.util.PersianDateUtils
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
+import java.util.Locale
 
 private val GoldColor = Color(0xFFF59E0B)
 private val UsdColor = Color(0xFF10B981)
 private val StockColor = Color(0xFF6366F1)
 private val CashColor = Color(0xFF8B5CF6)
 private val CryptoColor = Color(0xFFF43F5E)
+
+enum class PortfolioUnit { TOMAN, USD, GOLD }
 
 @Composable
 fun PortfolioHomeScreen(
@@ -57,228 +61,121 @@ fun PortfolioHomeScreen(
     onOpenSettings: () -> Unit = {}
 ) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
-    val totalRealizedPnl by viewModel.totalRealizedPnlRial.collectAsStateWithLifecycle()
-    val totalDebt by viewModel.totalDebtRial.collectAsStateWithLifecycle()
-    val totalCredit by viewModel.totalCreditRial.collectAsStateWithLifecycle()
+    val summary by viewModel.portfolioSummary.collectAsStateWithLifecycle()
+    val snapshots by viewModel.snapshots.collectAsStateWithLifecycle()
     val sellError by viewModel.sellError.collectAsStateWithLifecycle()
     
-    val totalValue = holdings.sumOf { it.currentValueRial }
-    val totalPaid = holdings.sumOf { it.totalPaidRial }
-    val totalPnl = totalValue - totalPaid
-    val totalPnlPercent = if (totalPaid > 0) (totalPnl / totalPaid) * 100.0 else 0.0
-    
-    val totalDailyChangeRial = holdings.sumOf { it.dailyChangeRial }
-    val totalDailyChangePercent = if (totalValue > 0) (totalDailyChangeRial / totalValue) * 100.0 else 0.0
-
-    val netWorth = totalValue + totalCredit - totalDebt
-
     var menuExpanded by remember { mutableStateOf(false) }
     var sellTarget by remember { mutableStateOf<HoldingSummary?>(null) }
+    var selectedUnit by remember { mutableStateOf(PortfolioUnit.TOMAN) }
 
-    Column(modifier = Modifier.fillMaxSize().background(DarkSlateSurface)) {
-        // --- Premium Header ---
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-                .background(
-                    Brush.verticalGradient(
-                        listOf(CredifyIndigo.copy(alpha = 0.8f), DarkSlateSurface)
-                    )
-                )
-                .padding(top = 24.dp, bottom = 40.dp, start = 20.dp, end = 20.dp)
-        ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "خوش آمدید 👋",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextSecondary
-                    )
-                    Row {
-                        IconButton(onClick = onTogglePrivacyMode) {
-                            Icon(
-                                if (isPrivacyModeEnabled) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = null,
-                                tint = TextPrimary
-                            )
-                        }
-                        Box {
-                            IconButton(onClick = { menuExpanded = true }) {
-                                Icon(Icons.Default.Menu, contentDescription = null, tint = TextPrimary)
-                            }
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false },
-                                modifier = Modifier.background(DarkSlateSecondary)
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("مدیریت بانک‌ها", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.AccountBalanceWallet, null, tint = CredifyIndigo) },
-                                    onClick = { menuExpanded = false; onOpenBankAccounts() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("بده و بستان", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.History, null, tint = CredifyViolet) },
-                                    onClick = { menuExpanded = false; onOpenDebtCredits() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("یادآورها", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.Notifications, null, tint = GoldAccent) },
-                                    onClick = { menuExpanded = false; onOpenReminders() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("هدف‌ها", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.Flag, null, tint = EmeraldProfit) },
-                                    onClick = { menuExpanded = false; onOpenGoals() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("صندوق‌های سرمایه‌گذاری", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.PieChart, null, tint = CredifySky) },
-                                    onClick = { menuExpanded = false; onOpenMutualFunds() }
-                                )
-                                HorizontalDivider(color = SlateBorder)
-                                DropdownMenuItem(
-                                    text = { Text("تحلیل هوشمند (AI)", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.AutoAwesome, null, tint = CredifyIndigo) },
-                                    onClick = { menuExpanded = false; onOpenAiAnalysis() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("اسکن فاکتور", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.DocumentScanner, null, tint = CredifyViolet) },
-                                    onClick = { menuExpanded = false; onOpenOcrScanner() }
-                                )
-                                HorizontalDivider(color = SlateBorder)
-                                DropdownMenuItem(
-                                    text = { Text("خروجی داده‌ها", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.CloudDownload, null, tint = TextSecondary) },
-                                    onClick = { menuExpanded = false; onExportRequested() }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("بازیابی داده‌ها", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.CloudUpload, null, tint = TextSecondary) },
-                                    onClick = { menuExpanded = false; onImportRequested() }
-                                )
-                                HorizontalDivider(color = SlateBorder)
-                                DropdownMenuItem(
-                                    text = { Text("تنظیمات و امنیت", color = TextPrimary) },
-                                    leadingIcon = { Icon(Icons.Default.Settings, null, tint = TextSecondary) },
-                                    onClick = { menuExpanded = false; onOpenSettings() }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("خالص دارایی (Net Worth)", color = TextSecondary, fontSize = 14.sp)
-                com.example.ui.components.PrivacyAwareAmountText(
-                    text = formatRial(netWorth),
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = TextPrimary
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = (if (totalDailyChangeRial >= 0) EmeraldProfit else RoseLoss).copy(alpha = 0.15f)
-                    ) {
-                        Text(
-                            text = formatPercentSigned(totalDailyChangePercent),
-                            color = if (totalDailyChangeRial >= 0) EmeraldProfit else RoseLoss,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "${if (totalDailyChangeRial >= 0) "+" else ""}${formatRial(totalDailyChangeRial)} امروز",
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-
+    Scaffold(
+        containerColor = DarkSlateSurface
+    ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().offset(y = (-20).dp),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // --- Welcome & Menu Header ---
+            item {
+                HeaderToolbar(
+                    isPrivacyModeEnabled = isPrivacyModeEnabled,
+                    onTogglePrivacyMode = onTogglePrivacyMode,
+                    onMenuClick = { menuExpanded = true },
+                    onOpenBankAccounts = onOpenBankAccounts,
+                    onOpenDebtCredits = onOpenDebtCredits,
+                    onOpenReminders = onOpenReminders,
+                    onOpenGoals = onOpenGoals,
+                    onOpenMutualFunds = onOpenMutualFunds,
+                    onOpenOcrScanner = onOpenOcrScanner,
+                    onOpenSettings = onOpenSettings,
+                    onExportRequested = onExportRequested,
+                    onImportRequested = onImportRequested,
+                    menuExpanded = menuExpanded,
+                    onMenuDismiss = { menuExpanded = false }
+                )
+            }
+
+            // --- Hero Dashboard Card ---
+            item {
+                summary?.let { 
+                    PortfolioHeroCard(
+                        summary = it,
+                        selectedUnit = selectedUnit,
+                        onUnitChange = { selectedUnit = it }
+                    )
+                } ?: SkeletonHeroCard()
+            }
+
+            // --- Quick Action Grid ---
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     QuickActionCard("افزودن دارایی", Icons.Default.Add, CryptoColor, Modifier.weight(1f), onOpenAddPurchase)
                     QuickActionCard("ماشین‌حساب", Icons.Default.Calculate, CredifyIndigo, Modifier.weight(1f), onOpenCalculators)
-                    QuickActionCard("پشتیبان‌گیری", Icons.Default.Backup, CredifyViolet, Modifier.weight(1f), onExportRequested)
+                    QuickActionCard("تحلیل هوشمند", Icons.Default.AutoAwesome, CredifyViolet, Modifier.weight(1f), onOpenAiAnalysis)
                 }
             }
 
+            // --- Insights Section ---
             item {
-                Text(
-                    "ترکیب دارایی‌ها",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
-                    shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(0.5.dp, SlateBorderLight)
-                ) {
-                    PortfolioDonutChart(
-                        slices = listOf(
-                            DonutSlice("طلا", holdings.filter { it.assetType == PortfolioAssetType.GOLD }.sumOf { it.currentValueRial }, GoldColor),
-                            DonutSlice("دلار", holdings.filter { it.assetType == PortfolioAssetType.USD }.sumOf { it.currentValueRial }, UsdColor),
-                            DonutSlice("سهام", holdings.filter { it.assetType == PortfolioAssetType.STOCK }.sumOf { it.currentValueRial }, StockColor),
-                            DonutSlice("نقد", holdings.filter { it.assetType == PortfolioAssetType.CASH }.sumOf { it.currentValueRial }, CashColor),
-                            DonutSlice("کریپتو", holdings.filter { it.assetType == PortfolioAssetType.CRYPTO }.sumOf { it.currentValueRial }, CryptoColor),
-                            DonutSlice("ملک", holdings.filter { it.assetType == PortfolioAssetType.REAL_ESTATE }.sumOf { it.currentValueRial }, Color(0xFFF97316)),
-                            DonutSlice("خودرو", holdings.filter { it.assetType == PortfolioAssetType.VEHICLE }.sumOf { it.currentValueRial }, Color(0xFF6B7280))
-                        ),
-                        modifier = Modifier.padding(20.dp)
-                    )
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        "دارایی‌های من",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    TextButton(onClick = { /* View All logic */ }) {
-                        Text("مشاهده همه", color = CredifyIndigo, fontSize = 12.sp)
+                summary?.let {
+                    if (it.insights.isNotEmpty()) {
+                        InsightsSection(it.insights)
                     }
                 }
             }
 
-            if (holdings.isEmpty()) {
-                item {
-                    EmptyHoldingsCard()
+            // --- Insights / Best & Worst ---
+            item {
+                summary?.let {
+                    if (holdings.isNotEmpty()) {
+                        PerformanceInsights(it)
+                    }
                 }
+            }
+
+            // --- Asset Allocation ---
+            item {
+                summary?.let {
+                    if (holdings.isNotEmpty()) {
+                        AllocationSection(it)
+                    }
+                }
+            }
+
+            // --- Gold Driver Analysis ---
+            item {
+                summary?.goldAnalysis?.let {
+                    GoldAnalysisCard(it)
+                }
+            }
+
+            // --- Performance Benchmark ---
+            item {
+                if (snapshots.isNotEmpty()) {
+                    val points = snapshots.map {
+                        BenchmarkPoint(
+                            date = PersianDateUtils.formatJalaliDate(java.util.Date(it.timestamp)),
+                            portfolioValue = it.totalValueRial,
+                            goldValue = it.goldPriceRial,
+                            usdValue = it.usdPriceRial
+                        )
+                    }
+                    BenchmarkPerformanceChart(points = points, modifier = Modifier.padding(horizontal = 20.dp))
+                }
+            }
+
+            // --- Holdings List ---
+            item {
+                SectionHeader("دارایی‌های من", onActionClick = { /* View All */ })
+            }
+
+            if (holdings.isEmpty()) {
+                item { EmptyHoldingsCard() }
             } else {
                 items(holdings) { holding ->
                     HoldingCardPremium(holding, onSellClick = { sellTarget = holding })
@@ -307,9 +204,295 @@ fun PortfolioHomeScreen(
 }
 
 @Composable
+fun HeaderToolbar(
+    isPrivacyModeEnabled: Boolean,
+    onTogglePrivacyMode: () -> Unit,
+    onMenuClick: () -> Unit,
+    onOpenBankAccounts: () -> Unit,
+    onOpenDebtCredits: () -> Unit,
+    onOpenReminders: () -> Unit,
+    onOpenGoals: () -> Unit,
+    onOpenMutualFunds: () -> Unit,
+    onOpenOcrScanner: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onExportRequested: () -> Unit,
+    onImportRequested: () -> Unit,
+    menuExpanded: Boolean,
+    onMenuDismiss: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("نمای کلی سرمایه", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Row {
+            IconButton(onClick = onTogglePrivacyMode) {
+                Icon(if (isPrivacyModeEnabled) Icons.Default.VisibilityOff else Icons.Default.Visibility, null, tint = TextSecondary)
+            }
+            Box {
+                IconButton(onClick = onMenuClick) {
+                    Icon(Icons.Default.MoreVert, null, tint = TextSecondary)
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = onMenuDismiss,
+                    modifier = Modifier.background(DarkSlateSecondary)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("مدیریت بانک‌ها", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.AccountBalanceWallet, null, tint = CredifyIndigo) },
+                        onClick = { onMenuDismiss(); onOpenBankAccounts() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("بده و بستان", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.History, null, tint = CredifyViolet) },
+                        onClick = { onMenuDismiss(); onOpenDebtCredits() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("یادآورها", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.Notifications, null, tint = GoldAccent) },
+                        onClick = { onMenuDismiss(); onOpenReminders() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("هدف‌ها", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.Flag, null, tint = EmeraldProfit) },
+                        onClick = { onMenuDismiss(); onOpenGoals() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("صندوق‌ها", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.PieChart, null, tint = CredifySky) },
+                        onClick = { onMenuDismiss(); onOpenMutualFunds() }
+                    )
+                    HorizontalDivider(color = SlateBorder)
+                    DropdownMenuItem(
+                        text = { Text("اسکن فاکتور", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.DocumentScanner, null, tint = CredifyViolet) },
+                        onClick = { onMenuDismiss(); onOpenOcrScanner() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("پشتیبان‌گیری", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.CloudDownload, null, tint = TextSecondary) },
+                        onClick = { onMenuDismiss(); onExportRequested() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("بازیابی", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.CloudUpload, null, tint = TextSecondary) },
+                        onClick = { onMenuDismiss(); onImportRequested() }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("تنظیمات", color = TextPrimary) },
+                        leadingIcon = { Icon(Icons.Default.Settings, null, tint = TextSecondary) },
+                        onClick = { onMenuDismiss(); onOpenSettings() }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PortfolioHeroCard(
+    summary: PortfolioSummary,
+    selectedUnit: PortfolioUnit,
+    onUnitChange: (PortfolioUnit) -> Unit
+) {
+    val isRial = LocalIsRial.current
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+        border = BorderStroke(0.5.dp, SlateBorderLight)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text(if (isRial) "ارزش کل (ریال)" else "ارزش کل پورتفو", color = TextSecondary, fontSize = 13.sp)
+                    val displayValue = when(selectedUnit) {
+                        PortfolioUnit.TOMAN -> formatRial(summary.totalValueRial, isRial = isRial)
+                        PortfolioUnit.USD -> "$${String.format(Locale.US, "%.2f", summary.totalValueRial / summary.usdRateRial)}"
+                        PortfolioUnit.GOLD -> "${String.format(Locale.US, "%.3f", summary.totalValueRial / summary.gold18kPriceRial)} گرم طلا"
+                    }
+                    Text(displayValue, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = TextPrimary)
+                }
+                UnitToggle(selectedUnit, onUnitChange)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                InfoItem("سود/زیان امروز", summary.todayProfitLossRial, summary.todayProfitLossPercent)
+                VerticalDivider(modifier = Modifier.height(40.dp), color = SlateBorderLight)
+                InfoItem("سود/زیان کل", summary.totalProfitLossRial, summary.totalProfitLossPercent)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            HorizontalDivider(color = SlateBorderLight)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(14.dp), tint = TextMuted)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "آخرین بروزرسانی: ${PersianDateUtils.formatRelativeTime(summary.lastUpdated)}",
+                    fontSize = 11.sp,
+                    color = TextMuted
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(summary.marketStatus, fontSize = 11.sp, color = if (summary.todayProfitLossRial >= 0) EmeraldProfit else RoseLoss)
+            }
+        }
+    }
+}
+
+@Composable
+fun UnitToggle(selectedUnit: PortfolioUnit, onUnitChange: (PortfolioUnit) -> Unit) {
+    val isRial = LocalIsRial.current
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = DarkSlateTertiary,
+        modifier = Modifier.height(36.dp)
+    ) {
+        Row(modifier = Modifier.padding(4.dp)) {
+            UnitButton(if (isRial) "ریال" else "تومان", selectedUnit == PortfolioUnit.TOMAN) { onUnitChange(PortfolioUnit.TOMAN) }
+            UnitButton("USD", selectedUnit == PortfolioUnit.USD) { onUnitChange(PortfolioUnit.USD) }
+            UnitButton("طلا", selectedUnit == PortfolioUnit.GOLD) { onUnitChange(PortfolioUnit.GOLD) }
+        }
+    }
+}
+
+@Composable
+fun UnitButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isSelected) CredifyIndigo else Color.Transparent)
+            .clickable { onClick() }
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, color = if (isSelected) Color.White else TextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun InfoItem(label: String, value: Double, percent: Double) {
+    val isRial = LocalIsRial.current
+    Column {
+        Text(label, color = TextSecondary, fontSize = 12.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                formatRial(value, isRial = isRial),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = if (value >= 0) EmeraldProfit else RoseLoss
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                formatPercentSigned(percent),
+                fontSize = 11.sp,
+                color = if (percent >= 0) EmeraldProfit else RoseLoss
+            )
+        }
+    }
+}
+
+@Composable
+fun PerformanceInsights(summary: PortfolioSummary) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        summary.bestPerformer?.let { 
+            PerformanceCard("🏆 بهترین امروز", it, EmeraldProfit, Modifier.weight(1f))
+        }
+        summary.worstPerformer?.let {
+            PerformanceCard("📉 ضعیف‌ترین امروز", it, RoseLoss, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+fun PerformanceCard(title: String, holding: HoldingSummary, color: Color, modifier: Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+        border = BorderStroke(0.5.dp, SlateBorderLight)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(title, fontSize = 10.sp, color = TextSecondary)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(holding.assetName, fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp, maxLines = 1)
+            Text(formatPercentSigned(holding.dailyChangePercent), color = color, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+        }
+    }
+}
+
+@Composable
+fun AllocationSection(summary: PortfolioSummary) {
+    var mode by remember { mutableIntStateOf(0) } // 0: By Asset, 1: By Type
+    
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("ترکیب دارایی‌ها", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+            TabRow(
+                selectedTabIndex = mode,
+                containerColor = Color.Transparent,
+                contentColor = CredifyIndigo,
+                divider = {},
+                indicator = {},
+                modifier = Modifier.width(160.dp).height(32.dp)
+            ) {
+                Tab(selected = mode == 0, onClick = { mode = 0 }, text = { Text("دارایی", fontSize = 10.sp) })
+                Tab(selected = mode == 1, onClick = { mode = 1 }, text = { Text("نوع", fontSize = 10.sp) })
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+            shape = RoundedCornerShape(24.dp),
+            border = BorderStroke(0.5.dp, SlateBorderLight)
+        ) {
+            val allocation = if (mode == 0) summary.allocationByAsset else summary.allocationByType
+            PortfolioDonutChart(
+                slices = allocation.mapIndexed { idx, it -> 
+                    DonutSlice(it.label, it.valueRial, getAllocationColor(idx)) 
+                },
+                modifier = Modifier.padding(20.dp)
+            )
+        }
+    }
+}
+
+fun getAllocationColor(index: Int): Color {
+    val colors = listOf(CredifyIndigo, CredifyViolet, GoldColor, UsdColor, CryptoColor, CredifySky, Color(0xFFF97316), Color(0xFF6B7280))
+    return colors[index % colors.size]
+}
+
+@Composable
+fun SectionHeader(title: String, onActionClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+        TextButton(onClick = onActionClick) {
+            Text("مشاهده همه", color = CredifyIndigo, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+fun SkeletonHeroCard() {
+    Box(modifier = Modifier.fillMaxWidth().height(200.dp).padding(20.dp).clip(RoundedCornerShape(32.dp)).background(DarkSlateSecondary))
+}
+
+@Composable
 fun QuickActionCard(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     color: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -335,13 +518,14 @@ fun QuickActionCard(
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(title, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Text(title, color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
 
 @Composable
 fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
+    val isRial = LocalIsRial.current
     val icon = when (holding.assetType) {
         PortfolioAssetType.GOLD -> Icons.Default.BrightnessLow
         PortfolioAssetType.USD -> Icons.Default.MonetizationOn
@@ -364,7 +548,7 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
         border = BorderStroke(0.5.dp, SlateBorderLight)
@@ -399,8 +583,8 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
             }
             
             Column(horizontalAlignment = Alignment.End) {
-                com.example.ui.components.PrivacyAwareAmountText(
-                    text = formatRial(holding.currentValueRial),
+                Text(
+                    text = formatRial(holding.currentValueRial, isRial = isRial),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -417,9 +601,84 @@ fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
 }
 
 @Composable
+fun InsightsSection(insights: List<String>) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Text("مهم‌ترین اتفاقات پورتفو", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextPrimary)
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+            shape = RoundedCornerShape(24.dp),
+            border = BorderStroke(0.5.dp, SlateBorderLight)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                insights.forEach { insight ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(if (insight.contains("⚠️")) RoseLoss else CredifySky))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(insight, fontSize = 11.sp, color = TextSecondary, lineHeight = 18.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GoldAnalysisCard(analysis: GoldPriceAnalysis) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+        border = BorderStroke(0.5.dp, SlateBorderLight)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text("چرا قیمت طلا امروز تغییر کرد؟", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                DriverItem("طلای جهانی", analysis.globalGoldChangePercent)
+                DriverItem("دلار آمریکا", analysis.usdChangePercent)
+                DriverItem("طلای ۱۸ عیار", analysis.localGoldChangePercent)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = SlateBorderLight)
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            val message = if (analysis.primaryDriver == "GLOBAL_GOLD") {
+                "رشد طلا بیشتر تحت تأثیر افزایش قیمت جهانی بوده است."
+            } else {
+                "بخش مهمی از تغییرات طلا ناشی از نوسانات دلار بوده است."
+            }
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, null, tint = GoldColor, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(message, fontSize = 11.sp, color = TextSecondary, lineHeight = 18.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun DriverItem(label: String, percent: Double) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, fontSize = 10.sp, color = TextMuted)
+        Text(
+            formatPercentSigned(percent),
+            fontWeight = FontWeight.Bold,
+            color = if (percent >= 0) EmeraldProfit else RoseLoss,
+            fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
 fun EmptyHoldingsCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary.copy(alpha = 0.5f)),
         border = BorderStroke(1.dp, SlateBorder.copy(alpha = 0.5f))
@@ -430,17 +689,8 @@ fun EmptyHoldingsCard() {
         ) {
             Icon(Icons.Default.AccountBalanceWallet, null, modifier = Modifier.size(48.dp), tint = TextMuted)
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                "هنوز دارایی ثبت نکرده‌اید",
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                "از منوی افزودن برای ثبت اولین خرید خود استفاده کنید.",
-                color = TextSecondary,
-                fontSize = 12.sp,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+            Text("هنوز دارایی ثبت نکرده‌اید", color = TextPrimary, fontWeight = FontWeight.Bold)
+            Text("از منوی افزودن برای ثبت اولین خرید خود استفاده کنید.", color = TextSecondary, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }

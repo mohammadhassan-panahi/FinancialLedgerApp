@@ -38,6 +38,7 @@ class PriceAlertWorker(
             bourseDao = database.bourseDao(),
             vehicleDao = database.vehicleDao(),
             realEstateDao = database.realEstateDao(),
+            snapshotDao = database.portfolioSnapshotDao(),
             apiKey = apiKey
         )
 
@@ -53,7 +54,7 @@ class PriceAlertWorker(
             triggered.forEach { alert ->
                 sendNotification(
                     title = "هشدار قیمت: ${alert.assetName}",
-                    message = "قیمت به ${formatRial(alert.targetPriceRial)} رسید."
+                    message = "قیمت به ${formatRial(alert.targetPriceRial, isRial = false)} رسید."
                 )
             }
             Result.success()

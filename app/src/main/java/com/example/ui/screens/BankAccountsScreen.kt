@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.BankAccountEntity
+import com.example.ui.LocalIsRial
 import com.example.ui.components.NotebookCard
 import com.example.ui.components.PersianNumberTextField
 import com.example.ui.viewmodel.PortfolioViewModel
@@ -85,6 +86,7 @@ fun BankAccountsScreen(
 
 @Composable
 private fun AccountCard(account: BankAccountEntity, onDelete: () -> Unit) {
+    val isRial = LocalIsRial.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -114,7 +116,7 @@ private fun AccountCard(account: BankAccountEntity, onDelete: () -> Unit) {
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(formatRial(account.currentBalance * 10), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(formatRial(account.currentBalance * 10, isRial = isRial), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 IconButton(onClick = onDelete) {
                     Icon(Icons.Default.Delete, contentDescription = "حذف", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
                 }

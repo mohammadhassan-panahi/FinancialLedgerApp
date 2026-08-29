@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crypto.analysis.AnalysisSignal
 import com.example.ui.components.CryptoIcon
+import com.example.util.PersianNumberUtils
 import kotlinx.coroutines.launch
 
 import java.util.Locale
@@ -30,7 +31,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarketScannerScreen(
-    viewModel: MarketScannerViewModel
+    viewModel: MarketScannerViewModel,
+    usdRateToman: Double = 65000.0
 ) {
     val opportunities by viewModel.opportunities.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -100,6 +102,7 @@ fun MarketScannerScreen(
                             Box(modifier = Modifier.weight(1f)) {
                                 OpportunityCard(
                                     opportunity = opportunity,
+                                    usdRateToman = usdRateToman,
                                     onWhyClick = { viewModel.selectOpportunity(opportunity) }
                                 )
                             }
@@ -122,6 +125,7 @@ fun MarketScannerScreen(
         ) {
             AiReportContent(
                 opportunity = selectedOp,
+                usdRateToman = usdRateToman,
                 isLoading = aiLoading,
                 onDeepAnalysisRequested = { selectedOp?.let { viewModel.fetchAiDeepAnalysis(it) } }
             )
@@ -133,6 +137,7 @@ fun MarketScannerScreen(
 @Composable
 fun OpportunityCard(
     opportunity: CryptoOpportunity,
+    usdRateToman: Double,
     onWhyClick: () -> Unit
 ) {
     val asset = opportunity.asset
@@ -172,6 +177,13 @@ fun OpportunityCard(
                     Text(
                         text = "$${String.format(Locale.US, "%,.2f", asset.priceUsd ?: 0.0)}",
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
+                    Text(
+                        text = PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان",
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold
                     )
                     val change = asset.percentChange24h ?: 0.0
@@ -287,6 +299,7 @@ fun SignalBadge(signal: AnalysisSignal) {
 @Composable
 fun AiReportContent(
     opportunity: CryptoOpportunity?,
+    usdRateToman: Double,
     isLoading: Boolean,
     onDeepAnalysisRequested: () -> Unit
 ) {
@@ -297,13 +310,30 @@ fun AiReportContent(
             .fillMaxWidth()
             .padding(24.dp)
     ) {
-        Text(
-            text = "تحلیل هوشمند برای ${opportunity.asset.symbol}",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = opportunity.asset.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                val priceToman = (opportunity.asset.priceUsd ?: 0.0) * usdRateToman
+                Text(
+                    text = PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Text(
+                text = "$${String.format(Locale.US, "%,.2f", opportunity.asset.priceUsd ?: 0.0)}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
         
         Spacer(modifier = Modifier.height(16.dp))
         

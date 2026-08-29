@@ -17,6 +17,8 @@ data class MarketRateEntity(
     val assetCode: String, // e.g. "USD", "EUR", "GOLD_18K", "AZADI"
     val name: String,
     val priceToman: Double,
+    val priceGlobal: Double = 0.0,
+    val currency: String = "تومان",
     val changePercent: Double,
     val updatedAt: Long = System.currentTimeMillis(),
     val isOfflineRate: Boolean = false

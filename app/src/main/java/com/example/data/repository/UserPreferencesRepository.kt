@@ -16,6 +16,16 @@ class UserPreferencesRepository(private val context: Context) {
     companion object {
         private val IS_ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("is_onboarding_completed")
         private val IS_PRIVACY_MODE_ENABLED_KEY = booleanPreferencesKey("is_privacy_mode_enabled")
+        private val CURRENCY_UNIT_KEY = androidx.datastore.preferences.core.stringPreferencesKey("currency_unit")
+    }
+
+    val currencyUnit: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[CURRENCY_UNIT_KEY] ?: "TOMAN" }
+
+    suspend fun setCurrencyUnit(unit: String) {
+        context.dataStore.edit { preferences ->
+            preferences[CURRENCY_UNIT_KEY] = unit
+        }
     }
 
     val isOnboardingCompleted: Flow<Boolean> = context.dataStore.data

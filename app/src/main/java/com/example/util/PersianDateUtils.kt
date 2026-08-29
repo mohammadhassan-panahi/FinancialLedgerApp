@@ -88,4 +88,20 @@ object PersianDateUtils {
         val j = toJalali(date)
         return PersianNumberUtils.toPersianDigits("${j.dayOfMonth} ${j.monthName} ${j.year}")
     }
+
+    /** e.g. "۲ دقیقه پیش" */
+    fun formatRelativeTime(timestamp: Long): String {
+        val now = System.currentTimeMillis()
+        val diff = (now - timestamp).coerceAtLeast(0)
+        val minutes = diff / (1000 * 60)
+        val hours = minutes / 60
+        val days = hours / 24
+
+        return when {
+            minutes < 1 -> "همین الان"
+            minutes < 60 -> PersianNumberUtils.toPersianDigits("$minutes دقیقه پیش")
+            hours < 24 -> PersianNumberUtils.toPersianDigits("$hours ساعت پیش")
+            else -> PersianNumberUtils.toPersianDigits("$days روز پیش")
+        }
+    }
 }

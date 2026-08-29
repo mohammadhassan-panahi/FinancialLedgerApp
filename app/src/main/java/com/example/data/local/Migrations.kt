@@ -330,8 +330,36 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
     }
 }
 
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `portfolio_snapshots` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `timestamp` INTEGER NOT NULL,
+                `totalValueRial` REAL NOT NULL,
+                `totalProfitLossRial` REAL NOT NULL,
+                `goldPriceRial` REAL NOT NULL,
+                `usdPriceRial` REAL NOT NULL,
+                `stockIndexValue` REAL NOT NULL,
+                `allocationByAssetJson` TEXT NOT NULL,
+                `allocationByTypeJson` TEXT NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `market_rates` ADD COLUMN `priceGlobal` REAL NOT NULL DEFAULT 0.0")
+        db.execSQL("ALTER TABLE `market_rates` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'تومان'")
+    }
+}
+
 /** All migrations in order — pass this whole array to `.addMigrations(...)`. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
-    MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14
+    MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
+    MIGRATION_14_15, MIGRATION_15_16
 )

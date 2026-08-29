@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.AssetPurchaseEntity
 import com.example.data.local.PortfolioAssetType
+import com.example.ui.LocalIsRial
 import com.example.ui.theme.*
 import com.example.ui.components.CryptoIcon
 import com.example.ui.components.PersianNumberTextField
@@ -44,6 +45,7 @@ import com.example.util.formatRial
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
+    val isRial = LocalIsRial.current
     var assetType by remember { mutableStateOf(PortfolioAssetType.GOLD) }
     var assetCode by remember { mutableStateOf("GOLD_18K") }
     var assetName by remember { mutableStateOf("طلا ۱۸ عیار (گرم)") }
@@ -51,19 +53,32 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
     var unitPrice by remember { mutableStateOf("") }
 
     val purchases by viewModel.purchases.collectAsStateWithLifecycle()
-    val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
+    val allMarketRates by viewModel.marketRates.collectAsStateWithLifecycle()
     val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle()
     val mutualFunds by viewModel.mutualFunds.collectAsStateWithLifecycle()
     val vehicles by viewModel.vehicles.collectAsStateWithLifecycle()
     val realEstates by viewModel.realEstates.collectAsStateWithLifecycle()
     
+    // Consistent with GoldDollarScreen: prefer live rates over seeded offline ones
+    val hasLiveRates = allMarketRates.any { !it.isOfflineRate }
+    val marketRates = if (hasLiveRates) allMarketRates.filter { !it.isOfflineRate } else allMarketRates
+
     val usdRateToman = marketRates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0
     val rialPerToman = 10.0
 
     fun updateUnitPriceFromMarket() {
         val livePriceRial = when (assetType) {
-            PortfolioAssetType.GOLD -> marketRates.find { it.assetCode == assetCode }?.priceToman?.let { it * rialPerToman }
-            PortfolioAssetType.USD -> marketRates.find { it.assetCode == assetCode }?.priceToman?.let { it * rialPerToman }
+            PortfolioAssetType.GOLD -> {
+                // Try exact code, then look for "GOLD" or "طلا" in code/name for robustness
+                val rate = marketRates.find { it.assetCode == assetCode } 
+                    ?: marketRates.find { it.assetCode.contains("GOLD") || it.name.contains("طلا") }
+                rate?.priceToman?.let { it * rialPerToman }
+            }
+            PortfolioAssetType.USD -> {
+                val rate = marketRates.find { it.assetCode == assetCode }
+                    ?: marketRates.find { it.assetCode == "USD" }
+                rate?.priceToman?.let { it * rialPerToman }
+            }
             PortfolioAssetType.CRYPTO -> cryptoAssets.find { it.symbol == assetCode }?.priceUsd?.let { it * usdRateToman * rialPerToman }
             PortfolioAssetType.FUND -> mutualFunds.find { it.id == assetCode }?.navToman?.let { it * rialPerToman }
             PortfolioAssetType.STOCK -> null // Tsetmc doesn't easily map to purchase screen without a search
@@ -235,7 +250,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("مجموع کل:", color = TextSecondary)
-                                Text(formatRial(q * p), fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text(formatRial(q * p, isRial = isRial), fontWeight = FontWeight.Bold, color = TextPrimary)
                             }
                         }
 
@@ -293,6 +308,7 @@ fun AddPurchaseScreen(viewModel: PortfolioViewModel) {
 
 @Composable
 private fun PurchaseRowPremium(purchase: AssetPurchaseEntity, onDelete: () -> Unit) {
+    val isRial = LocalIsRial.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -314,7 +330,7 @@ private fun PurchaseRowPremium(purchase: AssetPurchaseEntity, onDelete: () -> Un
                 Column {
                     Text(purchase.assetName, fontWeight = FontWeight.Bold, color = TextPrimary)
                     Text(
-                        "${com.example.util.PersianNumberUtils.formatDecimal(purchase.quantity)} واحد - ${formatRial(purchase.unitPriceRial)}",
+                        "${com.example.util.PersianNumberUtils.formatDecimal(purchase.quantity)} واحد - ${formatRial(purchase.unitPriceRial, isRial = isRial)}",
                         color = TextSecondary,
                         fontSize = 11.sp
                     )

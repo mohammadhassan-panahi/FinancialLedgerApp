@@ -8,8 +8,10 @@ import com.example.data.local.AssetSaleEntity
 import com.example.data.local.BankAccountEntity
 import com.example.data.local.PortfolioAssetType
 import com.example.data.local.PriceAlertEntity
+import com.example.data.local.PortfolioSnapshotEntity
 import com.example.data.repository.HoldingSummary
 import com.example.data.repository.PortfolioRepository
+import com.example.domain.model.PortfolioSummary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +23,12 @@ import kotlinx.coroutines.launch
 class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
 
     val holdings: StateFlow<List<HoldingSummary>> = repository.holdings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val portfolioSummary: StateFlow<PortfolioSummary?> = repository.portfolioSummary
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val snapshots: StateFlow<List<PortfolioSnapshotEntity>> = repository.snapshots
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val bankAccounts: StateFlow<List<BankAccountEntity>> = repository.bankAccounts
@@ -100,6 +108,12 @@ class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
             val goldOk = repository.refreshGoldAndDollar()
             val indexOk = repository.refreshIndices()
             val stockOk = if (watchlistSymbols.isNotEmpty()) repository.refreshWatchlist(watchlistSymbols) else true
+            
+            // Capture a snapshot after a successful refresh
+            if (goldOk || indexOk || stockOk) {
+                repository.saveSnapshot()
+            }
+            
             _isOfflineMode.value = !goldOk && !indexOk && !stockOk
             _isRefreshing.value = false
         }

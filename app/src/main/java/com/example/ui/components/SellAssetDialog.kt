@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.data.repository.HoldingSummary
+import com.example.ui.LocalIsRial
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
 
@@ -31,8 +32,9 @@ fun SellAssetDialog(
     onDismiss: () -> Unit,
     onConfirm: (quantitySold: Double, saleUnitPriceRial: Double) -> Unit
 ) {
-    var quantityText by remember { mutableStateOf(formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2)) }
-    var priceText by remember { mutableStateOf(formatRial(holding.currentPriceRial, showSuffix = false)) }
+    val isRial = LocalIsRial.current
+    var quantityText by remember { mutableStateOf(formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2, isRial = isRial)) }
+    var priceText by remember { mutableStateOf(formatRial(holding.currentPriceRial, showSuffix = false, isRial = isRial)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -46,7 +48,7 @@ fun SellAssetDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     PrivacyAwareAmountText(
-                        text = formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2),
+                        text = formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2, isRial = isRial),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -60,7 +62,7 @@ fun SellAssetDialog(
                 OutlinedTextField(
                     value = priceText,
                     onValueChange = { priceText = it },
-                    label = { Text("قیمت واحد فروش (ریال)") },
+                    label = { Text("قیمت واحد فروش (${if (isRial) "ریال" else "تومان"})") },
                     modifier = Modifier.padding(top = 8.dp)
                 )
                 errorMessage?.let {

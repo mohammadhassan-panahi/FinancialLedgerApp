@@ -25,6 +25,13 @@ val TextPrimary = Color(0xFFF8FAFC)
 val TextSecondary = Color(0xFF94A3B8)
 val TextMuted = Color(0xFF64748B)
 
+// Shared Asset Colors
+val GoldColor = Color(0xFFF59E0B)
+val UsdColor = Color(0xFF10B981)
+val StockColor = Color(0xFF6366F1)
+val CashColor = Color(0xFF8B5CF6)
+val CryptoColor = Color(0xFFF43F5E)
+
 // Aliases for compatibility
 val AccentGold = GoldAccent
 val ProfitGreen = EmeraldProfit

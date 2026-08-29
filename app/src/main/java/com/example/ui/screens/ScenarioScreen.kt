@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.CalculationHistoryEntity
 import com.example.data.local.PortfolioAssetType
+import com.example.ui.LocalIsRial
 import com.example.data.repository.HoldingSummary
 import com.example.ui.components.HistoryAccordion
 import com.example.ui.components.NotebookCard
@@ -63,6 +64,7 @@ fun ScenarioScreen(
     onDeleteHistory: (Long) -> Unit,
     onClearHistory: () -> Unit
 ) {
+    val isRial = LocalIsRial.current
     val portfolioLegs = remember(holdings) {
         PortfolioAssetType.entries.mapNotNull { type ->
             val value = holdings.filter { it.assetType == type }.sumOf { it.currentValueRial }
@@ -182,7 +184,7 @@ fun ScenarioScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("ارزش فعلی سبد", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        PrivacyAwareAmountText(text = formatRial(result.currentValue))
+                        PrivacyAwareAmountText(text = formatRial(result.currentValue, isRial = isRial))
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
@@ -191,7 +193,7 @@ fun ScenarioScreen(
                     ) {
                         Text("ارزش سبد در این سناریو", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         PrivacyAwareAmountText(
-                            text = formatRial(result.simulatedValue),
+                            text = formatRial(result.simulatedValue, isRial = isRial),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -203,7 +205,7 @@ fun ScenarioScreen(
                     ) {
                         Text("تغییر", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         PrivacyAwareAmountText(
-                            text = "${formatRial(result.changeAmount)} (${formatPercentSigned(result.changePercent)})",
+                            text = "${formatRial(result.changeAmount, isRial = isRial)} (${formatPercentSigned(result.changePercent)})",
                             color = if (positive) ProfitGreen else LossRed,
                             fontWeight = FontWeight.Bold
                         )
@@ -215,7 +217,7 @@ fun ScenarioScreen(
                                 CalculationHistoryEntity(
                                     sectionKey = "scenario",
                                     title = "سناریو: طلا ${goldPct.roundToInt()}٪ / دلار ${usdPct.roundToInt()}٪ / سهام ${stockPct.roundToInt()}٪",
-                                    summary = "ارزش سبد: ${formatRial(result.currentValue, showSuffix = false)} → ${formatRial(result.simulatedValue, showSuffix = false)} ریال (${formatPercentSigned(result.changePercent)})",
+                                    summary = "ارزش سبد: ${formatRial(result.currentValue, showSuffix = false, isRial = isRial)} → ${formatRial(result.simulatedValue, showSuffix = false, isRial = isRial)} ${if (isRial) "ریال" else "تومان"} (${formatPercentSigned(result.changePercent)})",
                                     paramsJson = "$manualMode|$goldManual|$usdManual|$stockManual|$goldPct|$usdPct|$stockPct"
                                 )
                             )

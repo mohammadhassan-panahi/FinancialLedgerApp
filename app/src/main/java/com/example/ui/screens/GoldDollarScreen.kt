@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.AlertDirection
 import com.example.data.local.MarketRateEntity
 import com.example.data.local.PriceAlertEntity
+import com.example.ui.LocalIsRial
 import com.example.ui.components.PriceAlertDialog
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
@@ -109,6 +110,7 @@ fun GoldDollarScreen(viewModel: PortfolioViewModel) {
 
 @Composable
 private fun RateCard(rate: MarketRateEntity, onSetAlert: () -> Unit) {
+    val isRial = LocalIsRial.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -123,7 +125,7 @@ private fun RateCard(rate: MarketRateEntity, onSetAlert: () -> Unit) {
             }
             Row {
                 Text(
-                    formatRial(rate.priceRial),
+                    formatRial(rate.priceRial, isRial = isRial),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(end = 4.dp)

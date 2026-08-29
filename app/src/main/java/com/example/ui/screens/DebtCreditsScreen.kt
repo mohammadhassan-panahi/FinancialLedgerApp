@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.DebtCreditEntity
 import com.example.data.local.DebtCreditType
+import com.example.ui.LocalIsRial
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.PortfolioViewModel
@@ -113,6 +114,7 @@ fun DebtCreditCard(
     onDelete: () -> Unit,
     onSettle: () -> Unit
 ) {
+    val isRial = LocalIsRial.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -127,7 +129,7 @@ fun DebtCreditCard(
                 )
             }
             Text(
-                formatRial(item.amountRial),
+                formatRial(item.amountRial, isRial = isRial),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (item.isSettled) Color.Gray else MaterialTheme.colorScheme.onSurface
             )

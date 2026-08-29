@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.MutualFundEntity
+import com.example.ui.LocalIsRial
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatPercentSigned
@@ -83,6 +84,7 @@ fun MutualFundsScreen(
 
 @Composable
 fun FundCard(fund: MutualFundEntity) {
+    val isRial = LocalIsRial.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -125,7 +127,7 @@ fun FundCard(fund: MutualFundEntity) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("قیمت صدور (NAV)", color = TextSecondary, fontSize = 12.sp)
-                    Text(formatRial(fund.navToman * 10), fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(formatRial(fund.navToman * 10, isRial = isRial), fontWeight = FontWeight.Bold, color = TextPrimary)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("بازدهی ماهانه", color = TextSecondary, fontSize = 12.sp)

@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.LocalIsRial
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
 
@@ -39,6 +40,7 @@ data class DonutSlice(val label: String, val valueRial: Double, val color: Color
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PortfolioDonutChart(slices: List<DonutSlice>, modifier: Modifier = Modifier) {
+    val isRial = LocalIsRial.current
     val total = slices.sumOf { it.valueRial }
     if (total <= 0) {
         Box(
@@ -71,13 +73,13 @@ fun PortfolioDonutChart(slices: List<DonutSlice>, modifier: Modifier = Modifier)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = formatRial(total, showSuffix = false),
+                    text = formatRial(total, showSuffix = false, isRial = isRial),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "ریال",
+                    text = if (isRial) "ریال" else "تومان",
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

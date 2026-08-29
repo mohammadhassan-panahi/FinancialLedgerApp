@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.MarketIndexEntity
 import com.example.data.local.PriceAlertEntity
 import com.example.data.local.StockSymbolEntity
+import com.example.ui.LocalIsRial
 import com.example.ui.components.PriceAlertDialog
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
@@ -205,6 +206,7 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
 
 @Composable
 fun IpoListDialog(ipos: List<com.example.data.local.IpoEntity>, onDismiss: () -> Unit) {
+    val isRial = LocalIsRial.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("عرضه‌های اولیه جدید", fontWeight = FontWeight.Bold) },
@@ -226,7 +228,7 @@ fun IpoListDialog(ipos: List<com.example.data.local.IpoEntity>, onDismiss: () ->
                                 Text(ipo.companyName, color = TextSecondary, fontSize = 12.sp)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text("تاریخ: ${ipo.ipoDate}", fontSize = 11.sp, color = TextPrimary)
-                                Text("نقدینگی مورد نیاز: ${formatRial(ipo.requiredLiquidityRial)}", fontSize = 11.sp, color = GoldAccent)
+                                Text("نقدینگی مورد نیاز: ${formatRial(ipo.requiredLiquidityRial, isRial = isRial)}", fontSize = 11.sp, color = GoldAccent)
                             }
                         }
                     }
@@ -349,6 +351,7 @@ fun InsightItem(label: String, value: String, color: Color) {
 
 @Composable
 fun MainIndexHero(index: MarketIndexEntity) {
+    val isRial = LocalIsRial.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -364,7 +367,7 @@ fun MainIndexHero(index: MarketIndexEntity) {
                 Column {
                     Text("شاخص کل بورس", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
                     Text(
-                        formatRial(index.value, showSuffix = false),
+                        formatRial(index.value, showSuffix = false, isRial = isRial),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White
@@ -389,6 +392,7 @@ fun MainIndexHero(index: MarketIndexEntity) {
 
 @Composable
 fun MiniIndexCard(index: MarketIndexEntity) {
+    val isRial = LocalIsRial.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -403,7 +407,7 @@ fun MiniIndexCard(index: MarketIndexEntity) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    formatRial(index.value, showSuffix = false),
+                    formatRial(index.value, showSuffix = false, isRial = isRial),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -420,6 +424,7 @@ fun MiniIndexCard(index: MarketIndexEntity) {
 
 @Composable
 private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemove: () -> Unit) {
+    val isRial = LocalIsRial.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
             Row(
@@ -434,7 +439,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (symbol.lastPriceRial > 0.0) {
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                            Text(formatRial(symbol.lastPriceRial), fontWeight = FontWeight.Bold)
+                            Text(formatRial(symbol.lastPriceRial, isRial = isRial), fontWeight = FontWeight.Bold)
                             Text(
                                 formatPercentSigned(symbol.changePercent),
                                 color = if (symbol.changePercent >= 0) EmeraldProfit else RoseLoss
@@ -463,7 +468,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                     Column {
                         Text("قیمت خرید", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            if (symbol.buyPriceRial > 0.0) formatRial(symbol.buyPriceRial) else "—",
+                            if (symbol.buyPriceRial > 0.0) formatRial(symbol.buyPriceRial, isRial = isRial) else "—",
                             style = MaterialTheme.typography.labelMedium,
                             color = EmeraldProfit
                         )
@@ -471,7 +476,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                     Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
                         Text("قیمت فروش", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            if (symbol.sellPriceRial > 0.0) formatRial(symbol.sellPriceRial) else "—",
+                            if (symbol.sellPriceRial > 0.0) formatRial(symbol.sellPriceRial, isRial = isRial) else "—",
                             style = MaterialTheme.typography.labelMedium,
                             color = RoseLoss
                         )
