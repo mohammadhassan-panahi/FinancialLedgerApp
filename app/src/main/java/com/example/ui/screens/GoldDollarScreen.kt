@@ -48,7 +48,11 @@ fun GoldDollarScreen(viewModel: PortfolioViewModel) {
     // seed "GOLD_18K" vs live "IR_GOLD_18K") so the same asset doesn't show twice with two
     // different, conflicting prices.
     val hasLiveRates = allRates.any { !it.isOfflineRate }
-    val rates = if (hasLiveRates) allRates.filter { !it.isOfflineRate } else allRates
+    // Only show Toman-denominated rows as price cards here — the global gold ounce row
+    // (currency != "تومان") is kept in market_rates for the gold-analysis calculation
+    // elsewhere, but has no meaningful priceToman and would render as a bogus "۰ تومان" card.
+    val rates = (if (hasLiveRates) allRates.filter { !it.isOfflineRate } else allRates)
+        .filter { it.isOfflineRate || it.currency == "تومان" }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
