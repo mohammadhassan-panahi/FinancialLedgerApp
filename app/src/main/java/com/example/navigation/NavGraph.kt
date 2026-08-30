@@ -2,6 +2,7 @@ package com.example.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,7 +18,7 @@ import com.example.security.PinManager
 import com.example.ui.dashboard.DashboardScreen
 import com.example.ui.dashboard.MarketScannerScreen
 import com.example.ui.dashboard.MarketScannerViewModel
-import com.example.ui.social.SocialHubScreen
+import com.example.ui.screens.news.NewsHubScreen
 import com.example.ui.tools.ToolsScreen
 import com.example.ui.viewmodel.CryptoViewModel
 
@@ -26,8 +27,8 @@ object Screen {
     const val Dashboard = "dashboard"
     const val Market = "market"
     const val Portfolio = "portfolio"
+    const val NewsHub = "news_hub"
     const val AiMentor = "ai_mentor"
-    const val SocialHub = "social_hub"
     const val Tools = "tools"
     const val MarketScanner = "market_scanner"
     const val RiskAssessment = "risk_assessment"
@@ -55,9 +56,9 @@ fun NavGraph(
     cryptoViewModel: CryptoViewModel,
     calculatorViewModel: com.example.ui.viewmodel.CalculatorViewModel,
     aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
-    socialHubViewModel: com.example.ui.viewmodel.SocialHubViewModel,
     riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
     settingsViewModel: com.example.ui.viewmodel.SettingsViewModel,
+    newsViewModel: com.example.ui.viewmodel.NewsViewModel,
     marketScannerViewModel: MarketScannerViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
@@ -107,8 +108,8 @@ fun NavGraph(
             )
         }
 
-        composable(Screen.SocialHub) {
-            SocialHubScreen(viewModel = socialHubViewModel)
+        composable(Screen.NewsHub) {
+            NewsHubScreen(viewModel = newsViewModel)
         }
 
         composable(Screen.Tools) {

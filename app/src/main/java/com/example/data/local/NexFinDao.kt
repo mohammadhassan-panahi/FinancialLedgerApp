@@ -19,14 +19,4 @@ interface NexFinDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveRoadmap(roadmap: InvestmentRoadmapEntity)
-
-    // Social Posts
-    @Query("SELECT * FROM social_posts ORDER BY timestamp DESC")
-    fun getSocialFeed(): Flow<List<SocialPostEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPost(post: SocialPostEntity)
-
-    @Query("DELETE FROM social_posts")
-    suspend fun clearSocialCache()
 }

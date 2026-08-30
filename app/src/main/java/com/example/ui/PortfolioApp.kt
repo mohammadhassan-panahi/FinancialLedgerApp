@@ -29,9 +29,9 @@ fun PortfolioApp(
     marketScannerViewModel: MarketScannerViewModel,
     calculatorViewModel: com.example.ui.viewmodel.CalculatorViewModel,
     aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
-    socialHubViewModel: com.example.ui.viewmodel.SocialHubViewModel,
     riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
     settingsViewModel: SettingsViewModel,
+    newsViewModel: com.example.ui.viewmodel.NewsViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
     pinManager: PinManager,
@@ -46,8 +46,8 @@ fun PortfolioApp(
         BottomNavItem("خانه", Screen.Dashboard, Icons.Default.Dashboard),
         BottomNavItem("بازار", Screen.Market, Icons.Default.ShowChart),
         BottomNavItem("پورتفو", Screen.Portfolio, Icons.Default.PieChart),
-        BottomNavItem("ابزارها", Screen.Tools, Icons.Default.Build),
-        BottomNavItem("هاب", Screen.SocialHub, Icons.Default.Groups)
+        BottomNavItem("اخبار", Screen.NewsHub, Icons.Default.Newspaper),
+        BottomNavItem("ابزارها", Screen.Tools, Icons.Default.Build)
     )
 
     CompositionLocalProvider(LocalIsRial provides isRial) {
@@ -82,10 +82,10 @@ fun PortfolioApp(
                 cryptoViewModel = cryptoViewModel,
                 calculatorViewModel = calculatorViewModel,
                 aiAnalysisViewModel = aiAnalysisViewModel,
-                socialHubViewModel = socialHubViewModel,
-                riskAssessmentViewModel = riskAssessmentViewModel,
-                settingsViewModel = settingsViewModel,
-                marketScannerViewModel = marketScannerViewModel,
+            riskAssessmentViewModel = riskAssessmentViewModel,
+            settingsViewModel = settingsViewModel,
+            newsViewModel = newsViewModel,
+            marketScannerViewModel = marketScannerViewModel,
                 userPreferencesRepository = userPreferencesRepository,
                 biometricAuthManager = biometricAuthManager,
                 pinManager = pinManager,

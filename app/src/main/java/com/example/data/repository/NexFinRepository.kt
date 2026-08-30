@@ -24,23 +24,4 @@ class NexFinRepository(
         nexFinDao.saveRoadmap(InvestmentRoadmapEntity(title = "نقشه راه ${System.currentTimeMillis()}", roadmapJson = roadmapText))
         return roadmapText
     }
-
-    // Social Feed
-    val socialFeed: Flow<List<SocialPostEntity>> = nexFinDao.getSocialFeed()
-
-    suspend fun shareAnalysis(content: String, assetCode: String?, sentiment: String?) {
-        nexFinDao.insertPost(SocialPostEntity(authorName = "کاربر نکس‌فین", content = content, assetCode = assetCode, sentiment = sentiment))
-    }
-
-    suspend fun seedSampleSocialPosts() {
-        try {
-            val currentFeed = nexFinDao.getSocialFeed().first()
-            if (currentFeed.isEmpty()) {
-                nexFinDao.insertPost(SocialPostEntity(authorName = "علی صراف", content = "به نظرم طلا ۱۸ عیار نقطه ورود خوبی داره.", assetCode = "GOLD_18K", sentiment = "Bullish"))
-                nexFinDao.insertPost(SocialPostEntity(authorName = "سارا مهدوی", content = "شاخص کل بورس امروز مقاومت مهمی رو شکوند.", assetCode = "TSE_INDEX", sentiment = "Bullish"))
-            }
-        } catch (e: Exception) {
-            // Ignore
-        }
-    }
 }

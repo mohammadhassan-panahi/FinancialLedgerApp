@@ -38,6 +38,9 @@ android {
 
     // GEMINI_API_KEY: Google AI SDK API key (from Google AI Studio).
     buildConfigField("String", "GEMINI_API_KEY", "\"\"")
+
+    // NEWS_API_KEY: API key for News (CryptoPanic/NewsAPI).
+    buildConfigField("String", "NEWS_API_KEY", "\"\"")
   }
 
   signingConfigs {

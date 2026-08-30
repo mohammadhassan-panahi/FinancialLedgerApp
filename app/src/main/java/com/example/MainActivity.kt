@@ -123,9 +123,6 @@ class MainActivity : FragmentActivity() {
         val aiAnalysisFactory = com.example.ui.viewmodel.AiAnalysisViewModelFactory(aiRepository, repository)
         val aiAnalysisViewModel = ViewModelProvider(this, aiAnalysisFactory)[com.example.ui.viewmodel.AiAnalysisViewModel::class.java]
 
-        val socialHubFactory = com.example.ui.viewmodel.SocialHubViewModelFactory(nexFinRepository)
-        val socialHubViewModel = ViewModelProvider(this, socialHubFactory)[com.example.ui.viewmodel.SocialHubViewModel::class.java]
-
         val riskAssessmentFactory = com.example.ui.viewmodel.RiskAssessmentViewModelFactory(nexFinRepository)
         val riskAssessmentViewModel = ViewModelProvider(this, riskAssessmentFactory)[com.example.ui.viewmodel.RiskAssessmentViewModel::class.java]
 
@@ -135,6 +132,11 @@ class MainActivity : FragmentActivity() {
         val aiReportUseCase = GetCryptoAIReportUseCase(aiRepository)
         val marketScannerFactory = MarketScannerViewModelFactory(cryptoRepository, aiReportUseCase)
         val marketScannerViewModel = ViewModelProvider(this, marketScannerFactory)[MarketScannerViewModel::class.java]
+
+        val newsApiService = com.example.data.remote.NewsApiService.create()
+        val newsRepository = com.example.data.repository.NewsRepository(database.newsDao(), newsApiService, BuildConfig.NEWS_API_KEY)
+        val newsFactory = com.example.ui.viewmodel.NewsViewModelFactory(newsRepository)
+        val newsViewModel = ViewModelProvider(this, newsFactory)[com.example.ui.viewmodel.NewsViewModel::class.java]
 
         com.example.worker.PriceAlertScheduler.schedule(applicationContext)
 
@@ -150,9 +152,9 @@ class MainActivity : FragmentActivity() {
                         marketScannerViewModel = marketScannerViewModel,
                         calculatorViewModel = calculatorViewModel,
                         aiAnalysisViewModel = aiAnalysisViewModel,
-                        socialHubViewModel = socialHubViewModel,
                         riskAssessmentViewModel = riskAssessmentViewModel,
                         settingsViewModel = settingsViewModel,
+                        newsViewModel = newsViewModel,
                         userPreferencesRepository = userPreferencesRepository,
                         biometricAuthManager = biometricAuthManager,
                         pinManager = pinManager,

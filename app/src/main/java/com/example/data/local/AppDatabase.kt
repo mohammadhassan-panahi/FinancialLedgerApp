@@ -35,10 +35,10 @@ import net.sqlcipher.database.SupportFactory
         RealEstateEntity::class,
         RiskProfileEntity::class,
         InvestmentRoadmapEntity::class,
-        SocialPostEntity::class,
+        NewsEntity::class,
         PortfolioSnapshotEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -60,6 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun realEstateDao(): RealEstateDao
     abstract fun nexFinDao(): NexFinDao
     abstract fun portfolioSnapshotDao(): PortfolioSnapshotDao
+    abstract fun newsDao(): NewsDao
 
     companion object {
         @Volatile

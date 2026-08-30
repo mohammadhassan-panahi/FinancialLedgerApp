@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 class AiRepository(private val apiKey: String) {
 
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash",
+        modelName = "gemini-3.5-flash",
         apiKey = apiKey,
         systemInstruction = content { 
             text("You are an Expert Financial Mentor. Provide professional, actionable, and concise financial advice in Persian. Analyze the user's portfolio data and give insights on risk, diversification, and potential actions based on market trends.") 

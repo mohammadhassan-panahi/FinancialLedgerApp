@@ -29,19 +29,3 @@ data class InvestmentRoadmapEntity(
     val roadmapJson: String, // Full JSON description of the plan
     val createdAt: Long = System.currentTimeMillis()
 )
-
-/**
- * Local cache for social feed posts (community analysis).
- */
-@JsonClass(generateAdapter = true)
-@Entity(tableName = "social_posts")
-data class SocialPostEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val authorName: String,
-    val content: String,
-    val assetCode: String? = null,
-    val sentiment: String? = null, // "Bullish", "Bearish"
-    val likesCount: Int = 0,
-    val timestamp: Long = System.currentTimeMillis()
-)
