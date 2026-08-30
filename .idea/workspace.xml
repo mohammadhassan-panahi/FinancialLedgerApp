@@ -11,11 +11,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b1516b4c-618a-4e67-845a-22cf41644b2f" name="Changes" comment="update and fixing bug">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/AiRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/AiRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/NewsRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/NewsRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/news/NewsHubScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/news/NewsHubScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/NewsViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/NewsViewModel.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -313,7 +308,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788049307320</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="update and fixing bug">
+      <option name="closed" value="true" />
+      <created>1788108336451</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1788108336451</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
