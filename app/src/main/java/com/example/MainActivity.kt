@@ -134,7 +134,14 @@ class MainActivity : FragmentActivity() {
         val marketScannerViewModel = ViewModelProvider(this, marketScannerFactory)[MarketScannerViewModel::class.java]
 
         val newsApiService = com.example.data.remote.NewsApiService.create()
-        val newsRepository = com.example.data.repository.NewsRepository(database.newsDao(), newsApiService, BuildConfig.NEWS_API_KEY)
+        val iranEconomyRssService = com.example.data.remote.IranEconomyRssService()
+        val newsRepository = com.example.data.repository.NewsRepository(
+            newsDao = database.newsDao(),
+            newsApiService = newsApiService,
+            apiKey = BuildConfig.NEWS_API_KEY,
+            aiRepository = aiRepository,
+            iranEconomyRssService = iranEconomyRssService
+        )
         val newsFactory = com.example.ui.viewmodel.NewsViewModelFactory(newsRepository)
         val newsViewModel = ViewModelProvider(this, newsFactory)[com.example.ui.viewmodel.NewsViewModel::class.java]
 

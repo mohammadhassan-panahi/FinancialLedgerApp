@@ -13,10 +13,10 @@ import kotlinx.coroutines.launch
 
 class NewsViewModel(private val repository: NewsRepository) : ViewModel() {
 
-    val cryptoNews = repository.getNews("CRYPTO")
+    val cryptoNews = repository.getNews(NewsRepository.CATEGORY_CRYPTO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val economyNews = repository.getNews("ECONOMY")
+    val iranEconomyNews = repository.getNews(NewsRepository.CATEGORY_IRAN_ECONOMY)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -26,7 +26,7 @@ class NewsViewModel(private val repository: NewsRepository) : ViewModel() {
         viewModelScope.launch {
             _isRefreshing.value = true
             repository.refreshCryptoNews()
-            // TODO: Add economy news refresh when API available
+            repository.refreshIranEconomyNews()
             _isRefreshing.value = false
         }
     }

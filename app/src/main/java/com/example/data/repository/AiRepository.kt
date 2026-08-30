@@ -90,4 +90,28 @@ class AiRepository(private val apiKey: String) {
             "خطا در اسکن فاکتور: ${e.message}"
         }
     }
+
+    /**
+     * Translates a batch of (English) news headlines into Persian in a single call.
+     * Uses a stateless generateContent call (not the shared chat session) so this doesn't
+     * pollute the AI-mentor conversation history. On any failure, or if the model's response
+     * doesn't parse back into the same number of lines, the ORIGINAL headlines are returned
+     * unchanged rather than guessing — never fabricates a translation it isn't sure of.
+     */
+    suspend fun translateHeadlinesToPersian(headlines: List<String>): List<String> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank() || headlines.isEmpty()) return@withContext headlines
+        try {
+            val numbered = headlines.mapIndexed { i, h -> "${i + 1}. $h" }.joinToString("\n")
+            val prompt = "Translate the following cryptocurrency news headlines into fluent, natural Persian (Farsi). " +
+                "Reply with ONLY the numbered translations, same numbering, one per line, no extra commentary:\n\n$numbered"
+            val response = generativeModel.generateContent(content { text(prompt) })
+            val text = response.text ?: return@withContext headlines
+            val lineRegex = Regex("""^\s*\d+[.)]\s*(.+)$""")
+            val translated = text.lines()
+                .mapNotNull { line -> lineRegex.find(line)?.groupValues?.get(1)?.trim() }
+            if (translated.size == headlines.size) translated else headlines
+        } catch (e: Exception) {
+            headlines
+        }
+    }
 }

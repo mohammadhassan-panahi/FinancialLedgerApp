@@ -31,14 +31,14 @@ import com.example.util.PersianDateUtils
 @Composable
 fun NewsHubScreen(viewModel: NewsViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("کریپتو", "اقتصاد")
-    
+    val tabs = listOf("اخبار ایران", "اخبار کریپتو")
+
+    val iranEconomyNews by viewModel.iranEconomyNews.collectAsStateWithLifecycle()
     val cryptoNews by viewModel.cryptoNews.collectAsStateWithLifecycle()
-    val economyNews by viewModel.economyNews.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        if (cryptoNews.isEmpty()) {
+        if (cryptoNews.isEmpty() && iranEconomyNews.isEmpty()) {
             viewModel.refreshNews()
         }
     }
@@ -81,7 +81,7 @@ fun NewsHubScreen(viewModel: NewsViewModel) {
             }
         }
     ) { padding ->
-        val newsList = if (selectedTab == 0) cryptoNews else economyNews
+        val newsList = if (selectedTab == 0) iranEconomyNews else cryptoNews
 
         if (newsList.isEmpty() && isRefreshing) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -138,7 +138,22 @@ fun NewsCard(news: NewsEntity) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (news.aiSummary != null) {
+                if (news.category == "CRYPTO") {
+                    Surface(
+                        color = CredifyIndigo.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "ترجمه‌شده با هوش مصنوعی — عنوان اصلی: ${news.description ?: news.title}",
+                            modifier = Modifier.padding(10.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            lineHeight = 18.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                } else if (news.aiSummary != null) {
                     Surface(
                         color = CredifyIndigo.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(12.dp)
