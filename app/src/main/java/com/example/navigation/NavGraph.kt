@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -15,16 +16,20 @@ import androidx.navigation.compose.composable
 import com.example.data.repository.UserPreferencesRepository
 import com.example.security.BiometricAuthManager
 import com.example.security.PinManager
-import com.example.ui.dashboard.DashboardScreen
+import com.example.ui.dashboard.DaraDashboardScreen
 import com.example.ui.dashboard.MarketScannerScreen
 import com.example.ui.dashboard.MarketScannerViewModel
 import com.example.ui.screens.news.NewsHubScreen
 import com.example.ui.tools.ToolsScreen
 import com.example.ui.viewmodel.CryptoViewModel
+import kotlinx.coroutines.launch
 
 /** Central registry of every route in the app. */
 object Screen {
+    const val Onboarding = "onboarding"
+    const val PinEntry = "pin_entry"
     const val Dashboard = "dashboard"
+    const val NewsDetail = "news_detail"
     const val Market = "market"
     const val Portfolio = "portfolio"
     const val NewsHub = "news_hub"
@@ -34,6 +39,14 @@ object Screen {
     const val RiskAssessment = "risk_assessment"
     const val InvestmentRoadmap = "investment_roadmap"
     const val InflationCalculator = "inflation_calculator"
+    const val ScenarioSimulator = "scenario_simulator"
+    const val FinancialHealth = "financial_health"
+    const val SmartAlerts = "smart_alerts"
+    const val GlobalSearch = "global_search"
+    const val AssetComparison = "asset_comparison"
+    const val PortfolioReport = "portfolio_report"
+    const val CryptoIntelligence = "crypto_intelligence"
+    const val AddAssetForm = "add_asset_form"
 
     // Previously unreachable screens — now wired in.
     const val AddPurchase = "add_purchase"
@@ -67,26 +80,116 @@ fun NavGraph(
     onImportRequested: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scope = rememberCoroutineScope()
     NavHost(
         navController = navController,
         startDestination = Screen.Dashboard,
         modifier = modifier
     ) {
+        composable(Screen.Onboarding) {
+            com.example.ui.screens.OnboardingScreen(
+                onFinishOnboarding = {
+                    scope.launch {
+                        userPreferencesRepository.setOnboardingCompleted(true)
+                        navController.navigate(Screen.Dashboard) {
+                            popUpTo(Screen.Onboarding) { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.PinEntry) {
+            com.example.ui.screens.PinEntryScreen(
+                biometricEnabled = pinManager.isBiometricEnabled(),
+                onVerifyPin = { pinManager.verifyPin(it) },
+                onUnlocked = {
+                    navController.navigate(Screen.Dashboard) {
+                        popUpTo(Screen.PinEntry) { inclusive = true }
+                    }
+                },
+                onBiometricRequested = {
+                    biometricAuthManager.authenticate(
+                        onSuccess = {
+                            navController.navigate(Screen.Dashboard) {
+                                popUpTo(Screen.PinEntry) { inclusive = true }
+                            }
+                        },
+                        onError = { /* Handle error */ }
+                    )
+                }
+            )
+        }
+
         composable(Screen.Dashboard) {
-            DashboardScreen(onNavigateToScanner = { navController.navigate(Screen.MarketScanner) })
+            DaraDashboardScreen(
+                viewModel = viewModel,
+                onNavigateToScanner = { navController.navigate(Screen.MarketScanner) },
+                onNavigateToMarket = { navController.navigate(Screen.Market) },
+                onNavigateToSearch = { navController.navigate(Screen.GlobalSearch) },
+                onNavigateToHealth = { navController.navigate(Screen.FinancialHealth) },
+                onNavigateToAlerts = { navController.navigate(Screen.SmartAlerts) }
+            )
+        }
+
+        composable(Screen.GlobalSearch) {
+            com.example.ui.screens.GlobalSearchScreen(
+                onBack = { navController.popBackStack() },
+                onAssetClick = { navController.navigate(Screen.Market) }
+            )
         }
 
         composable(Screen.Market) {
             com.example.ui.screens.MarketHubScreen(
                 portfolioViewModel = viewModel,
-                cryptoViewModel = cryptoViewModel
+                cryptoViewModel = cryptoViewModel,
+                onNavigateToIntelligence = { navController.navigate(Screen.CryptoIntelligence) }
+            )
+        }
+
+        composable(Screen.FinancialHealth) {
+            com.example.ui.screens.FinancialHealthScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToAi = { navController.navigate(Screen.AiMentor) },
+                onNavigateToSimulator = { navController.navigate(Screen.ScenarioSimulator) }
+            )
+        }
+
+        composable(Screen.ScenarioSimulator) {
+            com.example.ui.screens.ScenarioSimulatorScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.SmartAlerts) {
+            com.example.ui.screens.SmartAlertsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.AssetComparison) {
+            com.example.ui.screens.AssetComparisonScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.PortfolioReport) {
+            com.example.ui.screens.PortfolioReportScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.CryptoIntelligence) {
+            com.example.ui.screens.CryptoIntelligenceScreen(
+                onBack = { navController.popBackStack() },
+                onAssetClick = { /* Handle asset click */ }
             )
         }
 
         composable(Screen.Portfolio) {
             com.example.ui.screens.PortfolioHomeScreen(
                 viewModel = viewModel,
-                onExportRequested = onExportRequested,
+                onExportRequested = { navController.navigate(Screen.PortfolioReport) },
                 onImportRequested = onImportRequested,
                 onOpenCalculators = { navController.navigate(Screen.CalculatorsHub) },
                 onOpenBankAccounts = { navController.navigate(Screen.BankAccounts) },
@@ -109,7 +212,24 @@ fun NavGraph(
         }
 
         composable(Screen.NewsHub) {
-            NewsHubScreen(viewModel = newsViewModel)
+            NewsHubScreen(
+                viewModel = newsViewModel,
+                onNewsClick = { news ->
+                    newsViewModel.selectNews(news)
+                    navController.navigate(Screen.NewsDetail)
+                }
+            )
+        }
+
+        composable(Screen.NewsDetail) {
+            val news by newsViewModel.selectedNews.collectAsStateWithLifecycle()
+            news?.let {
+                com.example.ui.screens.news.NewsDetailScreen(
+                    news = it,
+                    onBack = { navController.popBackStack() },
+                    onChatWithAi = { navController.navigate(Screen.AiMentor) }
+                )
+            }
         }
 
         composable(Screen.Tools) {
@@ -117,7 +237,10 @@ fun NavGraph(
                 onOpenCalculators = { navController.navigate(Screen.CalculatorsHub) },
                 onOpenRiskAssessment = { navController.navigate(Screen.RiskAssessment) },
                 onOpenOcrScanner = { navController.navigate(Screen.OcrScanner) },
-                onOpenInvestmentRoadmap = { navController.navigate(Screen.InvestmentRoadmap) }
+                onOpenInvestmentRoadmap = { navController.navigate(Screen.InvestmentRoadmap) },
+                onOpenFinancialHealth = { navController.navigate(Screen.FinancialHealth) },
+                onOpenScenarioSimulator = { navController.navigate(Screen.ScenarioSimulator) },
+                onOpenAssetComparison = { navController.navigate(Screen.AssetComparison) }
             )
         }
 
@@ -149,7 +272,31 @@ fun NavGraph(
         }
 
         composable(Screen.AddPurchase) {
-            com.example.ui.screens.AddPurchaseScreen(viewModel = viewModel)
+            com.example.ui.screens.AddPurchaseScreen(
+                viewModel = viewModel,
+                onNextStep = { type ->
+                    navController.navigate("${Screen.AddAssetForm}/${type.name}")
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.AddAssetForm}/{assetType}",
+            arguments = listOf(androidx.navigation.navArgument("assetType") { type = androidx.navigation.NavType.StringType })
+        ) { backStackEntry ->
+            val typeStr = backStackEntry.arguments?.getString("assetType")
+            val assetType = try { com.example.data.local.PortfolioAssetType.valueOf(typeStr ?: "") } catch(e: Exception) { com.example.data.local.PortfolioAssetType.CASH }
+            
+            com.example.ui.screens.AddAssetFormScreen(
+                assetType = assetType,
+                onBack = { navController.popBackStack() },
+                onSubmit = { name, qty, price, date ->
+                    viewModel.addPurchase(assetType, name, name, qty, price, System.currentTimeMillis(), "Manual")
+                    navController.navigate(Screen.Portfolio) {
+                        popUpTo(Screen.Dashboard) { inclusive = false }
+                    }
+                }
+            )
         }
 
         composable(Screen.CalculatorsHub) {

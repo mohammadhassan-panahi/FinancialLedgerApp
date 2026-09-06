@@ -1,411 +1,208 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.local.CryptoAssetEntity
+import com.example.data.local.MarketRateEntity
+import com.example.data.local.MutualFundEntity
+import com.example.data.repository.HoldingSummary
+import com.example.ui.components.DaraGlassCard
+import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.CalculatorViewModel
-
-data class CalculatorItemInfo(
-    val title: String,
-    val description: String,
-    val category: String,
-    val icon: ImageVector,
-    val iconBgColor: Color
-)
+import com.example.util.PersianNumberUtils
 
 @Composable
 fun CalculatorsHubScreen(
     viewModel: CalculatorViewModel,
-    onBack: () -> Unit = {},
-    currencyUnit: String = "تومان",
-    defaultInflation: Double = 40.0,
-    defaultTax: Double = 0.0,
-    holdings: List<com.example.data.repository.HoldingSummary> = emptyList(),
-    marketRates: List<com.example.data.local.MarketRateEntity> = emptyList(),
-    cryptoAssets: List<com.example.data.local.CryptoAssetEntity> = emptyList()
+    onBack: () -> Unit,
+    holdings: List<HoldingSummary>,
+    marketRates: List<MarketRateEntity>,
+    cryptoAssets: List<CryptoAssetEntity>
 ) {
-    var activeCalculatorIndex by remember { mutableStateOf<Int?>(null) }
+    var goldWeight by remember { mutableStateOf("۴.۸۵۰") }
 
-    val calculatorsList = listOf(
-        CalculatorItemInfo(
-            title = "۱. سود ساده",
-            description = "محاسبه سود اصل سرمایه با نرخ ثابت سالانه بدون مرکب‌سازی",
-            category = "پایه",
-            icon = Icons.Default.Percent,
-            iconBgColor = Color(0xFF2563EB)
-        ),
-        CalculatorItemInfo(
-            title = "۲. سود مرکب",
-            description = "محاسبه اثر مرکب‌سازی سود، سرمایه‌گذاری مجدد و رشد آتی",
-            category = "رشد",
-            icon = Icons.Default.TrendingUp,
-            iconBgColor = Color(0xFF059669)
-        ),
-        CalculatorItemInfo(
-            title = "۳. وام و اقساط",
-            description = "محاسبه مبلغ قسط ماهانه، سود کل پرداختی و جدول اقساط",
-            category = "تسهیلات",
-            icon = Icons.Default.Calculate,
-            iconBgColor = Color(0xFFD97706)
-        ),
-        CalculatorItemInfo(
-            title = "۴. سپرده بانکی",
-            description = "محاسبه سود روزشمار/ماهیانه سپرده بانکی و کسر تورم",
-            category = "بانکی",
-            icon = Icons.Default.AccountBalance,
-            iconBgColor = Color(0xFF7C3AED)
-        ),
-        CalculatorItemInfo(
-            title = "۵. تورم و قدرت خرید",
-            description = "ارزیابی افت ارزش پول ملی و محاسبه قدرت خرید در سال‌های آینده",
-            category = "اقتصادی",
-            icon = Icons.Default.PriceChange,
-            iconBgColor = Color(0xFFDC2626)
-        ),
-        CalculatorItemInfo(
-            title = "۶. سود طلا و ارز",
-            description = "محاسبه حباب سکه/طلا، سود معاملات و نوسانات ارز",
-            category = "بازار",
-            icon = Icons.Default.MonetizationOn,
-            iconBgColor = Color(0xFFCA8A04)
-        ),
-        CalculatorItemInfo(
-            title = "۷. مقایسه گزینه‌ها",
-            description = "مقایسه همزمان و تحلیل بازدهی واقعی ۳ سناریوی مختلف",
-            category = "تحلیلی",
-            icon = Icons.Default.CompareArrows,
-            iconBgColor = Color(0xFF0891B2)
-        ),
-        CalculatorItemInfo(
-            title = "۸. حباب سکه و طلا",
-            description = "مقایسه قیمت بازار با ارزش ذاتی بر مبنای انس جهانی و دلار — کی خرید منطقیه؟",
-            category = "بازار",
-            icon = Icons.Default.QueryStats,
-            iconBgColor = Color(0xFFB45309)
-        ),
-        CalculatorItemInfo(
-            title = "۹. اجرت و مالیات طلا",
-            description = "قیمت تمام‌شده طلای نو و دست‌دوم بر اساس فرمول اتحادیه طلا",
-            category = "بازار",
-            icon = Icons.Default.Paid,
-            iconBgColor = Color(0xFF15803D)
-        ),
-        CalculatorItemInfo(
-            title = "۱۰. اگر آن روز می‌خریدی",
-            description = "محاسبه سود فرضی: اگر فلان تاریخ سرمایه‌ات را خرج فلان دارایی می‌کردی",
-            category = "تحلیلی",
-            icon = Icons.Default.History,
-            iconBgColor = Color(0xFF7E22CE)
-        ),
-        CalculatorItemInfo(
-            title = "۱۱. شبیه‌ساز سناریو",
-            description = "اگر دلار یا طلا رشد/ریزد، ارزش سبد تو چقدر می‌شود؟ (متصل به سبد واقعی)",
-            category = "تحلیلی",
-            icon = Icons.Default.DeviceThermostat,
-            iconBgColor = Color(0xFFBE123C)
-        )
-    )
-
-    if (activeCalculatorIndex == null) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkSlateSurface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            CalculatorHeader(onBack = onBack)
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Back navigation to Home
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "بازگشت",
-                        tint = TextPrimary
-                    )
+            // Context Intro
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Surface(color = ObsidianSlate800.copy(alpha = 0.6f), shape = CircleShape) {
+                        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Box(modifier = Modifier.size(6.dp).background(EmeraldCore, CircleShape))
+                            Text("محاسبات بلادرنگ و تبدیل هوشمند", style = DaraTypography.labelSmall, color = Slate400)
+                        }
+                    }
+                    Text("جعبه ابزار مالی دارا", style = DaraTypography.headlineLarge, color = Slate50, fontWeight = FontWeight.Bold)
                 }
-                Text(
-                    text = "بازگشت",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = TextPrimary,
-                    modifier = Modifier.clickable { onBack() }
+            }
+
+            // Primary Tool: Gold Calculator
+            item {
+                GoldCalculatorCard(
+                    weight = goldWeight,
+                    onWeightChange = { goldWeight = it }
                 )
             }
 
-            // Header Banner
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
-                border = BorderStroke(0.5.dp, SlateBorderLight)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = CredifyIndigo.copy(alpha = 0.1f),
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Calculate,
-                                contentDescription = null,
-                                tint = CredifyIndigo,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = "ابزارهای هوشمند مالی",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "محاسبات دقیق بازار در دستان شما",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
+            // Other Tools Grid
+            item {
+                Text("ابزارهای محاسباتی هوشمند", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    SecondaryToolCard(title = "مبدل ارزها", desc = "دلار، یورو و درهم", icon = Icons.Default.CurrencyExchange, color = EmeraldCore, modifier = Modifier.weight(1f))
+                    SecondaryToolCard(title = "رمزارز به تومان", desc = "تتر و بیت‌کوین", icon = Icons.Default.CurrencyBitcoin, color = IndigoElectric, modifier = Modifier.weight(1f))
                 }
             }
 
-            // Grid
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 160.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                itemsIndexed(calculatorsList) { index, calc ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clickable { activeCalculatorIndex = index },
-                        shape = RoundedCornerShape(28.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
-                        border = BorderStroke(0.5.dp, SlateBorderLight)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(20.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = calc.iconBgColor.copy(alpha = 0.1f),
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(calc.icon, null, tint = calc.iconBgColor, modifier = Modifier.size(24.dp))
-                                }
+            // Bottom Banner: Compound Interest
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = ObsidianSlate800.copy(alpha = 0.6f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Box(modifier = Modifier.size(44.dp).background(EmeraldCore.copy(alpha = 0.1f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Percent, null, tint = EmeraldCore)
                             }
-                            
                             Column {
-                                Text(
-                                    text = calc.title,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = TextPrimary,
-                                    maxLines = 1
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = calc.category,
-                                    fontSize = 10.sp,
-                                    color = calc.iconBgColor,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text("سود سپرده مرکب", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                                Text("سود مؤثر سالانه ۳۱.۵٪", style = DaraTypography.labelSmall, color = Slate600)
                             }
                         }
+                        Icon(Icons.Default.ChevronLeft, null, tint = Slate600)
                     }
+                }
+            }
+            
+            item { Spacer(modifier = Modifier.height(100.dp)) }
+        }
+    }
+}
+
+@Composable
+fun CalculatorHeader(onBack: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+        color = ObsidianSlate900.copy(alpha = 0.8f)
+    ) {
+        Row(
+            modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Slate50)
+                }
+                Column {
+                    Text("دارا Toolkit", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                    Text("موتور محاسباتی هوشمند", style = DaraTypography.labelSmall, color = IndigoElectric)
+                }
+            }
+            IconButton(onClick = { }) {
+                Icon(Icons.Default.Notifications, null, tint = Slate400)
+            }
+        }
+    }
+}
+
+@Composable
+fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit) {
+    DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(modifier = Modifier.size(40.dp).background(RefinedAmberGold.copy(alpha = 0.1f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.MonetizationOn, null, tint = RefinedAmberGold)
+                }
+                Column {
+                    Text("ماشین‌حساب پیشرفته طلا", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                    Text("محاسبه حباب، مظنه و مالیات", style = DaraTypography.labelSmall, color = Slate400)
+                }
+            }
+            
+            PersianNumberTextField(
+                value = weight,
+                onValueChange = onWeightChange,
+                label = "وزن طلا (گرم)",
+                isDecimalAllowed = true
+            )
+            
+            // Carat Grid
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("عیار و استاندارد طلا", style = DaraTypography.labelSmall, color = Slate600)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CaratChip(label = "۱۸ عیار", isSelected = true, modifier = Modifier.weight(1f))
+                    CaratChip(label = "۲۴ عیار", isSelected = false, modifier = Modifier.weight(1f))
+                }
+            }
+            
+            // Result
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = ObsidianSlate800.copy(alpha = 0.6f)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("ارزش تمام شده کل (تخمین)", style = DaraTypography.labelSmall, color = Slate400)
+                    Text("۲۳,۱۸۴,۰۰۰ تومان", style = DaraTypography.headlineSmall, color = Slate50, fontWeight = FontWeight.Black)
                 }
             }
         }
-    } else {
-        // Active Sub-Calculator View
-        Column(modifier = Modifier.fillMaxSize().background(DarkSlateSurface)) {
-            // Top Navigation Back Bar
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = DarkSlateSecondary
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { activeCalculatorIndex = null }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "بازگشت",
-                            tint = TextPrimary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "بازگشت به فهرست",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = TextPrimary,
-                        modifier = Modifier.clickable { activeCalculatorIndex = null }
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        text = calculatorsList.getOrNull(activeCalculatorIndex ?: 0)?.title ?: "",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = TextSecondary
-                    )
-                }
-            }
+    }
+}
 
-            Box(modifier = Modifier.weight(1f)) {
-                when (activeCalculatorIndex) {
-                    0 -> {
-                        val history by viewModel.getHistoryForSection("simple_interest").collectAsStateWithLifecycle(emptyList())
-                        SimpleInterestScreen(
-                            historyList = history,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("simple_interest") }
-                        )
-                    }
-                    1 -> {
-                        val history by viewModel.getHistoryForSection("compound").collectAsStateWithLifecycle(emptyList())
-                        CompoundInterestScreen(
-                            historyList = history,
-                            defaultInflation = defaultInflation,
-                            defaultTax = defaultTax,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("compound") }
-                        )
-                    }
-                    2 -> {
-                        val history by viewModel.getHistoryForSection("loan").collectAsStateWithLifecycle(emptyList())
-                        LoanCalculatorScreen(
-                            historyList = history,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("loan") }
-                        )
-                    }
-                    3 -> {
-                        val history by viewModel.getHistoryForSection("deposit").collectAsStateWithLifecycle(emptyList())
-                        BankDepositScreen(
-                            historyList = history,
-                            defaultInflation = defaultInflation,
-                            defaultTax = defaultTax,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("deposit") }
-                        )
-                    }
-                    4 -> {
-                        val history by viewModel.getHistoryForSection("inflation").collectAsStateWithLifecycle(emptyList())
-                        InflationScreen(
-                            historyList = history,
-                            defaultInflation = defaultInflation,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("inflation") }
-                        )
-                    }
-                    5 -> {
-                        val history by viewModel.getHistoryForSection("gold_fx").collectAsStateWithLifecycle(emptyList())
-                        GoldFxScreen(
-                            historyList = history,
-                            currencyUnit = currencyUnit,
-                            marketRates = marketRates,
-                            cryptoAssets = cryptoAssets,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("gold_fx") }
-                        )
-                    }
-                    6 -> {
-                        val history by viewModel.getHistoryForSection("comparison").collectAsStateWithLifecycle(emptyList())
-                        ComparisonScreen(
-                            historyList = history,
-                            defaultInflation = defaultInflation,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("comparison") }
-                        )
-                    }
-                    7 -> {
-                        val history by viewModel.getHistoryForSection("gold_bubble").collectAsStateWithLifecycle(emptyList())
-                        GoldBubbleScreen(
-                            historyList = history,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("gold_bubble") }
-                        )
-                    }
-                    8 -> {
-                        val history by viewModel.getHistoryForSection("gold_wage").collectAsStateWithLifecycle(emptyList())
-                        GoldWageScreen(
-                            historyList = history,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("gold_wage") }
-                        )
-                    }
-                    9 -> {
-                        val history by viewModel.getHistoryForSection("retrospective").collectAsStateWithLifecycle(emptyList())
-                        RetrospectiveScreen(
-                            historyList = history,
-                            currencyUnit = currencyUnit,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("retrospective") }
-                        )
-                    }
-                    10 -> {
-                        val history by viewModel.getHistoryForSection("scenario").collectAsStateWithLifecycle(emptyList())
-                        ScenarioScreen(
-                            holdings = holdings,
-                            historyList = history,
-                            onAddHistory = { viewModel.addHistory(it) },
-                            onDeleteHistory = { viewModel.deleteHistory(it) },
-                            onClearHistory = { viewModel.clearSectionHistory("scenario") }
-                        )
-                    }
-                }
+@Composable
+fun CaratChip(label: String, isSelected: Boolean, modifier: Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(10.dp),
+        color = if (isSelected) IndigoElectric.copy(alpha = 0.2f) else ObsidianSlate800,
+        border = BorderStroke(1.dp, if (isSelected) IndigoElectric else Color.Transparent)
+    ) {
+        Box(modifier = Modifier.padding(12.dp), contentAlignment = Alignment.Center) {
+            Text(label, style = DaraTypography.labelMedium, color = if (isSelected) IndigoElectric else Slate400, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun SecondaryToolCard(title: String, desc: String, icon: ImageVector, color: Color, modifier: Modifier) {
+    DaraGlassCard(modifier = modifier.height(140.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+            Column {
+                Text(title, style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(desc, style = DaraTypography.labelSmall, color = Slate600, maxLines = 1)
             }
         }
     }

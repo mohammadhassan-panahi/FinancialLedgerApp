@@ -1,36 +1,25 @@
 package com.example.ui.tools
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.DocumentScanner
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.ui.components.DaraGlassCard
+import com.example.ui.theme.*
 
 private data class ToolItem(
     val title: String,
@@ -40,38 +29,50 @@ private data class ToolItem(
     val onClick: () -> Unit
 )
 
-/**
- * Hub screen for the "ابزارها" (Tools) bottom-nav tab.
- * Replaces the old empty placeholder ("Tools Screen") with real entry points
- * to features that already existed in the codebase but had no way to be reached.
- */
 @Composable
 fun ToolsScreen(
     onOpenCalculators: () -> Unit,
     onOpenRiskAssessment: () -> Unit,
     onOpenOcrScanner: () -> Unit,
-    onOpenInvestmentRoadmap: () -> Unit
+    onOpenInvestmentRoadmap: () -> Unit,
+    onOpenFinancialHealth: () -> Unit = {},
+    onOpenScenarioSimulator: () -> Unit = {},
+    onOpenAssetComparison: () -> Unit = {}
 ) {
     val items = listOf(
         ToolItem(
-            "ماشین‌حساب‌های مالی",
-            "وام، سود مرکب، تورم، حباب طلا، اجرت، سناریو و بیشتر",
-            Icons.Default.Calculate,
-            Color(0xFF6366F1),
-            onOpenCalculators
+            "سلامت مالی (Health Score)",
+            "سنجش ریسک و تاب‌آوری سبد دارایی",
+            Icons.Default.Verified,
+            EmeraldCore,
+            onOpenFinancialHealth
         ),
         ToolItem(
-            "ارزیابی ریسک‌پذیری",
-            "شناخت پروفایل سرمایه‌گذاری شما",
-            Icons.Default.Psychology,
-            Color(0xFF10B981),
-            onOpenRiskAssessment
+            "شبیه‌ساز سناریو",
+            "اثر رویدادهای بازار بر ثروت شما",
+            Icons.Default.Insights,
+            IndigoElectric,
+            onOpenScenarioSimulator
+        ),
+        ToolItem(
+            "مقایسه پیشرفته",
+            "تحلیل رقابتی بازدهی و نوسان دارایی‌ها",
+            Icons.Default.Balance,
+            RefinedAmberGold,
+            onOpenAssetComparison
+        ),
+        ToolItem(
+            "ماشین‌حساب‌های مالی",
+            "حباب طلا، تورم، وام و محاسبات مرکب",
+            Icons.Default.Calculate,
+            IndigoElectric,
+            onOpenCalculators
         ),
         ToolItem(
             "اسکن هوشمند رسید",
             "استخراج خودکار جزئیات از فاکتور خرید",
             Icons.Default.DocumentScanner,
-            Color(0xFFF59E0B),
+            RefinedAmberGold,
             onOpenOcrScanner
         ),
         ToolItem(
@@ -83,56 +84,72 @@ fun ToolsScreen(
         )
     )
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text(
-                "ابزارها",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-        }
-        items(items) { tool ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { tool.onClick() },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+                color = ObsidianSlate900.copy(alpha = 0.8f)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .background(tool.color.copy(alpha = 0.15f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(imageVector = tool.icon, contentDescription = tool.title, tint = tool.color)
-                    }
-                    Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                        Text(tool.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            tool.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.ChevronLeft,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    "جعبه ابزار دارا",
+                    modifier = Modifier.padding(16.dp),
+                    style = DaraTypography.titleLarge,
+                    color = Slate50,
+                    fontWeight = FontWeight.Bold
+                )
             }
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(items) { tool ->
+                DaraToolCard(tool)
+            }
+            item { Spacer(modifier = Modifier.height(100.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun DaraToolCard(tool: ToolItem) {
+    Surface(
+        onClick = tool.onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = ObsidianSlate800.copy(alpha = 0.5f),
+        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.05f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(tool.color.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = tool.icon, contentDescription = tool.title, tint = tool.color)
+            }
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                Text(tool.title, style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(
+                    tool.subtitle,
+                    style = DaraTypography.labelSmall,
+                    color = Slate400,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronLeft,
+                contentDescription = null,
+                tint = Slate600
+            )
         }
     }
 }

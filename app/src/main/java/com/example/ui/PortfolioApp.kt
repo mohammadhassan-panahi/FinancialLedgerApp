@@ -1,13 +1,12 @@
 package com.example.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -20,7 +19,7 @@ import com.example.ui.viewmodel.CryptoViewModel
 import com.example.ui.dashboard.MarketScannerViewModel
 import com.example.ui.viewmodel.SettingsViewModel
 import com.example.ui.viewmodel.PortfolioViewModel
-import com.example.ui.LocalIsRial
+import com.example.ui.components.DaraBottomBar
 
 @Composable
 fun PortfolioApp(
@@ -42,50 +41,54 @@ fun PortfolioApp(
     val currencyUnit by settingsViewModel.currencyUnit.collectAsState()
     val isRial = currencyUnit == "RIAL"
 
-    val bottomNavItems = listOf(
-        BottomNavItem("خانه", Screen.Dashboard, Icons.Default.Dashboard),
-        BottomNavItem("بازار", Screen.Market, Icons.Default.ShowChart),
-        BottomNavItem("پورتفو", Screen.Portfolio, Icons.Default.PieChart),
-        BottomNavItem("اخبار", Screen.NewsHub, Icons.Default.Newspaper),
-        BottomNavItem("ابزارها", Screen.Tools, Icons.Default.Build)
-    )
+    val isOnboardingCompleted by userPreferencesRepository.isOnboardingCompleted.collectAsState(initial = null)
+    val pinSet = pinManager.isPinSet()
+    var isUnlocked by remember { mutableStateOf(!pinSet) }
+
+    LaunchedEffect(isOnboardingCompleted) {
+        if (isOnboardingCompleted == false) {
+            navController.navigate(Screen.Onboarding) {
+                popUpTo(0)
+            }
+        } else if (pinSet && !isUnlocked) {
+            navController.navigate(Screen.PinEntry) {
+                popUpTo(0)
+            }
+        }
+    }
 
     CompositionLocalProvider(LocalIsRial provides isRial) {
         Scaffold(
             bottomBar = {
-                NavigationBar {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
-                    bottomNavItems.forEach { item ->
-                        val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
-                            selected = isSelected,
-                            onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+                
+                DaraBottomBar(
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
                             }
-                        )
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                }
+                )
             }
         ) { innerPadding ->
+            // Use a Box to ensure the bottom bar doesn't overlap content poorly if needed,
+            // though Scaffold handles padding.
             NavGraph(
                 navController = navController,
                 viewModel = viewModel,
                 cryptoViewModel = cryptoViewModel,
                 calculatorViewModel = calculatorViewModel,
                 aiAnalysisViewModel = aiAnalysisViewModel,
-            riskAssessmentViewModel = riskAssessmentViewModel,
-            settingsViewModel = settingsViewModel,
-            newsViewModel = newsViewModel,
-            marketScannerViewModel = marketScannerViewModel,
+                riskAssessmentViewModel = riskAssessmentViewModel,
+                settingsViewModel = settingsViewModel,
+                newsViewModel = newsViewModel,
+                marketScannerViewModel = marketScannerViewModel,
                 userPreferencesRepository = userPreferencesRepository,
                 biometricAuthManager = biometricAuthManager,
                 pinManager = pinManager,
@@ -96,9 +99,3 @@ fun PortfolioApp(
         }
     }
 }
-
-private data class BottomNavItem(
-    val label: String,
-    val route: String,
-    val icon: ImageVector
-)

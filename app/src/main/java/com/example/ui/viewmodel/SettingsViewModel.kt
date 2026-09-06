@@ -14,9 +14,18 @@ class SettingsViewModel(private val repository: UserPreferencesRepository) : Vie
     val currencyUnit: StateFlow<String> = repository.currencyUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "TOMAN")
 
+    val isPrivacyModeEnabled: StateFlow<Boolean> = repository.isPrivacyModeEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     fun setCurrencyUnit(unit: String) {
         viewModelScope.launch {
             repository.setCurrencyUnit(unit)
+        }
+    }
+
+    fun setPrivacyModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.setPrivacyModeEnabled(enabled)
         }
     }
 }

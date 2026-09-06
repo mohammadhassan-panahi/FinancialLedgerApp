@@ -10,45 +10,88 @@ import com.example.R
 
 /**
  * Vazirmatn (https://github.com/rastikerdar/vazirmatn, OFL) as the app-wide Persian font.
- * SemiBold/ExtraBold/etc. fall back to Bold, Light falls back to Regular — Vazirmatn's
- * full weight range isn't bundled to keep the APK small.
  */
 val VazirmatnFontFamily = FontFamily(
     Font(R.font.vazirmatn_regular, FontWeight.Normal),
-    Font(R.font.vazirmatn_regular, FontWeight.Light),
-    Font(R.font.vazirmatn_regular, FontWeight.Thin),
     Font(R.font.vazirmatn_medium, FontWeight.Medium),
-    Font(R.font.vazirmatn_medium, FontWeight.SemiBold),
-    Font(R.font.vazirmatn_bold, FontWeight.Bold),
-    Font(R.font.vazirmatn_bold, FontWeight.ExtraBold),
-    Font(R.font.vazirmatn_bold, FontWeight.Black)
+    Font(R.font.vazirmatn_bold, FontWeight.Bold)
 )
 
-private val MaterialDefaults = Typography()
-
-/** Every Material text style uses Vazirmatn so mixed-system-font rendering never leaks through. */
-val Typography = MaterialDefaults.copy(
-    displayLarge = MaterialDefaults.displayLarge.copy(fontFamily = VazirmatnFontFamily),
-    displayMedium = MaterialDefaults.displayMedium.copy(fontFamily = VazirmatnFontFamily),
-    displaySmall = MaterialDefaults.displaySmall.copy(fontFamily = VazirmatnFontFamily),
-    headlineLarge = MaterialDefaults.headlineLarge.copy(fontFamily = VazirmatnFontFamily),
-    headlineMedium = MaterialDefaults.headlineMedium.copy(fontFamily = VazirmatnFontFamily),
-    headlineSmall = MaterialDefaults.headlineSmall.copy(fontFamily = VazirmatnFontFamily),
-    titleLarge = MaterialDefaults.titleLarge.copy(fontFamily = VazirmatnFontFamily),
-    titleMedium = MaterialDefaults.titleMedium.copy(fontFamily = VazirmatnFontFamily),
-    titleSmall = MaterialDefaults.titleSmall.copy(fontFamily = VazirmatnFontFamily),
-    bodyLarge = MaterialDefaults.bodyLarge.copy(fontFamily = VazirmatnFontFamily),
-    bodyMedium = MaterialDefaults.bodyMedium.copy(fontFamily = VazirmatnFontFamily),
-    bodySmall = MaterialDefaults.bodySmall.copy(fontFamily = VazirmatnFontFamily),
-    labelLarge = MaterialDefaults.labelLarge.copy(fontFamily = VazirmatnFontFamily),
-    labelMedium = MaterialDefaults.labelMedium.copy(fontFamily = VazirmatnFontFamily),
-    labelSmall = MaterialDefaults.labelSmall.copy(fontFamily = VazirmatnFontFamily)
-)
-
-/** For TextStyle() call sites outside MaterialTheme.typography (charts, custom components). */
-val VazirmatnBodyStyle = TextStyle(
-    fontFamily = VazirmatnFontFamily,
-    fontWeight = FontWeight.Normal,
-    fontSize = 16.sp,
-    lineHeight = 24.sp
+val DaraTypography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.ExtraBold, // 800
+        fontSize = 36.sp,
+        lineHeight = 48.sp,
+        letterSpacing = (-0.02).sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Bold, // 700
+        fontSize = 28.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-0.01).sp
+    ),
+    headlineLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = 34.sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold, // 600
+        fontSize = 20.sp,
+        lineHeight = 30.sp
+    ),
+    titleLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 18.sp,
+        lineHeight = 26.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Medium, // 500
+        fontSize = 16.sp,
+        lineHeight = 24.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 26.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 22.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 18.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.01.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = VazirmatnFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.02.sp
+    )
 )

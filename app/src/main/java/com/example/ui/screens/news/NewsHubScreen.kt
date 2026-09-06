@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -24,12 +25,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.data.local.NewsEntity
+import com.example.ui.components.DaraNewsRadarEmptyState
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.NewsViewModel
 import com.example.util.PersianDateUtils
 
 @Composable
-fun NewsHubScreen(viewModel: NewsViewModel) {
+fun NewsHubScreen(
+    viewModel: NewsViewModel,
+    onNewsClick: (NewsEntity) -> Unit = {}
+) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("اخبار ایران", "اخبار کریپتو")
 
@@ -44,28 +49,29 @@ fun NewsHubScreen(viewModel: NewsViewModel) {
     }
 
     Scaffold(
-        containerColor = DarkSlateSurface,
+        containerColor = ObsidianSlate900,
         topBar = {
-            Column(modifier = Modifier.background(DarkSlateSurface)) {
+            Column(modifier = Modifier.background(ObsidianSlate900).statusBarsPadding()) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("📰 پیشخوان اخبار", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("📰 پیشخوان اخبار", style = DaraTypography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate50)
                     IconButton(onClick = { viewModel.refreshNews() }, enabled = !isRefreshing) {
-                        Icon(Icons.Default.Refresh, null, tint = CredifyIndigo)
+                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = IndigoElectric)
+                        else Icon(Icons.Default.Refresh, null, tint = IndigoElectric)
                     }
                 }
                 TabRow(
                     selectedTabIndex = selectedTab,
                     containerColor = Color.Transparent,
-                    contentColor = CredifyIndigo,
+                    contentColor = IndigoElectric,
                     divider = {},
                     indicator = { tabPositions ->
                         TabRowDefaults.SecondaryIndicator(
                             Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                            color = CredifyIndigo,
+                            color = IndigoElectric,
                             height = 3.dp
                         )
                     }
@@ -74,7 +80,14 @@ fun NewsHubScreen(viewModel: NewsViewModel) {
                         Tab(
                             selected = selectedTab == index,
                             onClick = { selectedTab = index },
-                            text = { Text(title, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) }
+                            text = { 
+                                Text(
+                                    title, 
+                                    style = DaraTypography.labelLarge,
+                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (selectedTab == index) Slate50 else Slate400
+                                ) 
+                            }
                         )
                     }
                 }
@@ -84,13 +97,9 @@ fun NewsHubScreen(viewModel: NewsViewModel) {
         val newsList = if (selectedTab == 0) iranEconomyNews else cryptoNews
 
         if (newsList.isEmpty() && isRefreshing) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = CredifyIndigo)
-            }
+            DaraNewsRadarEmptyState()
         } else if (newsList.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("خبری برای نمایش وجود ندارد", color = TextSecondary)
-            }
+            DaraNewsRadarEmptyState() // Also show radar if truly empty but not refreshing
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -98,20 +107,21 @@ fun NewsHubScreen(viewModel: NewsViewModel) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(newsList) { news ->
-                    NewsCard(news)
+                    NewsCard(news, onClick = { onNewsClick(news) })
                 }
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }
 }
 
 @Composable
-fun NewsCard(news: NewsEntity) {
+fun NewsCard(news: NewsEntity, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { /* Open URL */ },
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, SlateBorderLight)
+        colors = CardDefaults.cardColors(containerColor = ObsidianSlate800),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.06f))
     ) {
         Column {
             if (news.imageUrl != null) {
@@ -126,54 +136,46 @@ fun NewsCard(news: NewsEntity) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ImportanceBadge(news.importance)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(news.source, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Text(news.source, style = DaraTypography.labelSmall, color = Slate400)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text(PersianDateUtils.formatRelativeTime(news.publishedAt), style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Text(PersianDateUtils.formatRelativeTime(news.publishedAt), style = DaraTypography.labelSmall, color = Slate400)
                 }
                 Text(
                     text = news.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = DaraTypography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = Slate50,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (news.category == "CRYPTO") {
+                
+                if (news.aiSummary != null) {
                     Surface(
-                        color = CredifyIndigo.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
+                        color = IndigoElectric.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(0.5.dp, IndigoElectric.copy(alpha = 0.1f))
                     ) {
                         Text(
-                            text = "ترجمه‌شده با هوش مصنوعی — عنوان اصلی: ${news.description ?: news.title}",
+                            text = "خلاصه هوشمند: ${news.aiSummary}",
                             modifier = Modifier.padding(10.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
+                            style = DaraTypography.labelSmall,
+                            color = Slate400,
                             lineHeight = 18.sp,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                } else if (news.aiSummary != null) {
-                    Surface(
-                        color = CredifyIndigo.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "خلاصه دارا: ${news.aiSummary}",
-                            modifier = Modifier.padding(10.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextPrimary,
-                            lineHeight = 18.sp
-                        )
-                    }
                 }
+                
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SentimentBadge(news.sentiment)
-                    news.relatedAssets?.split(",")?.take(3)?.forEach { asset ->
+                    news.relatedAssets?.split(",")?.take(2)?.forEach { asset ->
                         AssistChip(
                             onClick = {},
-                            label = { Text(asset, fontSize = 10.sp) },
-                            colors = AssistChipDefaults.assistChipColors(labelColor = TextSecondary)
+                            label = { Text(asset, style = DaraTypography.labelSmall) },
+                            colors = AssistChipDefaults.assistChipColors(labelColor = Slate400, containerColor = ObsidianSlate700),
+                            border = null,
+                            shape = CircleShape
                         )
                     }
                 }
@@ -184,23 +186,27 @@ fun NewsCard(news: NewsEntity) {
 
 @Composable
 fun ImportanceBadge(importance: String) {
-    val (color, text) = when (importance) {
-        "HIGH" -> RoseLoss to "فوری"
-        "LOW" -> EmeraldProfit to "عادی"
-        else -> GoldAccent to "مهم"
+    val result = when (importance) {
+        "HIGH" -> RoseCoral to "فوری"
+        "LOW" -> EmeraldCore to "عادی"
+        else -> RefinedAmberGold to "مهم"
     }
-    Surface(color = color.copy(alpha = 0.15f), shape = RoundedCornerShape(6.dp)) {
-        Text(text, color = color, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    val color = result.first
+    val text = result.second
+    Surface(color = color.copy(alpha = 0.1f), shape = RoundedCornerShape(6.dp)) {
+        Text(text, color = color, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = DaraTypography.labelSmall, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 fun SentimentBadge(sentiment: String) {
-    val (color, icon) = when (sentiment) {
-        "POSITIVE" -> EmeraldProfit to Icons.AutoMirrored.Filled.TrendingUp
-        "NEGATIVE" -> RoseLoss to Icons.AutoMirrored.Filled.TrendingUp // TODO: Change icon
-        else -> TextMuted to Icons.AutoMirrored.Filled.TrendingUp
+    val result = when (sentiment) {
+        "POSITIVE" -> EmeraldCore to Icons.AutoMirrored.Filled.TrendingUp
+        "NEGATIVE" -> RoseCoral to Icons.AutoMirrored.Filled.TrendingUp // TODO: Correct icon
+        else -> Slate400 to Icons.AutoMirrored.Filled.TrendingUp
     }
+    val color = result.first
+    val icon = result.second
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, null, tint = color, modifier = Modifier.size(14.dp))
         Spacer(modifier = Modifier.width(4.dp))
@@ -211,7 +217,8 @@ fun SentimentBadge(sentiment: String) {
                 else -> "خنثی"
             },
             color = color,
-            fontSize = 11.sp
+            style = DaraTypography.labelSmall,
+            fontWeight = FontWeight.Bold
         )
     }
 }

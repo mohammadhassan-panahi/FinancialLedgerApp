@@ -13,10 +13,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+data class ChatMessage(
+    val content: String,
+    val isUser: Boolean,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 class AiAnalysisViewModel(
     private val aiRepository: AiRepository,
     private val portfolioRepository: PortfolioRepository
 ) : ViewModel() {
+
+    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
 
     private val _analysisResult = MutableStateFlow<String?>(null)
     val analysisResult: StateFlow<String?> = _analysisResult.asStateFlow()
@@ -26,6 +35,30 @@ class AiAnalysisViewModel(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    fun sendMessage(text: String) {
+        if (text.isBlank()) return
+        
+        val userMsg = ChatMessage(text, true)
+        _messages.value = _messages.value + userMsg
+        
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = aiRepository.getChatResponse(text)
+                val aiMsg = ChatMessage(response, false)
+                _messages.value = _messages.value + aiMsg
+            } catch (e: Exception) {
+                _messages.value = _messages.value + ChatMessage("خطا در برقراری ارتباط با هوش مصنوعی", false)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun clearChat() {
+        _messages.value = emptyList()
+    }
 
     private val _ocrResult = MutableStateFlow<String?>(null)
     val ocrResult: StateFlow<String?> = _ocrResult.asStateFlow()

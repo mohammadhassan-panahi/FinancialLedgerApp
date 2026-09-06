@@ -1,251 +1,242 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.CredifyIndigo
-import com.example.ui.theme.CredifyViolet
-import com.example.ui.theme.DarkSlateSurface
-import com.example.ui.theme.GoldAccent
-
-data class OnboardingStep(
-    val title: String,
-    val description: String,
-    val icon: ImageVector,
-    val badge: String
-)
+import coil.compose.AsyncImage
+import com.example.ui.theme.*
 
 @Composable
 fun OnboardingScreen(
     onFinishOnboarding: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val steps = remember {
-        listOf(
-            OnboardingStep(
-                title = "امنیت بیومتریک و پایگاه رمزنگاری شده",
-                description = "حفاظت از تمامی اطلاعات دفتر محاسبات مالی با استاندارد SQLCipher سخت‌افزاری و حسگر اثر انگشت/چهره.",
-                icon = Icons.Default.Fingerprint,
-                badge = "گام ۱: امنیت لایه اول"
-            ),
-            OnboardingStep(
-                title = "دفتر ثبت دقیق دارایی و تراکنش‌ها",
-                description = "ثبت انواع واریز، انتقال و تبدیل به طلا یا ارز همراه با مدیریت دقیق مانده حساب در اپلیکیشن Credify.",
-                icon = Icons.Default.ReceiptLong,
-                badge = "گام ۲: محاسبات مالی"
-            ),
-            OnboardingStep(
-                title = "آنالیز هوشمند سود و نرخ‌های زنده",
-                description = "پایش لحظه‌ای قیمت طلا، سکه و دلار همراه با تحلیل NAV صندوق‌های فارابی، مفید و اعتماد ملی.",
-                icon = Icons.Default.Analytics,
-                badge = "گام ۳: تحلیل و آنالیز"
-            )
-        )
-    }
-
-    var currentStepIndex by remember { mutableIntStateOf(0) }
-    val currentStep = steps[currentStepIndex]
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        DarkSlateSurface,
-                        Color(0xFF1E1B4B),
-                        DarkSlateSurface
+            .background(ObsidianSlate900)
+    ) {
+        // Background Glows
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(IndigoElectric.copy(alpha = 0.08f), Color.Transparent),
+                        radius = 1000f
                     )
                 )
-            )
-            .navigationBarsPadding()
-            .padding(24.dp)
-    ) {
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 80.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(top = 48.dp, bottom = 48.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Badge
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = CredifyViolet.copy(alpha = 0.25f),
-                modifier = Modifier.padding(bottom = 24.dp)
+            // Header with Monogram
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = currentStep.badge,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = GoldAccent
-                    ),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // Animated Step Content
-            AnimatedContent(
-                targetState = currentStep,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "onboarding_step_anim"
-            ) { step ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
+                Surface(
+                    modifier = Modifier.size(36.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = ObsidianSlate600
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(CredifyIndigo, CredifyViolet)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = step.icon,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(56.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    Text(
-                        text = step.title,
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 22.sp
-                        ),
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                    Icon(
+                        imageVector = Icons.Default.Token,
+                        contentDescription = null,
+                        tint = IndigoElectric,
+                        modifier = Modifier.padding(8.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = step.description,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            lineHeight = 22.sp
-                        ),
-                        color = Color.White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
+                }
+                Column {
+                    Text("دارا", style = DaraTypography.titleLarge, color = Slate50, fontWeight = FontWeight.Bold)
+                    Text("مدیریت ثروت هوشمند", style = DaraTypography.labelSmall, color = Slate400)
                 }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Step Indicator Dots
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                steps.indices.forEach { index ->
-                    Box(
-                        modifier = Modifier
-                            .height(8.dp)
-                            .width(if (index == currentStepIndex) 28.dp else 8.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (index == currentStepIndex) GoldAccent else Color.White.copy(alpha = 0.3f)
+            // Hero Image
+            Box(contentAlignment = Alignment.Center) {
+                // Pulsing Halo
+                Box(
+                    modifier = Modifier
+                        .size(260.dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(IndigoElectric.copy(alpha = 0.15f), Color.Transparent)
                             )
-                    )
+                        )
+                )
+                AsyncImage(
+                    model = "https://lh3.googleusercontent.com/aida-public/AB6AXuAyWFu-oNyI0GI8j_h7y1wnJvLw8hnr6atEjR2iOqMyON4xq1J3D_sPSYjmJkssLDH_0T0Qxg1T-ZMVcdXx8K7FfFQkMIbp9tP4DVEPGQFhRK3IzXnB84VDXspVhDvL7PN-Axo8rqP7sQUsT1G2ZQu9wmhRTV-rrUMn706ek9BZhTPTQ6nkdizACyMSKods1TlivNWDC_yxGfuv8-GFyEzIEadl5R7oVsN2A8O4vR4qKZmt4_-F_Yn5",
+                    contentDescription = "Dara Coin",
+                    modifier = Modifier.size(240.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Tagline
+            Surface(
+                shape = RoundedCornerShape(percent = 100),
+                color = ObsidianSlate600,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(Icons.Default.Stars, null, tint = IndigoElectric, modifier = Modifier.size(16.dp))
+                    Text("نسل نوین مدیریت ثروت هوشمند", style = DaraTypography.labelMedium, color = IndigoElectric, fontWeight = FontWeight.Bold)
                 }
+            }
+
+            // Main Title with Gradient Text
+            val annotatedTitle = buildAnnotatedString {
+                append("همه‌ی دارایی‌ات، ")
+                withStyle(style = SpanStyle(color = IndigoElectric)) {
+                    append("یک‌جا")
+                }
+                append("، به زبان خودت")
+            }
+            Text(
+                text = annotatedTitle,
+                style = DaraTypography.displaySmall,
+                color = Slate50,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "پایش و رشد هوشمند طلا، رمزارز، تتر، سهام و ملک بر پایه تحلیل‌های بی‌درنگ و سناریوهای سودآوری اختصاصی.",
+                style = DaraTypography.bodyMedium,
+                color = Slate400,
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Feature Pills
+            FeaturePill(
+                icon = Icons.Default.AccountBalanceWallet,
+                title = "پورتفوی یکپارچه و چندارزی",
+                subtitle = "محاسبه خودکار ارزش ریالی، دلاری و طلا",
+                iconColor = IndigoElectric
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            FeaturePill(
+                icon = Icons.Default.Insights,
+                title = "تحلیل روند بازار و سناریونویسی",
+                subtitle = "هشدار نوسانات تورمی و بازتنظیم پرتفوی",
+                iconColor = RefinedAmberGold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            FeaturePill(
+                icon = Icons.Default.VerifiedUser,
+                title = "امنیت بانکی رمزنگاری‌شده AES-256",
+                subtitle = "کنترل تمام‌عیار کاربر روی تمامی داده‌ها",
+                iconColor = EmeraldCore
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Primary Button
+            Button(
+                onClick = onFinishOnboarding,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = IndigoElectric
+                )
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.ArrowForward, null)
+                    Text("شروع کنید", style = DaraTypography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(onClick = { /* Login */ }) {
+                Text(
+                    text = buildAnnotatedString {
+                        append("قبلاً حساب ساخته‌اید؟ ")
+                        withStyle(style = SpanStyle(color = IndigoElectric, fontWeight = FontWeight.Bold)) {
+                            append("ورود به دارا")
+                        }
+                    },
+                    style = DaraTypography.bodyMedium,
+                    color = Slate400
+                )
             }
         }
+    }
+}
 
-        // Bottom Action Button
-        Button(
-            onClick = {
-                if (currentStepIndex < steps.size - 1) {
-                    currentStepIndex++
-                } else {
-                    onFinishOnboarding()
-                }
-            },
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = CredifyIndigo
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .align(Alignment.BottomCenter)
-                .testTag("button_onboarding_next")
+@Composable
+private fun FeaturePill(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    iconColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(ObsidianSlate800.copy(alpha = 0.5f))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = ObsidianSlate700
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = if (currentStepIndex == steps.size - 1) "ورود به دفتر محاسبات مالی" else "گام بعدی",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    tint = Color.White
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.padding(10.dp)
+            )
+        }
+        Column {
+            Text(title, style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+            Text(subtitle, style = DaraTypography.labelSmall, color = Slate400)
         }
     }
 }

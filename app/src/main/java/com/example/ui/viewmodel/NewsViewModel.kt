@@ -3,6 +3,7 @@ package com.example.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.data.local.NewsEntity
 import com.example.data.repository.NewsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,17 @@ class NewsViewModel(private val repository: NewsRepository) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _selectedNews = MutableStateFlow<NewsEntity?>(null)
+    val selectedNews: StateFlow<NewsEntity?> = _selectedNews.asStateFlow()
+
+    fun selectNews(news: NewsEntity) {
+        _selectedNews.value = news
+    }
+
+    fun clearSelectedNews() {
+        _selectedNews.value = null
+    }
 
     fun refreshNews() {
         viewModelScope.launch {
