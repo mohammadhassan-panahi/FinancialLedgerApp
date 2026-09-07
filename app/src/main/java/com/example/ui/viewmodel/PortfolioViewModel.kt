@@ -11,22 +11,40 @@ import com.example.data.local.PriceAlertEntity
 import com.example.data.local.PortfolioSnapshotEntity
 import com.example.data.repository.HoldingSummary
 import com.example.data.repository.PortfolioRepository
+import com.example.domain.model.Holding
 import com.example.domain.model.PortfolioSummary
+import com.example.domain.usecase.AddAssetPurchaseUseCase
+import com.example.domain.usecase.GetHoldingsUseCase
+import com.example.domain.usecase.GetPortfolioSummaryUseCase
+import com.example.ui.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
+class PortfolioViewModel(
+    private val repository: PortfolioRepository,
+    private val getHoldingsUseCase: GetHoldingsUseCase,
+    private val getPortfolioSummaryUseCase: GetPortfolioSummaryUseCase,
+    private val addAssetPurchaseUseCase: AddAssetPurchaseUseCase
+) : ViewModel() {
 
-    val holdings: StateFlow<List<HoldingSummary>> = repository.holdings
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val holdingsState: StateFlow<UiState<List<Holding>>> = getHoldingsUseCase()
+        .map { UiState.Success(it) as UiState<List<Holding>> }
+        .onStart { emit(UiState.Loading) }
+        .catch { emit(UiState.Error(it.message ?: "Unknown error")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
-    val portfolioSummary: StateFlow<PortfolioSummary?> = repository.portfolioSummary
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val summaryState: StateFlow<UiState<PortfolioSummary?>> = getPortfolioSummaryUseCase()
+        .map { UiState.Success(it) as UiState<PortfolioSummary?> }
+        .onStart { emit(UiState.Loading) }
+        .catch { emit(UiState.Error(it.message ?: "Unknown error")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
     val snapshots: StateFlow<List<PortfolioSnapshotEntity>> = repository.snapshots
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -129,16 +147,13 @@ class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
         note: String = ""
     ) {
         viewModelScope.launch {
-            repository.addPurchase(
-                AssetPurchaseEntity(
-                    assetType = assetType,
-                    assetCode = assetCode,
-                    assetName = assetName,
-                    quantity = quantity,
-                    unitPriceRial = unitPriceRial,
-                    totalPaidRial = quantity * unitPriceRial,
-                    purchaseDate = purchaseDate
-                )
+            addAssetPurchaseUseCase(
+                assetType = assetType,
+                assetCode = assetCode,
+                assetName = assetName,
+                quantity = quantity,
+                unitPriceRial = unitPriceRial,
+                purchaseDate = purchaseDate
             )
         }
     }
@@ -248,11 +263,21 @@ class PortfolioViewModel(val repository: PortfolioRepository) : ViewModel() {
     fun deleteGoal(entity: com.example.data.local.GoalEntity) = viewModelScope.launch { repository.deleteGoal(entity) }
 }
 
-class PortfolioViewModelFactory(private val repository: PortfolioRepository) : ViewModelProvider.Factory {
+class PortfolioViewModelFactory(
+    private val repository: PortfolioRepository,
+    private val getHoldingsUseCase: GetHoldingsUseCase,
+    private val getPortfolioSummaryUseCase: GetPortfolioSummaryUseCase,
+    private val addAssetPurchaseUseCase: AddAssetPurchaseUseCase
+) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PortfolioViewModel::class.java)) {
-            return PortfolioViewModel(repository) as T
+            return PortfolioViewModel(
+                repository,
+                getHoldingsUseCase,
+                getPortfolioSummaryUseCase,
+                addAssetPurchaseUseCase
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

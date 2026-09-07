@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.repository.AiRepository
-import com.example.data.repository.HoldingSummary
 import com.example.data.repository.PortfolioRepository
+import com.example.domain.model.Holding
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -111,7 +111,7 @@ class AiAnalysisViewModel(
     }
 
     private fun generateLocalPortfolioReport(
-        holdings: List<HoldingSummary>,
+        holdings: List<Holding>,
         totalValue: Double,
         liquidity: Double
     ): String {

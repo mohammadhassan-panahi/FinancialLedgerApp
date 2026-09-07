@@ -27,7 +27,7 @@ import com.example.ui.viewmodel.PortfolioViewModelFactory
 import com.example.ui.dashboard.MarketScannerViewModel
 import com.example.ui.dashboard.MarketScannerViewModelFactory
 import com.example.data.repository.AiRepository
-import com.example.domain.usecase.GetCryptoAIReportUseCase
+import com.example.domain.usecase.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -108,8 +108,18 @@ class MainActivity : FragmentActivity() {
             database = database
         )
 
-        val factory = PortfolioViewModelFactory(repository)
-        viewModel = ViewModelProvider(this, factory)[PortfolioViewModel::class.java]
+        // Portfolio UseCases
+        val getHoldingsUseCase = GetHoldingsUseCase(repository)
+        val getPortfolioSummaryUseCase = GetPortfolioSummaryUseCase(repository)
+        val addAssetPurchaseUseCase = AddAssetPurchaseUseCase(repository)
+
+        val portfolioFactory = PortfolioViewModelFactory(
+            repository,
+            getHoldingsUseCase,
+            getPortfolioSummaryUseCase,
+            addAssetPurchaseUseCase
+        )
+        viewModel = ViewModelProvider(this, portfolioFactory)[PortfolioViewModel::class.java]
 
         val cryptoFactory = com.example.ui.viewmodel.CryptoViewModelFactory(cryptoRepository)
         val cryptoViewModel = ViewModelProvider(this, cryptoFactory)[com.example.ui.viewmodel.CryptoViewModel::class.java]
@@ -126,7 +136,15 @@ class MainActivity : FragmentActivity() {
         val riskAssessmentFactory = com.example.ui.viewmodel.RiskAssessmentViewModelFactory(nexFinRepository)
         val riskAssessmentViewModel = ViewModelProvider(this, riskAssessmentFactory)[com.example.ui.viewmodel.RiskAssessmentViewModel::class.java]
 
-        val settingsFactory = com.example.ui.viewmodel.SettingsViewModelFactory(userPreferencesRepository)
+        // Settings UseCases
+        val exportDataUseCase = ExportDataUseCase(backupRepository)
+        val importDataUseCase = ImportDataUseCase(backupRepository)
+
+        val settingsFactory = com.example.ui.viewmodel.SettingsViewModelFactory(
+            userPreferencesRepository,
+            exportDataUseCase,
+            importDataUseCase
+        )
         val settingsViewModel = ViewModelProvider(this, settingsFactory)[com.example.ui.viewmodel.SettingsViewModel::class.java]
 
         val aiReportUseCase = GetCryptoAIReportUseCase(aiRepository)

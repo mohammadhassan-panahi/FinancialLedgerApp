@@ -24,7 +24,9 @@ import com.example.data.local.PortfolioAssetType
 import com.example.data.repository.HoldingSummary
 import com.example.ui.LocalIsRial
 import com.example.domain.model.GoldPriceAnalysis
+import com.example.domain.model.Holding
 import com.example.domain.model.PortfolioSummary
+import com.example.ui.UiState
 import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
@@ -53,13 +55,13 @@ fun PortfolioHomeScreen(
     onOpenAddPurchase: () -> Unit = {},
     onOpenSettings: () -> Unit = {}
 ) {
-    val holdings by viewModel.holdings.collectAsStateWithLifecycle()
-    val summary by viewModel.portfolioSummary.collectAsStateWithLifecycle()
+    val holdingsState by viewModel.holdingsState.collectAsStateWithLifecycle()
+    val summaryState by viewModel.summaryState.collectAsStateWithLifecycle()
     val snapshots by viewModel.snapshots.collectAsStateWithLifecycle()
     val sellError by viewModel.sellError.collectAsStateWithLifecycle()
     
     var menuExpanded by remember { mutableStateOf(false) }
-    var sellTarget by remember { mutableStateOf<HoldingSummary?>(null) }
+    var sellTarget by remember { mutableStateOf<Holding?>(null) }
     var selectedUnit by remember { mutableStateOf(PortfolioUnit.TOMAN) }
 
     Scaffold(
@@ -88,13 +90,19 @@ fun PortfolioHomeScreen(
         ) {
             // --- Hero Dashboard Card ---
             item {
-                summary?.let { 
-                    PortfolioHeroCard(
-                        summary = it,
-                        selectedUnit = selectedUnit,
-                        onUnitChange = { selectedUnit = it }
-                    )
-                } ?: SkeletonHeroCard()
+                when (val state = summaryState) {
+                    is UiState.Success -> {
+                        state.data?.let { 
+                            PortfolioHeroCard(
+                                summary = it,
+                                selectedUnit = selectedUnit,
+                                onUnitChange = { unit -> selectedUnit = unit }
+                            )
+                        } ?: SkeletonHeroCard()
+                    }
+                    is UiState.Loading -> SkeletonHeroCard()
+                    else -> SkeletonHeroCard()
+                }
             }
 
             // --- Quick Action Grid ---
@@ -111,9 +119,12 @@ fun PortfolioHomeScreen(
 
             // --- Insights Section ---
             item {
-                summary?.let {
-                    if (it.insights.isNotEmpty()) {
-                        InsightsSection(it.insights)
+                if (summaryState is UiState.Success) {
+                    val summary = (summaryState as UiState.Success).data
+                    summary?.let {
+                        if (it.insights.isNotEmpty()) {
+                            InsightsSection(it.insights)
+                        }
                     }
                 }
             }
@@ -140,12 +151,20 @@ fun PortfolioHomeScreen(
                 SectionHeader("دارایی‌های من", onActionClick = { /* View All */ })
             }
 
-            if (holdings.isEmpty()) {
-                item { EmptyHoldingsCard() }
-            } else {
-                items(holdings) { holding ->
-                    HoldingCardPremium(holding, onSellClick = { sellTarget = holding })
+            when (val state = holdingsState) {
+                is UiState.Success -> {
+                    if (state.data.isEmpty()) {
+                        item { EmptyHoldingsCard() }
+                    } else {
+                        items(state.data) { holding ->
+                            HoldingCardPremium(holding, onSellClick = { sellTarget = holding })
+                        }
+                    }
                 }
+                is UiState.Loading -> {
+                    items(3) { Box(modifier = Modifier.fillMaxWidth().height(80.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(16.dp)).background(ObsidianSlate800)) }
+                }
+                else -> { item { Text("Error loading holdings", color = RoseCoral, modifier = Modifier.padding(16.dp)) } }
             }
         }
     }
@@ -403,7 +422,7 @@ fun QuickActionCard(
 }
 
 @Composable
-fun HoldingCardPremium(holding: HoldingSummary, onSellClick: () -> Unit) {
+fun HoldingCardPremium(holding: Holding, onSellClick: () -> Unit) {
     val isRial = LocalIsRial.current
     val icon = when (holding.assetType) {
         PortfolioAssetType.GOLD -> Icons.Default.BrightnessLow

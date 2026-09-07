@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.CalculationHistoryEntity
 import com.example.data.local.PortfolioAssetType
 import com.example.ui.LocalIsRial
-import com.example.data.repository.HoldingSummary
+import com.example.domain.model.Holding
 import com.example.ui.components.HistoryAccordion
 import com.example.ui.components.NotebookCard
 import com.example.ui.components.PrivacyAwareAmountText
@@ -58,7 +58,7 @@ private fun PortfolioAssetType.displayName(): String = when (this) {
  */
 @Composable
 fun ScenarioScreen(
-    holdings: List<HoldingSummary> = emptyList(),
+    holdings: List<Holding> = emptyList(),
     historyList: List<CalculationHistoryEntity>,
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,

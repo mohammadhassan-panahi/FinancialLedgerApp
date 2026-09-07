@@ -1,11 +1,12 @@
 package com.example.domain.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Summary of the entire portfolio.
  * Used for the Hero Card on the main dashboard.
  */
-import com.example.data.repository.HoldingSummary
-
+@Immutable
 data class PortfolioSummary(
     val totalValueRial: Double,
     val totalProfitLossRial: Double,
@@ -16,8 +17,8 @@ data class PortfolioSummary(
     val marketStatus: String,
     val usdRateRial: Double,
     val gold18kPriceRial: Double,
-    val bestPerformer: HoldingSummary? = null,
-    val worstPerformer: HoldingSummary? = null,
+    val bestPerformer: Holding? = null,
+    val worstPerformer: Holding? = null,
     val allocationByAsset: List<AllocationItem> = emptyList(),
     val allocationByType: List<AllocationItem> = emptyList(),
     val goldAnalysis: GoldPriceAnalysis? = null,

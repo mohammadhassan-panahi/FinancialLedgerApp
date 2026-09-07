@@ -16,7 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.data.repository.HoldingSummary
+import com.example.domain.model.Holding
 import com.example.ui.LocalIsRial
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
@@ -27,7 +27,7 @@ import com.example.util.formatRial
  */
 @Composable
 fun SellAssetDialog(
-    holding: HoldingSummary,
+    holding: Holding,
     errorMessage: String?,
     onDismiss: () -> Unit,
     onConfirm: (quantitySold: Double, saleUnitPriceRial: Double) -> Unit

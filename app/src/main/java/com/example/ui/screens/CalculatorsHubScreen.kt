@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.CryptoAssetEntity
 import com.example.data.local.MarketRateEntity
 import com.example.data.local.MutualFundEntity
-import com.example.data.repository.HoldingSummary
+import com.example.domain.model.Holding
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
@@ -33,7 +33,7 @@ import com.example.util.PersianNumberUtils
 fun CalculatorsHubScreen(
     viewModel: CalculatorViewModel,
     onBack: () -> Unit,
-    holdings: List<HoldingSummary>,
+    holdings: List<Holding>,
     marketRates: List<MarketRateEntity>,
     cryptoAssets: List<CryptoAssetEntity>
 ) {

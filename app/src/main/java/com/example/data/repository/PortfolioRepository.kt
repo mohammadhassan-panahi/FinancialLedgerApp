@@ -6,29 +6,13 @@ import com.example.data.remote.TsetmcApiClient
 import com.example.data.remote.TsetmcApiService
 import com.example.domain.model.AllocationItem
 import com.example.domain.model.GoldPriceAnalysis
+import com.example.domain.model.Holding
 import com.example.domain.model.PortfolioSummary
 import kotlinx.coroutines.flow.Flow
 import java.util.Locale
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-
-/** One row of the holdings summary: everything the user owns of one asset. */
-data class HoldingSummary(
-    val assetType: PortfolioAssetType,
-    val assetCode: String,
-    val assetName: String,
-    val quantity: Double,
-    val totalPaidRial: Double,
-    val currentPriceRial: Double,
-    val currentValueRial: Double,
-    val profitLossRial: Double,
-    val profitLossPercent: Double,
-    val dailyChangePercent: Double = 0.0,
-    val dailyChangeRial: Double = 0.0,
-    val inflationAdjustedProfitLossRial: Double = 0.0,
-    val cmcId: Int? = null
-)
 
 class PortfolioRepository(
     private val purchaseDao: AssetPurchaseDao,
@@ -79,7 +63,7 @@ class PortfolioRepository(
     /**
      * Combines all data sources to provide a unified view of the user's portfolio.
      */
-    val holdings: Flow<List<HoldingSummary>> = combine(
+    val holdings: Flow<List<Holding>> = combine(
         purchases,
         sales,
         marketRates,
@@ -100,12 +84,12 @@ class PortfolioRepository(
         val vehicleRates = array[7] as List<VehicleEntity>
         val propertyRates = array[8] as List<RealEstateEntity>
         
-        val result = mutableListOf<HoldingSummary>()
+        val result = mutableListOf<Holding>()
         val usdRateToman = rates.find { it.assetCode == "USD" }?.priceToman ?: 60000.0
         val usdToRial = usdRateToman * RIAL_PER_TOMAN
 
         if (liquidityRial > 0) {
-            result.add(HoldingSummary(PortfolioAssetType.CASH, "CASH_RIAL", "نقدینگی", liquidityRial, liquidityRial, 1.0, liquidityRial, 0.0, 0.0))
+            result.add(Holding(PortfolioAssetType.CASH, "CASH_RIAL", "نقدینگی", liquidityRial, liquidityRial, 1.0, liquidityRial, 0.0, 0.0))
         }
 
         val soldByCode = soldTxns.groupBy { it.assetCode }
@@ -174,7 +158,7 @@ class PortfolioRepository(
             val realPnl = currentValue - inflationAdjustedPaid
 
             result.add(
-                HoldingSummary(
+                Holding(
                     assetType = type,
                     assetCode = code,
                     assetName = group.first().assetName,
@@ -238,6 +222,7 @@ class PortfolioRepository(
                 PortfolioAssetType.FUND -> "صندوق‌های سرمایه‌گذاری"
                 PortfolioAssetType.REAL_ESTATE -> "املاک"
                 PortfolioAssetType.VEHICLE -> "خودرو"
+                else -> "سایر"
             }
             AllocationItem(label, if (totalValue > 0) (typeValue / totalValue) * 100 else 0.0, typeValue)
         }.sortedByDescending { it.valueRial }
@@ -266,8 +251,9 @@ class PortfolioRepository(
             insights.add("تغییرات قیمت طلا بیشترین تأثیر را روی ارزش پورتفوی شما در امروز داشته است.")
         }
 
-        val staleHours = (System.currentTimeMillis() - (rates.maxOfOrNull { it.updatedAt } ?: 0L)) / (1000 * 60 * 60)
-        if (staleHours > 3) {
+        val lastRateUpdate = rates.maxOfOrNull { it.updatedAt } ?: 0L
+        val staleHours = (System.currentTimeMillis() - lastRateUpdate) / (1000 * 60 * 60)
+        if (staleHours > 3 && lastRateUpdate > 0) {
             insights.add("⚠️ قیمت‌های بازار بیش از ${com.example.util.PersianNumberUtils.toPersianDigits(staleHours.toString())} ساعت است که بروزرسانی نشده‌اند.")
         }
 
@@ -295,11 +281,13 @@ class PortfolioRepository(
         val moshi = com.squareup.moshi.Moshi.Builder()
             .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
             .build()
-        val adapter = moshi.adapter(List::class.java) // Simple way for now
+        
+        // Use specific type to avoid raw list issue
+        val listType = com.squareup.moshi.Types.newParameterizedType(List::class.java, AllocationItem::class.java)
+        val adapter = moshi.adapter<List<AllocationItem>>(listType)
 
-        // More robust: use specific types or a wrapper
-        val assetJson = moshi.adapter(List::class.java).toJson(summary.allocationByAsset)
-        val typeJson = moshi.adapter(List::class.java).toJson(summary.allocationByType)
+        val assetJson = adapter.toJson(summary.allocationByAsset)
+        val typeJson = adapter.toJson(summary.allocationByType)
 
         val snapshot = PortfolioSnapshotEntity(
             totalValueRial = summary.totalValueRial,
@@ -323,7 +311,7 @@ class PortfolioRepository(
         val remainingCost = allPurchases.sumOf { it.totalPaidRial } - allSales.sumOf { it.costBasisRial }
         
         require(quantitySold <= remainingQty + 0.0001) { "موجودی کافی نیست" }
-        val costBasis = (remainingCost / remainingQty) * quantitySold
+        val costBasis = if (remainingQty > 0) (remainingCost / remainingQty) * quantitySold else 0.0
         val sale = AssetSaleEntity(
             assetType = assetType,
             assetCode = assetCode,
@@ -356,45 +344,45 @@ class PortfolioRepository(
     suspend fun deleteGoal(entity: GoalEntity) = goalDao.delete(entity)
 
     suspend fun refreshGoldAndDollar(): Boolean {
-        val response = marketApiService?.getGoldCurrency(apiKey) ?: return false
-        return if (response.isSuccessful && response.body() != null) {
-            val body = response.body()!!
-            val liveRates = (body.gold + body.currency).map {
-                MarketRateEntity(
-                    assetCode = it.symbol,
-                    name = it.name,
-                    priceToman = if (it.unit == "تومان") it.price else 0.0,
-                    priceGlobal = if (it.unit != "تومان") it.price else 0.0,
-                    currency = it.unit,
-                    changePercent = it.changePercent,
-                    isOfflineRate = false
-                )
-            }
-            if (liveRates.isNotEmpty()) marketDao.insertMarketRates(liveRates)
-            true
-        } else false
+        val response = try { marketApiService?.getGoldCurrency(apiKey) } catch(e: Exception) { null }
+        if (response == null || !response.isSuccessful || response.body() == null) return false
+        
+        val body = response.body()!!
+        val liveRates = (body.gold + body.currency).map {
+            MarketRateEntity(
+                assetCode = it.symbol,
+                name = it.name,
+                priceToman = if (it.unit == "تومان") it.price else 0.0,
+                priceGlobal = if (it.unit != "تومان") it.price else 0.0,
+                currency = it.unit,
+                changePercent = it.changePercent,
+                isOfflineRate = false
+            )
+        }
+        if (liveRates.isNotEmpty()) marketDao.insertMarketRates(liveRates)
+        return true
     }
 
     suspend fun refreshWatchlist(symbols: List<String>): Boolean {
-        val response = tsetmcApiService?.getAllSymbols() ?: return false
-        return if (response.isSuccessful && response.body() != null) {
-            val body = response.body()!!
-            symbols.forEach { sym ->
-                body.find { it.symbol == sym }?.let {
-                    stockDao.insertSymbol(StockSymbolEntity(it.symbol!!, it.fullName!!, it.closingPrice ?: 0.0, it.changePercent ?: 0.0))
-                }
+        val response = try { tsetmcApiService?.getAllSymbols() } catch(e: Exception) { null }
+        if (response == null || !response.isSuccessful || response.body() == null) return false
+        
+        val body = response.body()!!
+        symbols.forEach { sym ->
+            body.find { it.symbol == sym }?.let {
+                stockDao.insertSymbol(StockSymbolEntity(it.symbol!!, it.fullName!!, it.closingPrice ?: 0.0, it.changePercent ?: 0.0))
             }
-            true
-        } else false
+        }
+        return true
     }
 
     suspend fun refreshIndices(): Boolean {
-        val response = tsetmcApiService?.getIndices() ?: return false
-        return if (response.isSuccessful && response.body() != null) {
-            val entities = response.body()!!.map { MarketIndexEntity(it.index ?: it.name ?: "", it.name ?: "", it.value ?: 0.0, it.changePercent ?: 0.0) }
-            stockDao.insertIndices(entities)
-            true
-        } else false
+        val response = try { tsetmcApiService?.getIndices() } catch(e: Exception) { null }
+        if (response == null || !response.isSuccessful || response.body() == null) return false
+        
+        val entities = response.body()!!.map { MarketIndexEntity(it.index ?: it.name ?: "", it.name ?: "", it.value ?: 0.0, it.changePercent ?: 0.0) }
+        stockDao.insertIndices(entities)
+        return true
     }
 
     suspend fun addSymbolToWatchlist(symbol: String, fullName: String) = stockDao.insertSymbol(StockSymbolEntity(symbol, fullName, 0.0, 0.0))
