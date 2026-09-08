@@ -36,14 +36,15 @@ fun NewsHubScreen(
     onNewsClick: (NewsEntity) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("اخبار ایران", "اخبار کریپتو")
+    val tabs = listOf("اقتصاد ایران", "رمزارز", "تکنولوژی")
 
     val iranEconomyNews by viewModel.iranEconomyNews.collectAsStateWithLifecycle()
     val cryptoNews by viewModel.cryptoNews.collectAsStateWithLifecycle()
+    val techNews by viewModel.techNews.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        if (cryptoNews.isEmpty() && iranEconomyNews.isEmpty()) {
+        if (cryptoNews.isEmpty() && iranEconomyNews.isEmpty() && techNews.isEmpty()) {
             viewModel.refreshNews()
         }
     }
@@ -94,7 +95,11 @@ fun NewsHubScreen(
             }
         }
     ) { padding ->
-        val newsList = if (selectedTab == 0) iranEconomyNews else cryptoNews
+        val newsList = when (selectedTab) {
+            0 -> iranEconomyNews
+            1 -> cryptoNews
+            else -> techNews
+        }
 
         if (newsList.isEmpty() && isRefreshing) {
             DaraNewsRadarEmptyState()

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.domain.model.Holding
 import com.example.ui.LocalIsRial
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel

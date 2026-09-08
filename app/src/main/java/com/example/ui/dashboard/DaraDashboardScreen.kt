@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.data.local.PortfolioAssetType
+import com.example.domain.model.Holding
 import com.example.ui.LocalIsRial
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.components.DashboardSkeleton
@@ -482,7 +483,9 @@ fun DaraTickerItem(rate: com.example.data.local.MarketRateEntity) {
 fun DaraAssetAllocation(viewModel: com.example.ui.viewmodel.PortfolioViewModel) {
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
     
-    val slices = holdings.groupBy { it.assetType }.map { (type, assets) ->
+    val slices = holdings.groupBy { it.assetType }.entries.map { entry ->
+        val type = entry.key
+        val assets = entry.value
         val totalValue = assets.sumOf { it.currentValueRial }
         val label = when(type) {
             PortfolioAssetType.GOLD -> "طلا"

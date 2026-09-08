@@ -8,40 +8,45 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.local.MarketRateEntity
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
+import com.example.ui.viewmodel.PortfolioViewModel
+import com.example.util.PersianNumberUtils
 
 @Composable
 fun AssetComparisonScreen(
+    viewModel: PortfolioViewModel,
     onBack: () -> Unit
 ) {
+    val marketRates by viewModel.marketRates.collectAsStateWithLifecycle(emptyList())
+
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
             ComparisonHeader(onBack = onBack)
         }
-    ) { padding ->
+    ) { innerPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Asset Selection Card
-            ComparisonAssetSelector()
+            ComparisonAssetSelector(marketRates)
 
             // Comparison Chart
             ComparisonChartCard()
@@ -85,24 +90,34 @@ fun ComparisonHeader(onBack: () -> Unit) {
 }
 
 @Composable
-fun ComparisonAssetSelector() {
+fun ComparisonAssetSelector(marketRates: kotlin.collections.List<MarketRateEntity>) {
+    var gold: MarketRateEntity? = null
+    var usd: MarketRateEntity? = null
+    
+    val iterator = marketRates.iterator()
+    while (iterator.hasNext()) {
+        val rate = iterator.next()
+        if (rate.assetCode == "GOLD_18K") gold = rate
+        if (rate.assetCode == "USD") usd = rate
+    }
+
     DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
         Box(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 AssetCompareItem(
                     title = "طلای ۱۸ عیار",
-                    price = "۴,۵۲۰,۰۰۰",
-                    change = "+۲.۴٪",
+                    price = PersianNumberUtils.formatCurrency(gold?.priceToman ?: 3500000.0, isRial = false),
+                    change = "${if ((gold?.changePercent ?: 0.0) >= 0.0) "+" else ""}${gold?.changePercent ?: 0.0}٪",
                     icon = Icons.Default.MonetizationOn,
                     color = RefinedAmberGold,
                     modifier = Modifier.weight(1f)
                 )
                 AssetCompareItem(
-                    title = "بیت‌کوین (BTC)",
-                    price = "$67,450",
-                    change = "+۵.۸٪",
-                    icon = Icons.Default.CurrencyBitcoin,
-                    color = IndigoElectric,
+                    title = "دلار آمریکا",
+                    price = PersianNumberUtils.formatCurrency(usd?.priceToman ?: 65000.0, isRial = false),
+                    change = "${if ((usd?.changePercent ?: 0.0) >= 0.0) "+" else ""}${usd?.changePercent ?: 0.0}٪",
+                    icon = Icons.Default.CurrencyExchange,
+                    color = EmeraldCore,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -156,7 +171,7 @@ fun ComparisonChartCard() {
                 }
             }
             
-            // Mock Multi-line Chart
+            // Mock Chart placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -164,7 +179,7 @@ fun ComparisonChartCard() {
                     .background(ObsidianSlate900.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Multi-Line Comparative Chart", style = DaraTypography.labelSmall, color = Slate600)
+                Text("نمودار مقایسه‌ای روند بازدهی", style = DaraTypography.labelSmall, color = Slate600)
             }
         }
     }
@@ -223,7 +238,7 @@ fun DaraAiVerdictCard() {
                 Text("دیدگاه استراتژیک هوشمند دارا", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
             }
             Text(
-                "در افق ۶ ماهه، بیت‌کوین بازدهی اسمی بالاتری داشته اما طلا به دلیل نوسان کمتر، نسبت شارپ برتری برای ریال ثبت کرده است.",
+                "در افق ۶ ماهه، بازدهی اسمی دارایی‌های دیجیتال بالاتر بوده اما طلا به دلیل نوسان کمتر، نسبت ریسک به بازدهی برتری برای سبد ریالی ثبت کرده است.",
                 style = DaraTypography.bodyMedium,
                 color = Slate400,
                 lineHeight = 22.sp
@@ -231,7 +246,7 @@ fun DaraAiVerdictCard() {
             
             Surface(color = ObsidianSlate900, shape = RoundedCornerShape(12.dp)) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("توزیع پیشنهادی: ۶۰٪ طلا / ۴۰٪ بیت‌کوین", style = DaraTypography.labelSmall, color = IndigoElectric, fontWeight = FontWeight.Bold)
+                    Text("توزیع پیشنهادی: ۶۰٪ طلا / ۴۰٪ رمزارز", style = DaraTypography.labelSmall, color = IndigoElectric, fontWeight = FontWeight.Bold)
                     Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(ObsidianSlate700)) {
                         Row(modifier = Modifier.fillMaxSize()) {
                             Box(modifier = Modifier.fillMaxHeight().weight(0.6f).background(EmeraldCore))

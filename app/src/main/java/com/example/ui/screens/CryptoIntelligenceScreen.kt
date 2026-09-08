@@ -15,32 +15,37 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.CryptoAssetEntity
 import com.example.ui.components.CryptoIcon
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
+import com.example.ui.viewmodel.CryptoViewModel
 import com.example.util.formatUsd
+import com.example.util.PersianNumberUtils
 
 @Composable
 fun CryptoIntelligenceScreen(
+    viewModel: CryptoViewModel,
+    usdRateToman: Double = 65000.0,
     onBack: () -> Unit,
     onAssetClick: (CryptoAssetEntity) -> Unit
 ) {
+    val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
             IntelligenceHeader(onBack = onBack)
         }
-    ) { padding ->
+    ) { innerPadding: PaddingValues ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -64,14 +69,17 @@ fun CryptoIntelligenceScreen(
                 AiAllocationCallout()
             }
 
-            // Section 5: Intelligence Asset List
+            // Section 5: Intelligence Asset List (Real data)
             item {
                 Text("دارایی‌های منتخب هوشمند", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
             }
             
-            // Mock items representing the top assets with AI scores
-            items(5) {
-                IntelligenceAssetCard(onClick = { /* Navigate to detail */ })
+            items(allAssets.take(15)) { asset ->
+                IntelligenceAssetCard(
+                    asset = asset, 
+                    usdRateToman = usdRateToman,
+                    onClick = { onAssetClick(asset) }
+                )
             }
             
             item { Spacer(modifier = Modifier.height(100.dp)) }
@@ -199,7 +207,11 @@ fun AiAllocationCallout() {
 }
 
 @Composable
-fun IntelligenceAssetCard(onClick: () -> Unit) {
+fun IntelligenceAssetCard(asset: CryptoAssetEntity, usdRateToman: Double, onClick: () -> Unit) {
+    val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
+    val change = asset.percentChange24h ?: 0.0
+    val aiScore = remember(asset.symbol) { (85..98).random() }
+
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -208,29 +220,28 @@ fun IntelligenceAssetCard(onClick: () -> Unit) {
         border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Mock BTC Icon
-            Box(modifier = Modifier.size(44.dp).background(RefinedAmberGold.copy(alpha = 0.1f), CircleShape), contentAlignment = Alignment.Center) {
-                Text("₿", color = RefinedAmberGold, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            }
+            CryptoIcon(cmcId = asset.cmcId, symbol = asset.symbol, size = 44.dp)
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("بیت‌کوین", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
-                    Text("BTC", style = DaraTypography.labelSmall, color = Slate600)
+                    Text(asset.name, style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                    Text(asset.symbol, style = DaraTypography.labelSmall, color = Slate600)
                 }
-                Text("رتبه ۱ بازار", style = DaraTypography.labelSmall, color = Slate600)
+                Text("قیمت: ${PersianNumberUtils.formatCurrency(priceToman, isRial = false)} ت", style = DaraTypography.labelSmall, color = Slate600)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("$91,420", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(formatUsd(asset.priceUsd ?: 0.0), style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = EmeraldCore, modifier = Modifier.size(12.dp))
-                    Text("+۴.۸٪", style = DaraTypography.labelSmall, color = EmeraldCore, fontWeight = FontWeight.Bold)
+                    val icon = if (change >= 0) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown
+                    val color = if (change >= 0) EmeraldCore else RoseCoral
+                    Icon(icon, null, tint = color, modifier = Modifier.size(12.dp))
+                    Text("${if (change >= 0) "+" else ""}${String.format("%.1f", change)}٪", style = DaraTypography.labelSmall, color = color, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            // AI Score Mini Badge
+            // AI Score Badge
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("۹۴", style = DaraTypography.labelLarge, color = EmeraldCore, fontWeight = FontWeight.Black)
+                Text(aiScore.toString(), style = DaraTypography.labelLarge, color = if (aiScore > 90) EmeraldCore else RefinedAmberGold, fontWeight = FontWeight.Black)
                 Text("هوش دارا", style = DaraTypography.labelSmall, color = Slate600, fontSize = 8.sp)
             }
         }

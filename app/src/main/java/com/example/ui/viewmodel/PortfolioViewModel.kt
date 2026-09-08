@@ -3,13 +3,7 @@ package com.example.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.data.local.AssetPurchaseEntity
-import com.example.data.local.AssetSaleEntity
-import com.example.data.local.BankAccountEntity
-import com.example.data.local.PortfolioAssetType
-import com.example.data.local.PriceAlertEntity
-import com.example.data.local.PortfolioSnapshotEntity
-import com.example.data.repository.HoldingSummary
+import com.example.data.local.*
 import com.example.data.repository.PortfolioRepository
 import com.example.domain.model.Holding
 import com.example.domain.model.PortfolioSummary
@@ -45,6 +39,13 @@ class PortfolioViewModel(
         .onStart { emit(UiState.Loading) }
         .catch { emit(UiState.Error(it.message ?: "Unknown error")) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+
+    // Simplified flows for legacy screens
+    val holdings: StateFlow<List<Holding>> = getHoldingsUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val portfolioSummary: StateFlow<PortfolioSummary?> = getPortfolioSummaryUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val snapshots: StateFlow<List<PortfolioSnapshotEntity>> = repository.snapshots
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -110,6 +111,21 @@ class PortfolioViewModel(
     val totalCreditRial: StateFlow<Double> = repository.totalCreditRial
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
+    val goldPriceToman: StateFlow<Double> = repository.marketRates
+        .map { rates -> rates.find { it.assetCode == "GOLD_18K" }?.priceToman ?: 3500000.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3500000.0)
+
+    val usdPriceToman: StateFlow<Double> = repository.marketRates
+        .map { rates -> rates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 65000.0)
+
+    val assetAllocations: StateFlow<Map<PortfolioAssetType, Double>> = holdings
+        .map { list -> 
+            list.groupBy { it.assetType }
+                .mapValues { it.value.sumOf { h -> h.currentValueRial } / 10.0 } 
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -117,7 +133,7 @@ class PortfolioViewModel(
     val isOfflineMode: StateFlow<Boolean> = _isOfflineMode.asStateFlow()
 
     val totalPortfolioValueRial: StateFlow<Double> = holdings
-        .map { list -> list.sumOf { it.currentValueRial } }
+        .map { list: List<Holding> -> list.sumOf { it.currentValueRial } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     fun refreshAll(watchlistSymbols: List<String> = emptyList()) {

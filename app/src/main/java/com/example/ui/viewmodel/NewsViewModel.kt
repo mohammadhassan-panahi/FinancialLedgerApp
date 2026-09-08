@@ -20,6 +20,9 @@ class NewsViewModel(private val repository: NewsRepository) : ViewModel() {
     val iranEconomyNews = repository.getNews(NewsRepository.CATEGORY_IRAN_ECONOMY)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val techNews = repository.getNews(NewsRepository.CATEGORY_TECH)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -37,8 +40,9 @@ class NewsViewModel(private val repository: NewsRepository) : ViewModel() {
     fun refreshNews() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            repository.refreshCryptoNews()
+            repository.refreshAggregatedCryptoNews()
             repository.refreshIranEconomyNews()
+            repository.refreshTechNews()
             _isRefreshing.value = false
         }
     }

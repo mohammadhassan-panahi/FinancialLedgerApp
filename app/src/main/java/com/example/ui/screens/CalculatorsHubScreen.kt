@@ -3,7 +3,6 @@ package com.example.ui.screens
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -13,16 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.local.CryptoAssetEntity
-import com.example.data.local.MarketRateEntity
-import com.example.data.local.MutualFundEntity
-import com.example.domain.model.Holding
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
@@ -32,25 +26,28 @@ import com.example.util.PersianNumberUtils
 @Composable
 fun CalculatorsHubScreen(
     viewModel: CalculatorViewModel,
+    goldPriceToman: Double,
     onBack: () -> Unit,
-    holdings: List<Holding>,
-    marketRates: List<MarketRateEntity>,
-    cryptoAssets: List<CryptoAssetEntity>
+    onNavigateToCurrencyConverter: () -> Unit,
+    onNavigateToCryptoConverter: () -> Unit,
+    onNavigateToCompoundInterest: () -> Unit
 ) {
-    var goldWeight by remember { mutableStateOf("۴.۸۵۰") }
+    var goldWeight by remember { mutableStateOf("1") }
+    
+    val weightValue = PersianNumberUtils.parseAmount(goldWeight)
+    val totalGoldValue = weightValue * goldPriceToman
 
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
             CalculatorHeader(onBack = onBack)
         }
-    ) { padding ->
+    ) { innerPadding: PaddingValues ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Context Intro
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Surface(color = ObsidianSlate800.copy(alpha = 0.6f), shape = CircleShape) {
@@ -63,27 +60,40 @@ fun CalculatorsHubScreen(
                 }
             }
 
-            // Primary Tool: Gold Calculator
             item {
                 GoldCalculatorCard(
                     weight = goldWeight,
-                    onWeightChange = { goldWeight = it }
+                    onWeightChange = { goldWeight = it },
+                    totalValue = totalGoldValue
                 )
             }
 
-            // Other Tools Grid
             item {
                 Text("ابزارهای محاسباتی هوشمند", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    SecondaryToolCard(title = "مبدل ارزها", desc = "دلار، یورو و درهم", icon = Icons.Default.CurrencyExchange, color = EmeraldCore, modifier = Modifier.weight(1f))
-                    SecondaryToolCard(title = "رمزارز به تومان", desc = "تتر و بیت‌کوین", icon = Icons.Default.CurrencyBitcoin, color = IndigoElectric, modifier = Modifier.weight(1f))
+                    SecondaryToolCard(
+                        title = "مبدل ارزها", 
+                        desc = "دلار، یورو و درهم", 
+                        icon = Icons.Default.CurrencyExchange, 
+                        color = EmeraldCore, 
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToCurrencyConverter
+                    )
+                    SecondaryToolCard(
+                        title = "رمزارز به تومان", 
+                        desc = "تتر و بیت‌کوین", 
+                        icon = Icons.Default.CurrencyBitcoin, 
+                        color = IndigoElectric, 
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToCryptoConverter
+                    )
                 }
             }
 
-            // Bottom Banner: Compound Interest
             item {
                 Surface(
+                    onClick = onNavigateToCompoundInterest,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     color = ObsidianSlate800.copy(alpha = 0.6f),
@@ -137,7 +147,7 @@ fun CalculatorHeader(onBack: () -> Unit) {
 }
 
 @Composable
-fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit) {
+fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit, totalValue: Double) {
     DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -157,7 +167,6 @@ fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit) {
                 isDecimalAllowed = true
             )
             
-            // Carat Grid
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("عیار و استاندارد طلا", style = DaraTypography.labelSmall, color = Slate600)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -166,7 +175,6 @@ fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit) {
                 }
             }
             
-            // Result
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -174,7 +182,7 @@ fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("ارزش تمام شده کل (تخمین)", style = DaraTypography.labelSmall, color = Slate400)
-                    Text("۲۳,۱۸۴,۰۰۰ تومان", style = DaraTypography.headlineSmall, color = Slate50, fontWeight = FontWeight.Black)
+                    Text(PersianNumberUtils.formatCurrency(totalValue, showSuffix = true), style = DaraTypography.headlineSmall, color = Slate50, fontWeight = FontWeight.Black)
                 }
             }
         }
@@ -196,8 +204,8 @@ fun CaratChip(label: String, isSelected: Boolean, modifier: Modifier) {
 }
 
 @Composable
-fun SecondaryToolCard(title: String, desc: String, icon: ImageVector, color: Color, modifier: Modifier) {
-    DaraGlassCard(modifier = modifier.height(140.dp)) {
+fun SecondaryToolCard(title: String, desc: String, icon: ImageVector, color: Color, modifier: Modifier, onClick: () -> Unit) {
+    DaraGlassCard(modifier = modifier.height(140.dp).clickable { onClick() }) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
             Column {

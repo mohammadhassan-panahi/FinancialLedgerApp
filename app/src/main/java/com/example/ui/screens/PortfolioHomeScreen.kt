@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.PortfolioAssetType
-import com.example.data.repository.HoldingSummary
 import com.example.ui.LocalIsRial
 import com.example.domain.model.GoldPriceAnalysis
 import com.example.domain.model.Holding

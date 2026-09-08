@@ -2,6 +2,7 @@ package com.example.ui.screens.news
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,11 +40,11 @@ fun NewsDetailScreen(
         floatingActionButton = {
             FloatingAiAssistantButton(onClick = onChatWithAi)
         }
-    ) { padding ->
+    ) { innerPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -167,15 +167,15 @@ fun DaraAiSnapshotBox(news: NewsEntity) {
                 }
             }
 
-            // Mocked AI bullets for UI parity
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                AiBullet(text = news.aiSummary ?: "تحلیل هوشمند برای این خبر در دسترس نیست.", color = EmeraldCore)
-                AiBullet(text = "اثر احتمالی بر بازار: کاهش حباب قیمتی در میان‌مدت.", color = RefinedAmberGold)
-                AiBullet(text = "پیشنهاد دارا: حفظ دارایی‌های طلا و پایش نرخ دلار.", color = IndigoElectric)
+                AiBullet(text = news.aiSummary ?: "در انتظار تحلیل هوشمند...", color = EmeraldCore)
+                val sentimentText = if (news.sentiment == "POSITIVE") "مثبت" else if (news.sentiment == "NEGATIVE") "منفی" else "خنثی"
+                AiBullet(text = "سنتیمنت بازار: $sentimentText", color = RefinedAmberGold)
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MetricMeter(label = "اثرگذاری بر بازار", value = 0.82f, color = RefinedAmberGold, modifier = Modifier.weight(1f))
+                val impact = if (news.importance == "HIGH") 0.9f else if (news.importance == "MEDIUM") 0.6f else 0.3f
+                MetricMeter(label = "اثرگذاری بر بازار", value = impact, color = RefinedAmberGold, modifier = Modifier.weight(1f))
                 MetricMeter(label = "سنتیمنت تحلیل", value = 0.75f, color = EmeraldCore, modifier = Modifier.weight(1f))
             }
         }
@@ -210,14 +210,13 @@ private fun MetricMeter(label: String, value: Float, color: Color, modifier: Mod
 fun NewsContentBody(news: NewsEntity) {
     Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Text(
-            text = news.description ?: "متن کامل خبر در دسترس نیست.",
+            text = news.description ?: "متن خبر در دسترس نیست.",
             style = DaraTypography.bodyLarge,
             color = Slate50.copy(alpha = 0.9f),
             lineHeight = 28.sp,
             textAlign = TextAlign.Justify
         )
 
-        // Pull Quote
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -229,13 +228,10 @@ fun NewsContentBody(news: NewsEntity) {
                 Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(EmeraldCore, CircleShape))
                 Column {
                     Text(
-                        "«سیاست مداخله هدفمند، سیگنال مهار حباب در بازار فیزیکی طلا را تقویت می‌کند.»",
-                        style = DaraTypography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        fontStyle = FontStyle.Italic,
-                        color = Slate50
+                        "منبع خبر: ${news.source}",
+                        style = DaraTypography.bodySmall,
+                        color = Slate400
                     )
-                    Text("— یادداشت دپارتمان استراتژی دارا", style = DaraTypography.labelSmall, color = IndigoElectric, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
@@ -252,7 +248,7 @@ fun AiInquiryCard(onChat: () -> Unit) {
                 }
                 Text("بینش سریع هوشمند دارا", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
             }
-            Text("برای شبیه‌سازی وزن طلای پورتفوی شخصی‌تان بر اساس این سناریو، سؤالتان را بپرسید:", style = DaraTypography.bodyMedium, color = Slate400)
+            Text("برای تحلیل دقیق‌تر اثر این خبر بر پورتفوی شخصی‌تان، سؤالتان را بپرسید:", style = DaraTypography.bodyMedium, color = Slate400)
             
             Button(
                 onClick = onChat,

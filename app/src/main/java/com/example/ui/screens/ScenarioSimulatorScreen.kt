@@ -3,8 +3,6 @@ package com.example.ui.screens
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,52 +12,72 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.data.local.PortfolioAssetType
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
+import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.PersianNumberUtils
 
 @Composable
 fun ScenarioSimulatorScreen(
+    viewModel: PortfolioViewModel,
     onBack: () -> Unit
 ) {
-    var goldChange by remember { mutableFloatStateOf(20f) }
-    var usdChange by remember { mutableFloatStateOf(-10f) }
-    var stockChange by remember { mutableFloatStateOf(15f) }
-    var cryptoChange by remember { mutableFloatStateOf(35f) }
+    val summary by viewModel.portfolioSummary.collectAsStateWithLifecycle(null)
+    val holdings by viewModel.holdings.collectAsStateWithLifecycle(emptyList())
 
-    // Mock base values
-    val baseWorth = 34850200000.0
-    val goldBase = baseWorth * 0.42
-    val stockBase = baseWorth * 0.28
-    val usdBase = baseWorth * 0.20
-    val cryptoBase = baseWorth * 0.10
+    var goldChange by remember { mutableStateOf(20f) }
+    var usdChange by remember { mutableStateOf(-10f) }
+    var stockChange by remember { mutableStateOf(15f) }
+    var cryptoChange by remember { mutableStateOf(35f) }
+
+    // Real base values from user portfolio
+    val baseWorth = (summary?.totalValueRial ?: 0.0) / 10.0 // To Toman
+    
+    var goldBase = 0.0
+    var stockBase = 0.0
+    var usdBase = 0.0
+    var cryptoBase = 0.0
+    
+    val iterator = holdings.iterator()
+    while (iterator.hasNext()) {
+        val holding = iterator.next()
+        when (holding.assetType) {
+            PortfolioAssetType.GOLD -> goldBase += holding.currentValueRial / 10.0
+            PortfolioAssetType.STOCK -> stockBase += holding.currentValueRial / 10.0
+            PortfolioAssetType.USD -> usdBase += holding.currentValueRial / 10.0
+            PortfolioAssetType.CRYPTO -> cryptoBase += holding.currentValueRial / 10.0
+            else -> {}
+        }
+    }
+    
+    val otherBase = baseWorth - (goldBase + stockBase + usdBase + cryptoBase)
 
     val goldSim = goldBase * (1 + goldChange / 100)
     val stockSim = stockBase * (1 + stockChange / 100)
     val usdSim = usdBase * (1 + usdChange / 100)
     val cryptoSim = cryptoBase * (1 + cryptoChange / 100)
 
-    val totalProjected = goldSim + stockSim + usdSim + cryptoSim
+    val totalProjected = goldSim + stockSim + usdSim + cryptoSim + otherBase
     val delta = totalProjected - baseWorth
-    val percentDelta = ((delta / baseWorth) * 100).toFloat()
+    val percentDelta = if (baseWorth > 0) ((delta / baseWorth) * 100).toFloat() else 0f
 
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
             SimulatorHeader(onBack = onBack)
         }
-    ) { padding ->
+    ) { innerPadding: PaddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -68,17 +86,14 @@ fun ScenarioSimulatorScreen(
                 EngineStatusStrip()
             }
 
-            // Section 2: Historical Growth (Simplified)
+            // Section 2: Current Wealth (Real)
             item {
                 DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("رشد سرمایه در یک سال اخیر", style = DaraTypography.labelSmall, color = Slate400)
+                        Text("ارزش فعلی سرمایه شما (تومان)", style = DaraTypography.labelSmall, color = Slate400)
                         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(PersianNumberUtils.formatDecimal(baseWorth), style = DaraTypography.displaySmall, color = Slate50, fontWeight = FontWeight.Black)
                             Text("تومان", style = DaraTypography.titleMedium, color = Slate600)
-                        }
-                        Box(modifier = Modifier.fillMaxWidth().height(80.dp).background(ObsidianSlate600.copy(alpha = 0.3f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                            Text("Wealth Growth Sparkline", style = DaraTypography.labelSmall, color = Slate600)
                         }
                     }
                 }
@@ -130,8 +145,13 @@ fun ScenarioSimulatorScreen(
                         Icon(Icons.Default.SmartToy, null, tint = IndigoElectric, modifier = Modifier.size(20.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("استراتژی پیشنهادی دارا", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                            val advice = when {
+                                percentDelta > 10 -> "در این سناریو، بازدهی شما بسیار مطلوب است. پیشنهاد می‌شود بخشی از سود را به دارایی‌های کم‌ریسک منتقل کنید."
+                                percentDelta < 0 -> "در صورت وقوع این سناریو، پورتفوی شما با کاهش ارزش مواجه می‌شود. افزایش سهم طلا می‌تواند به عنوان پوشش ریسک عمل کند."
+                                else -> "تنوع‌بخشی فعلی شما مناسب است. حفظ آرامش و پایش مداوم نرخ‌ها توصیه می‌شود."
+                            }
                             Text(
-                                "با توجه به سناریوی انتخابی، بازتنظیم ۱۵٪ از منابع راکد به گواهی سپرده طلا انحراف معیار ریسک شما را کاهش می‌دهد.",
+                                advice,
                                 style = DaraTypography.bodySmall,
                                 color = Slate400,
                                 lineHeight = 20.sp
