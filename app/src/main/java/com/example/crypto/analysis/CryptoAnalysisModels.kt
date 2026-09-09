@@ -1,12 +1,14 @@
 package com.example.crypto.analysis
 
+import java.math.BigDecimal
+
 data class CandleStick(
     val time: Long,
-    val open: Double,
-    val high: Double,
-    val low: Double,
-    val close: Double,
-    val volume: Double
+    val open: BigDecimal,
+    val high: BigDecimal,
+    val low: BigDecimal,
+    val close: BigDecimal,
+    val volume: BigDecimal
 )
 
 enum class MarketTrend {
@@ -23,20 +25,20 @@ enum class AnalysisSignal {
 
 data class TechnicalAnalysisResult(
     val symbol: String,
-    val price: Double,
+    val price: BigDecimal,
     val trend: String, // Bullish, Bearish, Sideways
     val volumeTrend: String, // Increasing, Decreasing, Spike
-    val rsi: Double,
-    val support: Double,
-    val resistance: Double,
+    val rsi: BigDecimal,
+    val support: BigDecimal,
+    val resistance: BigDecimal,
     val liquidity: String, // High, Medium, Low
     val riskScore: Int, // 0-100
     val opportunityScore: Int, // 0-100
     val signal: AnalysisSignal,
-    val entryZone: Pair<Double, Double>?,
-    val stopLoss: Double?,
-    val takeProfit: Double?,
-    val riskReward: Double?,
+    val entryZone: Pair<BigDecimal, BigDecimal>?,
+    val stopLoss: BigDecimal?,
+    val takeProfit: BigDecimal?,
+    val riskReward: BigDecimal?,
     val warnings: List<String>,
     val reasons: List<String>,
     val timestamp: Long = System.currentTimeMillis()

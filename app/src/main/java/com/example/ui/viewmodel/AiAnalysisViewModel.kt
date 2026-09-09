@@ -7,11 +7,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.repository.AiRepository
 import com.example.data.repository.PortfolioRepository
 import com.example.domain.model.Holding
+import com.example.util.safeDiv
+import com.example.util.sumOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 data class ChatMessage(
     val content: String,
@@ -112,8 +116,8 @@ class AiAnalysisViewModel(
 
     private fun generateLocalPortfolioReport(
         holdings: List<Holding>,
-        totalValue: Double,
-        liquidity: Double
+        totalValue: BigDecimal,
+        liquidity: BigDecimal
     ): String {
         return buildString {
             appendLine("📊 تحلیل وضعیت سبد دارایی (الگوریتم داخلی):")
@@ -125,30 +129,31 @@ class AiAnalysisViewModel(
             }
 
             val totalAssetCount = holdings.size
-            val profitableAssets = holdings.count { it.profitLossRial > 0 }
+            val profitableAssets = holdings.count { it.profitLossRial > BigDecimal.ZERO }
             
             appendLine("• شما در حال حاضر $totalAssetCount نوع دارایی مختلف دارید.")
             appendLine("• تعداد $profitableAssets دارایی در وضعیت سوددهی هستند.")
             
             // Risk check: Diversification
             holdings.maxByOrNull { it.currentValueRial }?.let { maxAsset ->
-                val ratio = (maxAsset.currentValueRial / totalValue) * 100
-                if (ratio > 40) {
-                    appendLine("⚠️ هشدار تمرکز سرمایه: دارایی '${maxAsset.assetName}' حدود ${ratio.toInt()}% از کل سبد شما را تشکیل می‌دهد. برای کاهش ریسک، تنوع بیشتری ایجاد کنید.")
+                val ratio = (maxAsset.currentValueRial.safeDiv(totalValue)).multiply(BigDecimal("100"))
+                if (ratio > BigDecimal("40")) {
+                    appendLine("⚠️ هشدار تمرکز سرمایه: دارایی '${maxAsset.assetName}' حدود ${ratio.setScale(0, RoundingMode.HALF_UP).toPlainString()}% از کل سبد شما را تشکیل می‌دهد. برای کاهش ریسک، تنوع بیشتری ایجاد کنید.")
                 }
             }
 
             // Liquidity check
-            val liquidityRatio = (liquidity / (totalValue + liquidity)) * 100
-            if (liquidityRatio < 10) {
+            val totalCap = totalValue.add(liquidity)
+            val liquidityRatio = if (totalCap.compareTo(BigDecimal.ZERO) > 0) (liquidity.safeDiv(totalCap)).multiply(BigDecimal("100")) else BigDecimal.ZERO
+            if (liquidityRatio < BigDecimal("10")) {
                 appendLine("💡 پیشنهاد: ذخیره نقدینگی شما کمتر از ۱۰٪ است. داشتن نقدینگی کافی برای خرید در اصلاح‌های بازار ضروری است.")
-            } else if (liquidityRatio > 50) {
-                appendLine("💡 پیشنهاد: نقدینگی بالایی دارید (${liquidityRatio.toInt()}%). در صورت مشاهده فرصت خرید در دیدبان، بخشی از آن را وارد بازار کنید.")
+            } else if (liquidityRatio > BigDecimal("50")) {
+                appendLine("💡 پیشنهاد: نقدینگی بالایی دارید (${liquidityRatio.setScale(0, RoundingMode.HALF_UP).toPlainString()}%). در صورت مشاهده فرصت خرید در دیدبان، بخشی از آن را وارد بازار کنید.")
             }
 
             // Overall health
             val totalProfit = holdings.sumOf { it.profitLossRial }
-            if (totalProfit > 0) {
+            if (totalProfit > BigDecimal.ZERO) {
                 appendLine("✅ وضعیت کلی سبد شما مثبت است. به استراتژی خود پایبند باشید.")
             } else {
                 appendLine("🧐 وضعیت کلی سبد در ضرر است. نقاط خرید خود را بررسی کرده و در صورت نیاز با تحلیل تکنیکال میانگین کم کنید.")

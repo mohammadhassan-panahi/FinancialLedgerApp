@@ -33,6 +33,7 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 @Composable
 fun AddPurchaseScreen(
@@ -53,22 +54,22 @@ fun AddPurchaseScreen(
     val mutualFunds by viewModel.mutualFunds.collectAsStateWithLifecycle()
 
     val marketRates = allMarketRates.filter { !it.isOfflineRate || it.currency == "تومان" }
-    val usdRateToman = marketRates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0
+    val usdRateToman = marketRates.find { it.assetCode == "USD" }?.priceToman ?: BigDecimal("65000")
 
     fun autoFillPrice() {
         val type = selectedType ?: return
-        val rialPerToman = 10.0
+        val rialPerToman = BigDecimal("10")
         val livePriceRial = when (type) {
             PortfolioAssetType.GOLD -> {
                 val rate = marketRates.find { it.assetCode == assetCode || it.name.contains(assetName) }
-                rate?.priceToman?.let { it * rialPerToman }
+                rate?.priceToman?.let { it.multiply(rialPerToman) }
             }
             PortfolioAssetType.USD -> {
                 val rate = marketRates.find { it.assetCode == assetCode || it.assetCode == "USD" }
-                rate?.priceToman?.let { it * rialPerToman }
+                rate?.priceToman?.let { it.multiply(rialPerToman) }
             }
-            PortfolioAssetType.CRYPTO -> cryptoAssets.find { it.symbol == assetCode }?.priceUsd?.let { it * usdRateToman * rialPerToman }
-            PortfolioAssetType.FUND -> mutualFunds.find { it.id == assetCode }?.navToman?.let { it * rialPerToman }
+            PortfolioAssetType.CRYPTO -> cryptoAssets.find { it.symbol == assetCode }?.priceUsd?.let { it.multiply(usdRateToman).multiply(rialPerToman) }
+            PortfolioAssetType.FUND -> mutualFunds.find { it.id == assetCode }?.navToman?.let { it.multiply(rialPerToman) }
             else -> null
         }
         if (livePriceRial != null) unitPrice = livePriceRial.toLong().toString()
@@ -360,7 +361,7 @@ fun AssetDetailsFormStep(
                 // Total Calculation
                 val q = PersianNumberUtils.parseAmount(quantity)
                 val p = PersianNumberUtils.parseAmount(unitPrice)
-                val total = q * p
+                val total = q.multiply(p)
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -374,7 +375,7 @@ fun AssetDetailsFormStep(
 
                 Button(
                     onClick = onSubmit,
-                    enabled = q > 0 && p > 0 && assetCode.isNotBlank(),
+                    enabled = q.compareTo(BigDecimal.ZERO) > 0 && p.compareTo(BigDecimal.ZERO) > 0 && assetCode.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = IndigoElectric)

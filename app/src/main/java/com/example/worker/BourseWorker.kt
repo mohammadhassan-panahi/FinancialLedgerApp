@@ -10,6 +10,7 @@ import androidx.work.WorkerParameters
 import com.example.R
 import com.example.data.local.AppDatabase
 import com.example.data.local.IpoEntity
+import java.math.BigDecimal
 
 class BourseWorker(
     context: Context,
@@ -32,9 +33,9 @@ class BourseWorker(
                     companyName = "پتروشیمی خلیج فارس",
                     ipoDate = "۱۴۰۳/۰۶/۱۵",
                     maxShares = 1000,
-                    maxPriceRial = 15000.0,
-                    minPriceRial = 14000.0,
-                    requiredLiquidityRial = 15000000.0,
+                    maxPriceRial = BigDecimal("15000"),
+                    minPriceRial = BigDecimal("14000"),
+                    requiredLiquidityRial = BigDecimal("15000000"),
                     status = "به زودی"
                 )
                 bourseDao.insertIpos(listOf(demoIpo))

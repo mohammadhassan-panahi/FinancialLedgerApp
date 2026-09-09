@@ -1,36 +1,38 @@
 package com.example.util
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import kotlin.math.pow
 
 object FinancialFormulas {
 
     // --- 1. SIMPLE INTEREST ---
     data class SimpleInterestResult(
-        val principal: Double,
-        val dailyInterest: Double,
-        val monthlyInterest: Double,
-        val yearlyInterest: Double,
-        val totalInterest: Double,
-        val totalAmount: Double
+        val principal: BigDecimal,
+        val dailyInterest: BigDecimal,
+        val monthlyInterest: BigDecimal,
+        val yearlyInterest: BigDecimal,
+        val totalInterest: BigDecimal,
+        val totalAmount: BigDecimal
     )
 
     fun calculateSimpleInterest(
-        principal: Double,
-        annualRatePercent: Double,
-        durationValue: Double,
+        principal: BigDecimal,
+        annualRatePercent: BigDecimal,
+        durationValue: BigDecimal,
         durationType: String // "days", "months", "years"
     ): SimpleInterestResult {
-        val r = annualRatePercent / 100.0
+        val r = annualRatePercent.safeDiv(BigDecimal("100"))
         val years = when (durationType) {
-            "days" -> durationValue / 365.0
-            "months" -> durationValue / 12.0
+            "days" -> durationValue.safeDiv(BigDecimal("365"))
+            "months" -> durationValue.safeDiv(BigDecimal("12"))
             else -> durationValue
         }
-        val totalInterest = principal * r * years
-        val dailyInterest = (principal * r) / 365.0
-        val monthlyInterest = (principal * r) / 12.0
-        val yearlyInterest = principal * r
-        val totalAmount = principal + totalInterest
+        val totalInterest = principal.multiply(r).multiply(years)
+        val dailyInterest = principal.multiply(r).safeDiv(BigDecimal("365"))
+        val monthlyInterest = principal.multiply(r).safeDiv(BigDecimal("12"))
+        val yearlyInterest = principal.multiply(r)
+        val totalAmount = principal.add(totalInterest)
 
         return SimpleInterestResult(
             principal = principal,
@@ -45,64 +47,66 @@ object FinancialFormulas {
     // --- 2. COMPOUND INTEREST ---
     data class CompoundYearRow(
         val year: Int,
-        val totalDeposited: Double,
-        val grossInterestEarned: Double,
-        val endingBalance: Double,
-        val realValueInflationAdjusted: Double
+        val totalDeposited: BigDecimal,
+        val grossInterestEarned: BigDecimal,
+        val endingBalance: BigDecimal,
+        val realValueInflationAdjusted: BigDecimal
     )
 
     data class CompoundInterestResult(
-        val initialPrincipal: Double,
-        val monthlyDeposit: Double,
-        val totalDeposited: Double,
-        val grossInterest: Double,
-        val netInterestAfterTax: Double,
-        val finalNominalValue: Double,
-        val finalRealValueInflationAdjusted: Double,
+        val initialPrincipal: BigDecimal,
+        val monthlyDeposit: BigDecimal,
+        val totalDeposited: BigDecimal,
+        val grossInterest: BigDecimal,
+        val netInterestAfterTax: BigDecimal,
+        val finalNominalValue: BigDecimal,
+        val finalRealValueInflationAdjusted: BigDecimal,
         val yearlyBreakdown: List<CompoundYearRow>
     )
 
     fun calculateCompoundInterest(
-        initialPrincipal: Double,
-        monthlyDeposit: Double,
-        annualRatePercent: Double,
+        initialPrincipal: BigDecimal,
+        monthlyDeposit: BigDecimal,
+        annualRatePercent: BigDecimal,
         years: Int,
         compoundingFrequency: String, // "daily", "monthly", "yearly"
-        inflationRatePercent: Double = 0.0,
-        taxRatePercent: Double = 0.0
+        inflationRatePercent: BigDecimal = BigDecimal.ZERO,
+        taxRatePercent: BigDecimal = BigDecimal.ZERO
     ): CompoundInterestResult {
-        val r = annualRatePercent / 100.0
+        val r = annualRatePercent.safeDiv(BigDecimal("100"))
         val n = when (compoundingFrequency) {
-            "daily" -> 365
-            "monthly" -> 12
-            else -> 1
+            "daily" -> BigDecimal("365")
+            "monthly" -> BigDecimal("12")
+            else -> BigDecimal.ONE
         }
-        val inf = inflationRatePercent / 100.0
-        val tax = taxRatePercent / 100.0
+        val inf = inflationRatePercent.safeDiv(BigDecimal("100"))
+        val tax = taxRatePercent.safeDiv(BigDecimal("100"))
 
         var currentBalance = initialPrincipal
         var totalDeposited = initialPrincipal
-        var totalGrossInterest = 0.0
+        var totalGrossInterest = BigDecimal.ZERO
         val yearlyBreakdown = mutableListOf<CompoundYearRow>()
 
         for (year in 1..years) {
             val startYearBalance = currentBalance
-            var yearDeposited = 0.0
+            var yearDeposited = BigDecimal.ZERO
 
             for (month in 1..12) {
-                currentBalance += monthlyDeposit
-                yearDeposited += monthlyDeposit
-                // compound monthly approximation or discrete period
-                val periodRate = r / n
-                val compoundPeriodsPerMonth = n / 12.0
-                currentBalance *= (1 + periodRate).pow(compoundPeriodsPerMonth)
+                currentBalance = currentBalance.add(monthlyDeposit)
+                yearDeposited = yearDeposited.add(monthlyDeposit)
+                
+                val periodRate = r.safeDiv(n)
+                val compoundPeriodsPerMonth = n.toDouble() / 12.0
+                // Use Double for pow then back to BigDecimal
+                val multiplier = (BigDecimal.ONE.add(periodRate).toDouble().pow(compoundPeriodsPerMonth)).toBigDecimal()
+                currentBalance = currentBalance.multiply(multiplier)
             }
 
-            totalDeposited += yearDeposited
-            val yearGrossInterest = currentBalance - (startYearBalance + yearDeposited)
-            totalGrossInterest += yearGrossInterest
+            totalDeposited = totalDeposited.add(yearDeposited)
+            val yearGrossInterest = currentBalance.subtract(startYearBalance.add(yearDeposited))
+            totalGrossInterest = totalGrossInterest.add(yearGrossInterest)
 
-            val realVal = currentBalance / (1 + inf).pow(year.toDouble())
+            val realVal = currentBalance.safeDiv(BigDecimal.ONE.add(inf).toDouble().pow(year.toDouble()).toBigDecimal())
 
             yearlyBreakdown.add(
                 CompoundYearRow(
@@ -115,9 +119,9 @@ object FinancialFormulas {
             )
         }
 
-        val netInterest = totalGrossInterest * (1 - tax)
-        val finalNominal = totalDeposited + netInterest
-        val finalReal = finalNominal / (1 + inf).pow(years.toDouble())
+        val netInterest = totalGrossInterest.multiply(BigDecimal.ONE.subtract(tax))
+        val finalNominal = totalDeposited.add(netInterest)
+        val finalReal = finalNominal.safeDiv(BigDecimal.ONE.add(inf).toDouble().pow(years.toDouble()).toBigDecimal())
 
         return CompoundInterestResult(
             initialPrincipal = initialPrincipal,
@@ -132,92 +136,93 @@ object FinancialFormulas {
     }
 
     fun calculateRequiredMonthlyDepositForTarget(
-        initialPrincipal: Double,
-        targetFinalValue: Double,
-        annualRatePercent: Double,
+        initialPrincipal: BigDecimal,
+        targetFinalValue: BigDecimal,
+        annualRatePercent: BigDecimal,
         years: Int,
         compoundingFrequency: String = "monthly"
-    ): Double {
-        if (years <= 0) return 0.0
-        val r = annualRatePercent / 100.0
+    ): BigDecimal {
+        if (years <= 0) return BigDecimal.ZERO
+        val r = annualRatePercent.safeDiv(BigDecimal("100"))
         val n = when (compoundingFrequency) {
-            "daily" -> 365
-            "monthly" -> 12
-            else -> 1
+            "daily" -> BigDecimal("365")
+            "monthly" -> BigDecimal("12")
+            else -> BigDecimal.ONE
         }
         val totalMonths = years * 12
-        val periodRate = r / n
-        val periodsPerMonth = n / 12.0
+        val periodRate = r.safeDiv(n)
+        val periodsPerMonth = n.toDouble() / 12.0
 
-        val fvPrincipal = initialPrincipal * (1 + periodRate).pow(n.toDouble() * years)
-        val remainingTarget = targetFinalValue - fvPrincipal
-        if (remainingTarget <= 0) return 0.0
+        val fvPrincipal = initialPrincipal.multiply(BigDecimal.ONE.add(periodRate).toDouble().pow(n.toDouble() * years).toBigDecimal())
+        val remainingTarget = targetFinalValue.subtract(fvPrincipal)
+        if (remainingTarget <= BigDecimal.ZERO) return BigDecimal.ZERO
 
         // Geometric series multiplier for monthly deposits
-        var factorSum = 0.0
-        var currentMult = 1.0
-        val monthlyMultiplier = (1 + periodRate).pow(periodsPerMonth)
+        var factorSum = BigDecimal.ZERO
+        var currentMult = BigDecimal.ONE
+        val monthlyMultiplier = BigDecimal.ONE.add(periodRate).toDouble().pow(periodsPerMonth).toBigDecimal()
         for (m in 1..totalMonths) {
-            currentMult *= monthlyMultiplier
-            factorSum += currentMult
+            currentMult = currentMult.multiply(monthlyMultiplier)
+            factorSum = factorSum.add(currentMult)
         }
 
-        return if (factorSum > 0) remainingTarget / factorSum else 0.0
+        return if (factorSum > BigDecimal.ZERO) remainingTarget.safeDiv(factorSum) else BigDecimal.ZERO
     }
 
     // --- 3. LOAN & INSTALLMENTS ---
     data class AmortizationRow(
         val month: Int,
-        val paymentAmount: Double,
-        val principalPart: Double,
-        val interestPart: Double,
-        val remainingBalance: Double
+        val paymentAmount: BigDecimal,
+        val principalPart: BigDecimal,
+        val interestPart: BigDecimal,
+        val remainingBalance: BigDecimal
     )
 
     data class LoanResult(
-        val loanAmount: Double,
-        val monthlyPayment: Double,
-        val totalRepayment: Double,
-        val totalInterest: Double,
-        val initialFeeAmount: Double,
+        val loanAmount: BigDecimal,
+        val monthlyPayment: BigDecimal,
+        val totalRepayment: BigDecimal,
+        val totalInterest: BigDecimal,
+        val initialFeeAmount: BigDecimal,
         val schedule: List<AmortizationRow>,
         // Early settlement details if specified
         val earlySettlementMonth: Int = 0,
-        val remainingBalanceAtSettlement: Double = 0.0,
-        val penaltyAmount: Double = 0.0,
-        val totalPayoffAmount: Double = 0.0,
-        val totalInterestSaved: Double = 0.0
+        val remainingBalanceAtSettlement: BigDecimal = BigDecimal.ZERO,
+        val penaltyAmount: BigDecimal = BigDecimal.ZERO,
+        val totalPayoffAmount: BigDecimal = BigDecimal.ZERO,
+        val totalInterestSaved: BigDecimal = BigDecimal.ZERO
     )
 
     fun calculateLoan(
-        loanAmount: Double,
-        annualRatePercent: Double,
+        loanAmount: BigDecimal,
+        annualRatePercent: BigDecimal,
         durationMonths: Int,
-        initialFeePercent: Double = 0.0,
+        initialFeePercent: BigDecimal = BigDecimal.ZERO,
         earlySettlementMonth: Int = 0,
-        penaltyPercent: Double = 0.0
+        penaltyPercent: BigDecimal = BigDecimal.ZERO
     ): LoanResult {
-        if (loanAmount <= 0 || durationMonths <= 0) {
-            return LoanResult(0.0, 0.0, 0.0, 0.0, 0.0, emptyList())
+        if (loanAmount <= BigDecimal.ZERO || durationMonths <= 0) {
+            return LoanResult(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, emptyList())
         }
 
-        val i = (annualRatePercent / 100.0) / 12.0
-        val pmt = if (i > 0) {
-            loanAmount * (i * (1 + i).pow(durationMonths)) / ((1 + i).pow(durationMonths) - 1)
+        val i = annualRatePercent.safeDiv(BigDecimal("100")).safeDiv(BigDecimal("12"))
+        val pmt = if (i > BigDecimal.ZERO) {
+            val iPlus1PowN = BigDecimal.ONE.add(i).toDouble().pow(durationMonths.toDouble()).toBigDecimal()
+            loanAmount.multiply(i.multiply(iPlus1PowN)).safeDiv(iPlus1PowN.subtract(BigDecimal.ONE))
         } else {
-            loanAmount / durationMonths
+            loanAmount.safeDiv(durationMonths.toBigDecimal())
         }
 
         var balance = loanAmount
         val schedule = mutableListOf<AmortizationRow>()
-        var totalInterest = 0.0
+        var totalInterest = BigDecimal.ZERO
 
         for (m in 1..durationMonths) {
-            val interestPart = balance * i
-            val principalPart = pmt - interestPart
-            balance -= principalPart
-            if (balance < 0) balance = 0.0
-            totalInterest += interestPart
+            val interestPart = balance.multiply(i)
+            val principalPart = pmt.subtract(interestPart)
+            balance = balance.subtract(principalPart)
+            if (balance < BigDecimal.ZERO) balance = BigDecimal.ZERO
+            totalInterest = totalInterest.add(interestPart)
 
             schedule.add(
                 AmortizationRow(
@@ -230,22 +235,22 @@ object FinancialFormulas {
             )
         }
 
-        val totalRepayment = pmt * durationMonths
-        val initialFee = loanAmount * (initialFeePercent / 100.0)
+        val totalRepayment = pmt.multiply(durationMonths.toBigDecimal())
+        val initialFee = loanAmount.multiply(initialFeePercent.safeDiv(BigDecimal("100")))
 
         // Early settlement calculations
-        var remBalAtSettlement = 0.0
-        var penaltyAmt = 0.0
-        var totalPayoff = 0.0
-        var interestSaved = 0.0
+        var remBalAtSettlement = BigDecimal.ZERO
+        var penaltyAmt = BigDecimal.ZERO
+        var totalPayoff = BigDecimal.ZERO
+        var interestSaved = BigDecimal.ZERO
 
         if (earlySettlementMonth in 1 until durationMonths) {
             remBalAtSettlement = schedule[earlySettlementMonth - 1].remainingBalance
-            penaltyAmt = remBalAtSettlement * (penaltyPercent / 100.0)
-            totalPayoff = remBalAtSettlement + penaltyAmt
-            val remainingOriginalPayments = pmt * (durationMonths - earlySettlementMonth)
-            interestSaved = remainingOriginalPayments - totalPayoff
-            if (interestSaved < 0) interestSaved = 0.0
+            penaltyAmt = remBalAtSettlement.multiply(penaltyPercent.safeDiv(BigDecimal("100")))
+            totalPayoff = remBalAtSettlement.add(penaltyAmt)
+            val remainingOriginalPayments = pmt.multiply((durationMonths - earlySettlementMonth).toBigDecimal())
+            interestSaved = remainingOriginalPayments.subtract(totalPayoff)
+            if (interestSaved < BigDecimal.ZERO) interestSaved = BigDecimal.ZERO
         }
 
         return LoanResult(
@@ -264,51 +269,52 @@ object FinancialFormulas {
     }
 
     fun calculateLoanInstallment(
-        loanAmount: Double,
-        annualRatePercent: Double,
+        loanAmount: BigDecimal,
+        annualRatePercent: BigDecimal,
         durationMonths: Int
-    ): Double = calculateLoan(loanAmount, annualRatePercent, durationMonths).monthlyPayment
+    ): BigDecimal = calculateLoan(loanAmount, annualRatePercent, durationMonths).monthlyPayment
 
     fun calculateMaxLoanFromPayment(
-        desiredPayment: Double,
-        annualRatePercent: Double,
+        desiredPayment: BigDecimal,
+        annualRatePercent: BigDecimal,
         durationMonths: Int
-    ): Double {
-        if (desiredPayment <= 0 || durationMonths <= 0) return 0.0
-        val i = (annualRatePercent / 100.0) / 12.0
-        return if (i > 0) {
-            desiredPayment * ((1 + i).pow(durationMonths) - 1) / (i * (1 + i).pow(durationMonths))
+    ): BigDecimal {
+        if (desiredPayment <= BigDecimal.ZERO || durationMonths <= 0) return BigDecimal.ZERO
+        val i = annualRatePercent.safeDiv(BigDecimal("100")).safeDiv(BigDecimal("12"))
+        return if (i > BigDecimal.ZERO) {
+            val iPlus1PowN = BigDecimal.ONE.add(i).toDouble().pow(durationMonths.toDouble()).toBigDecimal()
+            desiredPayment.multiply(iPlus1PowN.subtract(BigDecimal.ONE)).safeDiv(i.multiply(iPlus1PowN))
         } else {
-            desiredPayment * durationMonths
+            desiredPayment.multiply(durationMonths.toBigDecimal())
         }
     }
 
     // --- 4. BANK DEPOSIT ---
     data class BankDepositResult(
-        val principal: Double,
-        val annualRatePercent: Double,
-        val dailyInterest: Double,
-        val monthlyInterest: Double,
-        val yearlyInterest: Double,
-        val netMonthlyInterest: Double,
-        val realInterestAfterInflation: Double
+        val principal: BigDecimal,
+        val annualRatePercent: BigDecimal,
+        val dailyInterest: BigDecimal,
+        val monthlyInterest: BigDecimal,
+        val yearlyInterest: BigDecimal,
+        val netMonthlyInterest: BigDecimal,
+        val realInterestAfterInflation: BigDecimal
     )
 
     fun calculateBankDeposit(
-        principal: Double,
-        annualRatePercent: Double,
-        taxRatePercent: Double = 0.0,
-        inflationRatePercent: Double = 0.0
+        principal: BigDecimal,
+        annualRatePercent: BigDecimal,
+        taxRatePercent: BigDecimal = BigDecimal.ZERO,
+        inflationRatePercent: BigDecimal = BigDecimal.ZERO
     ): BankDepositResult {
-        val yearlyInterest = principal * (annualRatePercent / 100.0)
-        val monthlyInterest = yearlyInterest / 12.0
-        val dailyInterest = yearlyInterest / 365.0
+        val yearlyInterest = principal.multiply(annualRatePercent.safeDiv(BigDecimal("100")))
+        val monthlyInterest = yearlyInterest.safeDiv(BigDecimal("12"))
+        val dailyInterest = yearlyInterest.safeDiv(BigDecimal("365"))
 
-        val tax = taxRatePercent / 100.0
-        val netMonthlyInterest = monthlyInterest * (1 - tax)
+        val tax = taxRatePercent.safeDiv(BigDecimal("100"))
+        val netMonthlyInterest = monthlyInterest.multiply(BigDecimal.ONE.subtract(tax))
 
-        val realInterestRate = annualRatePercent - inflationRatePercent
-        val realInterestAfterInflation = principal * (realInterestRate / 100.0)
+        val realInterestRate = annualRatePercent.subtract(inflationRatePercent)
+        val realInterestAfterInflation = principal.multiply(realInterestRate.safeDiv(BigDecimal("100")))
 
         return BankDepositResult(
             principal = principal,
@@ -324,57 +330,57 @@ object FinancialFormulas {
     // --- 5. INVESTMENT COMPARISON ---
     data class ComparisonScenarioInput(
         val name: String,
-        val initialAmount: Double,
-        val monthlyDeposit: Double,
-        val annualRatePercent: Double,
+        val initialAmount: BigDecimal,
+        val monthlyDeposit: BigDecimal,
+        val annualRatePercent: BigDecimal,
         val durationYears: Int
     )
 
     data class ComparisonYearPoint(
         val year: Int,
-        val nominalValue: Double,
-        val realValue: Double
+        val nominalValue: BigDecimal,
+        val realValue: BigDecimal
     )
 
     data class ComparisonScenarioResult(
         val name: String,
-        val initialAmount: Double,
-        val totalDeposited: Double,
-        val finalNominalValue: Double,
-        val finalRealValue: Double,
-        val totalProfit: Double,
+        val initialAmount: BigDecimal,
+        val totalDeposited: BigDecimal,
+        val finalNominalValue: BigDecimal,
+        val finalRealValue: BigDecimal,
+        val totalProfit: BigDecimal,
         val yearPoints: List<ComparisonYearPoint>
     )
 
     fun compareScenarios(
         scenarios: List<ComparisonScenarioInput>,
-        inflationRatePercent: Double = 0.0
+        inflationRatePercent: BigDecimal = BigDecimal.ZERO
     ): List<ComparisonScenarioResult> {
-        val inf = inflationRatePercent / 100.0
+        val inf = inflationRatePercent.safeDiv(BigDecimal("100"))
         return scenarios.map { sc ->
             var current = sc.initialAmount
             var totalDep = sc.initialAmount
             val yearPoints = mutableListOf<ComparisonYearPoint>()
-            val r = sc.annualRatePercent / 100.0
+            val r = sc.annualRatePercent.safeDiv(BigDecimal("100"))
 
             for (y in 1..sc.durationYears) {
                 for (m in 1..12) {
-                    current += sc.monthlyDeposit
-                    totalDep += sc.monthlyDeposit
-                    current *= (1 + r / 12.0)
+                    current = current.add(sc.monthlyDeposit)
+                    totalDep = totalDep.add(sc.monthlyDeposit)
+                    current = current.multiply(BigDecimal.ONE.add(r.safeDiv(BigDecimal("12"))))
                 }
-                val realVal = current / (1 + inf).pow(y.toDouble())
+                val realVal = current.safeDiv(BigDecimal.ONE.add(inf).toDouble().pow(y.toDouble()).toBigDecimal())
                 yearPoints.add(ComparisonYearPoint(y, current, realVal))
             }
 
-            val finalReal = if (sc.durationYears > 0) current / (1 + inf).pow(sc.durationYears.toDouble()) else current
+            val finalReal = if (sc.durationYears > 0) current.safeDiv(BigDecimal.ONE.add(inf).toDouble().pow(sc.durationYears.toDouble()).toBigDecimal()) else current
             ComparisonScenarioResult(
                 name = sc.name,
                 initialAmount = sc.initialAmount,
                 totalDeposited = totalDep,
                 finalNominalValue = current,
                 finalRealValue = finalReal,
-                totalProfit = current - totalDep,
+                totalProfit = current.subtract(totalDep),
                 yearPoints = yearPoints
             )
         }
@@ -383,36 +389,36 @@ object FinancialFormulas {
     // --- 6. INFLATION & PURCHASING POWER ---
     data class InflationYearRow(
         val year: Int,
-        val purchasingPowerValue: Double,
-        val lossPercentage: Double
+        val purchasingPowerValue: BigDecimal,
+        val lossPercentage: BigDecimal
     )
 
     data class InflationResult(
-        val currentAmount: Double,
-        val annualInflationPercent: Double,
+        val currentAmount: BigDecimal,
+        val annualInflationPercent: BigDecimal,
         val years: Int,
-        val futureRealPurchasingPower: Double,
-        val percentageLoss: Double,
-        val futureAmountNeededToMatchToday: Double,
+        val futureRealPurchasingPower: BigDecimal,
+        val percentageLoss: BigDecimal,
+        val futureAmountNeededToMatchToday: BigDecimal,
         val yearlyLossBreakdown: List<InflationYearRow>
     )
 
     fun calculateInflation(
-        currentAmount: Double,
-        annualInflationPercent: Double,
+        currentAmount: BigDecimal,
+        annualInflationPercent: BigDecimal,
         years: Int
     ): InflationResult {
-        val inf = annualInflationPercent / 100.0
-        val multiplier = (1 + inf).pow(years.toDouble())
-        val futureAmountNeeded = currentAmount * multiplier
-        val futureRealValue = if (multiplier > 0) currentAmount / multiplier else 0.0
-        val percentageLoss = if (currentAmount > 0) ((currentAmount - futureRealValue) / currentAmount) * 100.0 else 0.0
+        val inf = annualInflationPercent.safeDiv(BigDecimal("100"))
+        val multiplier = BigDecimal.ONE.add(inf).toDouble().pow(years.toDouble()).toBigDecimal()
+        val futureAmountNeeded = currentAmount.multiply(multiplier)
+        val futureRealValue = if (multiplier > BigDecimal.ZERO) currentAmount.safeDiv(multiplier) else BigDecimal.ZERO
+        val percentageLoss = if (currentAmount > BigDecimal.ZERO) ((currentAmount.subtract(futureRealValue)).safeDiv(currentAmount)).multiply(BigDecimal("100")) else BigDecimal.ZERO
 
         val yearlyBreakdown = mutableListOf<InflationYearRow>()
         for (y in 1..years) {
-            val multY = (1 + inf).pow(y.toDouble())
-            val realValY = currentAmount / multY
-            val lossPctY = ((currentAmount - realValY) / currentAmount) * 100.0
+            val multY = BigDecimal.ONE.add(inf).toDouble().pow(y.toDouble()).toBigDecimal()
+            val realValY = currentAmount.safeDiv(multY)
+            val lossPctY = ((currentAmount.subtract(realValY)).safeDiv(currentAmount)).multiply(BigDecimal("100"))
             yearlyBreakdown.add(InflationYearRow(y, realValY, lossPctY))
         }
 
@@ -430,26 +436,26 @@ object FinancialFormulas {
     // --- 7. GOLD, DOLLAR & FX PROFIT ---
     data class TradeProfitResult(
         val assetName: String,
-        val buyPrice: Double,
-        val sellPrice: Double,
-        val quantity: Double,
-        val totalBuyValue: Double,
-        val totalSellValue: Double,
-        val profitLossAmount: Double,
-        val profitLossPercentage: Double,
+        val buyPrice: BigDecimal,
+        val sellPrice: BigDecimal,
+        val quantity: BigDecimal,
+        val totalBuyValue: BigDecimal,
+        val totalSellValue: BigDecimal,
+        val profitLossAmount: BigDecimal,
+        val profitLossPercentage: BigDecimal,
         val isProfit: Boolean
     )
 
     fun calculateTradeProfit(
         assetName: String,
-        buyPrice: Double,
-        sellPrice: Double,
-        quantity: Double
+        buyPrice: BigDecimal,
+        sellPrice: BigDecimal,
+        quantity: BigDecimal
     ): TradeProfitResult {
-        val totalBuy = buyPrice * quantity
-        val totalSell = sellPrice * quantity
-        val profit = totalSell - totalBuy
-        val profitPct = if (totalBuy > 0) (profit / totalBuy) * 100.0 else 0.0
+        val totalBuy = buyPrice.multiply(quantity)
+        val totalSell = sellPrice.multiply(quantity)
+        val profit = totalSell.subtract(totalBuy)
+        val profitPct = if (totalBuy > BigDecimal.ZERO) (profit.safeDiv(totalBuy)).multiply(BigDecimal("100")) else BigDecimal.ZERO
 
         return TradeProfitResult(
             assetName = assetName,
@@ -460,20 +466,20 @@ object FinancialFormulas {
             totalSellValue = totalSell,
             profitLossAmount = profit,
             profitLossPercentage = profitPct,
-            isProfit = profit >= 0
+            isProfit = profit >= BigDecimal.ZERO
         )
     }
 
     fun calculateRequiredSellingPrice(
-        buyPrice: Double,
-        targetProfitPercent: Double
-    ): Double {
-        return buyPrice * (1 + targetProfitPercent / 100.0)
+        buyPrice: BigDecimal,
+        targetProfitPercent: BigDecimal
+    ): BigDecimal {
+        return buyPrice.multiply(BigDecimal.ONE.add(targetProfitPercent.safeDiv(BigDecimal("100"))))
     }
 
     /** Simple profit/loss percentage of currentBalance vs. initialCapital, e.g. for a dashboard header. */
-    fun calculatePnLPercentage(initialCapital: Double, currentBalance: Double): Double {
-        if (initialCapital == 0.0) return 0.0
-        return ((currentBalance - initialCapital) / initialCapital) * 100.0
+    fun calculatePnLPercentage(initialCapital: BigDecimal, currentBalance: BigDecimal): BigDecimal {
+        if (initialCapital.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO
+        return currentBalance.subtract(initialCapital).safeDiv(initialCapital, 4).multiply(BigDecimal("100"))
     }
 }

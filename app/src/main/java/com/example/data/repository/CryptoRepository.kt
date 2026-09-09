@@ -8,6 +8,7 @@ import com.example.data.remote.BinanceApiService
 import com.example.data.remote.CmcCoinDto
 import com.example.data.remote.CoinMarketCapApiService
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
 
 /**
  * Crypto market data — Phase 1 (Market Data + basic info) of the crypto analysis feature.
@@ -60,11 +61,11 @@ class CryptoRepository(
                     }
                     CandleStick(
                         time = time,
-                        open = (list[1] as String).toDouble(),
-                        high = (list[2] as String).toDouble(),
-                        low = (list[3] as String).toDouble(),
-                        close = (list[4] as String).toDouble(),
-                        volume = (list[5] as String).toDouble()
+                        open = (list[1] as String).toBigDecimal(),
+                        high = (list[2] as String).toBigDecimal(),
+                        low = (list[3] as String).toBigDecimal(),
+                        close = (list[4] as String).toBigDecimal(),
+                        volume = (list[5] as String).toBigDecimal()
                     )
                 } catch (e: Exception) {
                     null
@@ -190,10 +191,10 @@ class CryptoRepository(
             val usdQuote = data.quote?.get("USD")
             Result.success(
                 GlobalMarketSnapshot(
-                    totalMarketCapUsd = usdQuote?.totalMarketCap,
-                    totalVolume24hUsd = usdQuote?.totalVolume24h,
-                    btcDominance = data.btcDominance,
-                    ethDominance = data.ethDominance,
+                    totalMarketCapUsd = usdQuote?.totalMarketCap?.toBigDecimal(),
+                    totalVolume24hUsd = usdQuote?.totalVolume24h?.toBigDecimal(),
+                    btcDominance = data.btcDominance?.toBigDecimal(),
+                    ethDominance = data.ethDominance?.toBigDecimal(),
                     activeCryptocurrencies = data.activeCryptocurrencies
                 )
             )
@@ -205,10 +206,10 @@ class CryptoRepository(
 
 /** "Global Market" section of the requested feature list — total cap + BTC/ETH dominance. */
 data class GlobalMarketSnapshot(
-    val totalMarketCapUsd: Double?,
-    val totalVolume24hUsd: Double?,
-    val btcDominance: Double?,
-    val ethDominance: Double?,
+    val totalMarketCapUsd: BigDecimal?,
+    val totalVolume24hUsd: BigDecimal?,
+    val btcDominance: BigDecimal?,
+    val ethDominance: BigDecimal?,
     val activeCryptocurrencies: Int?
 )
 
@@ -220,18 +221,18 @@ private fun CmcCoinDto.toEntity(): CryptoAssetEntity {
         name = name,
         slug = slug,
         cmcRank = cmcRank,
-        priceUsd = usd?.price,
-        percentChange1h = usd?.percentChange1h,
-        percentChange24h = usd?.percentChange24h,
-        percentChange7d = usd?.percentChange7d,
-        percentChange30d = usd?.percentChange30d,
-        marketCapUsd = usd?.marketCap,
-        fullyDilutedMarketCapUsd = usd?.fullyDilutedMarketCap,
-        volume24hUsd = usd?.volume24h,
-        volumeChange24h = usd?.volumeChange24h,
-        circulatingSupply = circulatingSupply,
-        totalSupply = totalSupply,
-        maxSupply = maxSupply,
+        priceUsd = usd?.price?.toBigDecimal(),
+        percentChange1h = usd?.percentChange1h?.toBigDecimal(),
+        percentChange24h = usd?.percentChange24h?.toBigDecimal(),
+        percentChange7d = usd?.percentChange7d?.toBigDecimal(),
+        percentChange30d = usd?.percentChange30d?.toBigDecimal(),
+        marketCapUsd = usd?.marketCap?.toBigDecimal(),
+        fullyDilutedMarketCapUsd = usd?.fullyDilutedMarketCap?.toBigDecimal(),
+        volume24hUsd = usd?.volume24h?.toBigDecimal(),
+        volumeChange24h = usd?.volumeChange24h?.toBigDecimal(),
+        circulatingSupply = circulatingSupply?.toBigDecimal(),
+        totalSupply = totalSupply?.toBigDecimal(),
+        maxSupply = maxSupply?.toBigDecimal(),
         infiniteSupply = infiniteSupply ?: false,
         platformName = platform?.name,
         tokenAddress = platform?.tokenAddress,

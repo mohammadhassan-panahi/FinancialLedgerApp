@@ -30,11 +30,12 @@ import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
 import com.example.util.PersianNumberUtils
 import com.example.util.formatUsd
+import java.math.BigDecimal
 
 @Composable
 fun CryptoDetailScreen(
     asset: CryptoAssetEntity,
-    usdRateToman: Double,
+    usdRateToman: BigDecimal,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -105,10 +106,10 @@ fun CryptoDetailHeader(asset: CryptoAssetEntity, onBack: () -> Unit) {
 }
 
 @Composable
-fun PriceHeroSection(asset: CryptoAssetEntity, usdRateToman: Double) {
-    val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
-    val change = asset.percentChange24h ?: 0.0
-    val changeColor = if (change >= 0) EmeraldCore else RoseCoral
+fun PriceHeroSection(asset: CryptoAssetEntity, usdRateToman: BigDecimal) {
+    val priceToman = (asset.priceUsd ?: BigDecimal.ZERO).multiply(usdRateToman)
+    val change = asset.percentChange24h ?: BigDecimal.ZERO
+    val changeColor = if (change >= BigDecimal.ZERO) EmeraldCore else RoseCoral
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
@@ -117,14 +118,14 @@ fun PriceHeroSection(asset: CryptoAssetEntity, usdRateToman: Double) {
             verticalAlignment = Alignment.Bottom
         ) {
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(formatUsd(asset.priceUsd ?: 0.0), style = DaraTypography.displayLarge, color = Slate50, fontWeight = FontWeight.Black)
+                Text(formatUsd(asset.priceUsd ?: BigDecimal.ZERO), style = DaraTypography.displayLarge, color = Slate50, fontWeight = FontWeight.Black)
                 Text("USD", style = DaraTypography.labelMedium, color = Slate600, modifier = Modifier.padding(bottom = 8.dp))
             }
             
             Surface(color = changeColor.copy(alpha = 0.15f), shape = RoundedCornerShape(percent = 100)) {
                 Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(if (change >= 0) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown, null, tint = changeColor, modifier = Modifier.size(14.dp))
-                    Text("${if (change >= 0) "+" else ""}${String.format("%.2f", change)}%", style = DaraTypography.labelMedium, color = changeColor, fontWeight = FontWeight.Bold)
+                    Icon(if (change >= BigDecimal.ZERO) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown, null, tint = changeColor, modifier = Modifier.size(14.dp))
+                    Text("${if (change >= BigDecimal.ZERO) "+" else ""}${String.format("%.2f", change.toDouble())}%", style = DaraTypography.labelMedium, color = changeColor, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -267,8 +268,8 @@ fun NetworkStatsGrid(asset: CryptoAssetEntity) {
         Text("آمار کلیدی بازار و شبکه", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatTile(label = "ارزش کل بازار", value = formatUsd(asset.marketCapUsd ?: 0.0), icon = Icons.Default.PieChart, modifier = Modifier.weight(1f))
-            StatTile(label = "حجم ۲۴ ساعته", value = formatUsd(asset.volume24hUsd ?: 0.0), icon = Icons.Default.BarChart, modifier = Modifier.weight(1f))
+            StatTile(label = "ارزش کل بازار", value = formatUsd(asset.marketCapUsd ?: BigDecimal.ZERO), icon = Icons.Default.PieChart, modifier = Modifier.weight(1f))
+            StatTile(label = "حجم ۲۴ ساعته", value = formatUsd(asset.volume24hUsd ?: BigDecimal.ZERO), icon = Icons.Default.BarChart, modifier = Modifier.weight(1f))
         }
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

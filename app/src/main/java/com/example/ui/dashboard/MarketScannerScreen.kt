@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crypto.analysis.AnalysisSignal
 import com.example.ui.components.CryptoIcon
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 import kotlinx.coroutines.launch
 
 import java.util.Locale
@@ -32,7 +33,7 @@ import java.util.Locale
 @Composable
 fun MarketScannerScreen(
     viewModel: MarketScannerViewModel,
-    usdRateToman: Double = 65000.0
+    usdRateToman: BigDecimal = BigDecimal.valueOf(65000.0)
 ) {
     val opportunities by viewModel.opportunities.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -137,7 +138,7 @@ fun MarketScannerScreen(
 @Composable
 fun OpportunityCard(
     opportunity: CryptoOpportunity,
-    usdRateToman: Double,
+    usdRateToman: BigDecimal,
     onWhyClick: () -> Unit
 ) {
     val asset = opportunity.asset
@@ -175,21 +176,21 @@ fun OpportunityCard(
                 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "$${String.format(Locale.US, "%,.2f", asset.priceUsd ?: 0.0)}",
+                        text = "$${String.format(Locale.US, "%,.2f", (asset.priceUsd ?: BigDecimal.ZERO).toDouble())}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
+                    val priceToman = (asset.priceUsd ?: BigDecimal.ZERO).multiply(usdRateToman)
                     Text(
                         text = PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان",
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold
                     )
-                    val change = asset.percentChange24h ?: 0.0
+                    val change = asset.percentChange24h ?: BigDecimal.ZERO
                     Text(
-                        text = "${if (change >= 0) "+" else ""}${String.format(Locale.US, "%.2f", change)}%",
-                        color = if (change >= 0) Color(0xFF4CAF50) else Color(0xFFF44336),
+                        text = "${if (change >= BigDecimal.ZERO) "+" else ""}${String.format(Locale.US, "%.2f", change.toDouble())}%",
+                        color = if (change >= BigDecimal.ZERO) Color(0xFF4CAF50) else Color(0xFFF44336),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -299,7 +300,7 @@ fun SignalBadge(signal: AnalysisSignal) {
 @Composable
 fun AiReportContent(
     opportunity: CryptoOpportunity?,
-    usdRateToman: Double,
+    usdRateToman: BigDecimal,
     isLoading: Boolean,
     onDeepAnalysisRequested: () -> Unit
 ) {
@@ -321,7 +322,7 @@ fun AiReportContent(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                val priceToman = (opportunity.asset.priceUsd ?: 0.0) * usdRateToman
+                val priceToman = (opportunity.asset.priceUsd ?: BigDecimal.ZERO).multiply(usdRateToman)
                 Text(
                     text = PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان",
                     style = MaterialTheme.typography.titleMedium,
@@ -329,7 +330,7 @@ fun AiReportContent(
                 )
             }
             Text(
-                text = "$${String.format(Locale.US, "%,.2f", opportunity.asset.priceUsd ?: 0.0)}",
+                text = "$${String.format(Locale.US, "%,.2f", (opportunity.asset.priceUsd ?: BigDecimal.ZERO).toDouble())}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )

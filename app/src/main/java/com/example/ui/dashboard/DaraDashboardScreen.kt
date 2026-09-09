@@ -35,6 +35,7 @@ import com.example.ui.theme.*
 import com.example.util.PersianNumberUtils
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 @Composable
 fun DaraDashboardScreen(
@@ -265,7 +266,7 @@ fun DaraWelcomeSection(
 
 @Composable
 fun DaraWealthCard(
-    totalValueRial: Double,
+    totalValueRial: BigDecimal,
     isBalanceVisible: Boolean,
     onRiskAnalysisClick: () -> Unit = {}
 ) {
@@ -444,7 +445,7 @@ fun DaraMarketTicker(
 
 @Composable
 fun DaraTickerItem(rate: com.example.data.local.MarketRateEntity) {
-    val isProfit = rate.changePercent >= 0
+    val isProfit = rate.changePercent >= BigDecimal.ZERO
     val accentColor = if (isProfit) EmeraldCore else RoseCoral
     
     DaraGlassCard(
@@ -467,7 +468,7 @@ fun DaraTickerItem(rate: com.example.data.local.MarketRateEntity) {
             Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = PersianNumberUtils.toPersianDigits(rate.priceToman.toLong().toString()),
+                    text = formatRial(rate.priceToman.multiply(com.example.util.RIAL_PER_TOMAN), showSuffix = false, isRial = false),
                     style = DaraTypography.titleMedium,
                     color = Slate50,
                     fontWeight = FontWeight.Bold

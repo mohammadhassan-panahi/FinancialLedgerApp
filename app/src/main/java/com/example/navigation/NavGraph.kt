@@ -24,6 +24,7 @@ import com.example.ui.screens.news.NewsHubScreen
 import com.example.ui.tools.ToolsScreen
 import com.example.ui.viewmodel.CryptoViewModel
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 /** Central registry of every route in the app. */
 object Screen {
@@ -258,7 +259,7 @@ fun NavGraph(
 
         composable(Screen.MarketScanner) {
             val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
-            val usdRateToman = 65000.0 // Simplified for IDE stability
+            val usdRateToman = BigDecimal("65000") // Simplified for IDE stability
             MarketScannerScreen(
                 viewModel = marketScannerViewModel,
                 usdRateToman = usdRateToman
@@ -313,10 +314,11 @@ fun NavGraph(
 
         composable(Screen.CalculatorsHub) {
             val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
-            
+            val goldRate = marketRates.find { it.assetCode == "GOLD_18K" }?.priceToman ?: BigDecimal("3500000")
+
             com.example.ui.screens.CalculatorsHubScreen(
                 viewModel = calculatorViewModel,
-                goldPriceToman = 3500000.0, // Temporary safe fallback for IDE
+                goldPriceToman = goldRate,
                 onBack = { navController.popBackStack() },
                 onNavigateToCurrencyConverter = { navController.navigate(Screen.CurrencyConverter) },
                 onNavigateToCryptoConverter = { navController.navigate(Screen.Market) },
@@ -331,31 +333,58 @@ fun NavGraph(
         }
 
         composable(Screen.CompoundInterest) {
+            val history by calculatorViewModel.getHistoryForSection("compound").collectAsStateWithLifecycle(initialValue = emptyList())
             com.example.ui.screens.CompoundInterestScreen(
+                historyList = history,
+                defaultInflation = 40.0,
+                defaultTax = 0.0,
+                onAddHistory = { calculatorViewModel.addHistory(it) },
+                onDeleteHistory = { calculatorViewModel.deleteHistory(it) },
+                onClearHistory = { calculatorViewModel.clearSectionHistory("compound") },
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.SimpleInterest) {
+            val history by calculatorViewModel.getHistoryForSection("simple_interest").collectAsStateWithLifecycle(initialValue = emptyList())
             com.example.ui.screens.SimpleInterestScreen(
+                historyList = history,
+                onAddHistory = { calculatorViewModel.addHistory(it) },
+                onDeleteHistory = { calculatorViewModel.deleteHistory(it) },
+                onClearHistory = { calculatorViewModel.clearSectionHistory("simple_interest") },
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.LoanCalculator) {
+            val history by calculatorViewModel.getHistoryForSection("loan").collectAsStateWithLifecycle(initialValue = emptyList())
             com.example.ui.screens.LoanCalculatorScreen(
+                historyList = history,
+                onAddHistory = { calculatorViewModel.addHistory(it) },
+                onDeleteHistory = { calculatorViewModel.deleteHistory(it) },
+                onClearHistory = { calculatorViewModel.clearSectionHistory("loan") },
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.GoldWage) {
+            val history by calculatorViewModel.getHistoryForSection("gold_wage").collectAsStateWithLifecycle(initialValue = emptyList())
             com.example.ui.screens.GoldWageScreen(
+                historyList = history,
+                onAddHistory = { calculatorViewModel.addHistory(it) },
+                onDeleteHistory = { calculatorViewModel.deleteHistory(it) },
+                onClearHistory = { calculatorViewModel.clearSectionHistory("gold_wage") },
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.GoldBubble) {
+            val history by calculatorViewModel.getHistoryForSection("gold_bubble").collectAsStateWithLifecycle(initialValue = emptyList())
             com.example.ui.screens.GoldBubbleScreen(
+                historyList = history,
+                onAddHistory = { calculatorViewModel.addHistory(it) },
+                onDeleteHistory = { calculatorViewModel.deleteHistory(it) },
+                onClearHistory = { calculatorViewModel.clearSectionHistory("gold_bubble") },
                 onBack = { navController.popBackStack() }
             )
         }

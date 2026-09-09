@@ -23,6 +23,7 @@ import com.example.ui.LocalIsRial
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +55,7 @@ fun InflationCalculatorScreen(viewModel: PortfolioViewModel) {
                                 formatRial(totalRealGrowth, isRial = isRial),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = if (totalRealGrowth >= 0) EmeraldProfit else RoseLoss
+                                color = if (totalRealGrowth >= BigDecimal.ZERO) EmeraldProfit else RoseLoss
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
@@ -74,7 +75,7 @@ fun InflationCalculatorScreen(viewModel: PortfolioViewModel) {
                         Text(holding.assetName, color = TextPrimary)
                         Text(
                             formatRial(holding.inflationAdjustedProfitLossRial, isRial = isRial),
-                            color = if (holding.inflationAdjustedProfitLossRial >= 0) EmeraldProfit else RoseLoss,
+                            color = if (holding.inflationAdjustedProfitLossRial >= BigDecimal.ZERO) EmeraldProfit else RoseLoss,
                             fontWeight = FontWeight.Bold
                         )
                     }

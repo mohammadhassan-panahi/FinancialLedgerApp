@@ -4,21 +4,32 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +42,12 @@ import com.example.ui.components.PersianNumberTextField
 import com.example.ui.components.PrintPdfDialog
 import com.example.ui.components.ResultHeaderBanner
 import com.example.ui.theme.AccentGold
+import com.example.ui.theme.DaraTypography
+import com.example.ui.theme.IndigoElectric
+import com.example.ui.theme.ObsidianSlate900
 import com.example.ui.theme.ProfitGreen
+import com.example.ui.theme.Slate50
+import com.example.ui.theme.Slate600
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
 
@@ -41,7 +57,8 @@ fun LoanCalculatorScreen(
     currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
-    onClearHistory: () -> Unit
+    onClearHistory: () -> Unit,
+    onBack: () -> Unit
 ) {
     val isRial = currencyUnit == "ریال"
     val unitLabel = PersianNumberUtils.getCurrencyUnitLabel(isRial)
@@ -121,224 +138,43 @@ fun LoanCalculatorScreen(
         )
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Mode switch
-        item {
-            NotebookCard {
-                Text(
-                    text = "حالت محاسبه وام",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentGold
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+                color = ObsidianSlate900.copy(alpha = 0.8f)
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(
-                        onClick = { isReverseMode = false },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (!isReverseMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(42.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = "محاسبه قسط",
-                            color = if (!isReverseMode) Color.Black else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Button(
-                        onClick = { isReverseMode = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isReverseMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(42.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = "حالت معکوس (سقف وام)",
-                            color = if (isReverseMode) Color.Black else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Slate50)
+                        }
+                        Column {
+                            Text("محاسبه وام", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                            Text("استهلاک و سقف اقساط", style = DaraTypography.labelSmall, color = IndigoElectric)
+                        }
                     }
                 }
             }
         }
-
-        // Form Inputs
-        item {
-            NotebookCard {
-                if (!isReverseMode) {
-                    PersianNumberTextField(
-                        value = loanAmountInput,
-                        onValueChange = { loanAmountInput = it },
-                        label = "مبلغ اصل وام ($unitLabel)",
-                        suffix = unitLabel
-                    )
-                } else {
-                    PersianNumberTextField(
-                        value = desiredPaymentInput,
-                        onValueChange = { desiredPaymentInput = it },
-                        label = "مبلغ قسط ماهانه دلخواه ($unitLabel)",
-                        suffix = unitLabel
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PersianNumberTextField(
-                        value = rateInput,
-                        onValueChange = { rateInput = it },
-                        label = "نرخ سود سالانه (٪)",
-                        suffix = "٪",
-                        modifier = Modifier.weight(1f),
-                        isDecimalAllowed = true
-                    )
-
-                    PersianNumberTextField(
-                        value = durationMonthsInput,
-                        onValueChange = { durationMonthsInput = it },
-                        label = "مدت بازپرداخت (ماه)",
-                        suffix = "ماه",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Optional Initial Fee & Early Settlement
-                if (!isReverseMode) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        PersianNumberTextField(
-                            value = initialFeePercentInput,
-                            onValueChange = { initialFeePercentInput = it },
-                            label = "کارمزد اولیه (٪)",
-                            suffix = "٪",
-                            modifier = Modifier.weight(1f),
-                            isDecimalAllowed = true
-                        )
-
-                        PersianNumberTextField(
-                            value = earlySettlementMonthInput,
-                            onValueChange = { earlySettlementMonthInput = it },
-                            label = "ماه تسویه پیش از موعد (0=غیرفعال)",
-                            suffix = "ماه",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    if (settlementMonth > 0) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        PersianNumberTextField(
-                            value = penaltyPercentInput,
-                            onValueChange = { penaltyPercentInput = it },
-                            label = "جریمه/کارمزد تسویه زودهنگام (٪)",
-                            suffix = "٪",
-                            isDecimalAllowed = true
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Button(
-                    onClick = {
-                        val title = if (!isReverseMode) "وام - قسط ${PersianNumberUtils.formatCurrency(loanResult.monthlyPayment)}" else "وام معکوس - سقف ${PersianNumberUtils.formatCurrency(maxLoanReachable)}"
-                        val summary = if (!isReverseMode) "وام: ${PersianNumberUtils.formatCurrency(loanAmt)}" else "قسط: ${PersianNumberUtils.formatCurrency(desiredPmt)}"
-                        val params = "$isReverseMode|$loanAmountInput|$desiredPaymentInput|$rateInput|$durationMonthsInput|$initialFeePercentInput|$earlySettlementMonthInput|$penaltyPercentInput"
-                        onAddHistory(
-                            CalculationHistoryEntity(
-                                sectionKey = "loan",
-                                title = title,
-                                summary = summary,
-                                paramsJson = params
-                            )
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentGold)
-                ) {
-                    Text(
-                        text = "ذخیره در تاریخچه",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
-            }
-        }
-
-        // Result Banner
-        item {
-            if (!isReverseMode) {
-                ResultHeaderBanner(
-                    title = "نتیجه محاسبات قسط وام",
-                    mainResultValue = PersianNumberUtils.formatCurrency(loanResult.monthlyPayment),
-                    mainResultLabel = "مبلغ قسط پرداختی در هر ماه",
-                    secondaryItems = listOf(
-                        "کل بازپرداخت" to PersianNumberUtils.formatCurrency(loanResult.totalRepayment),
-                        "کل سود وام" to PersianNumberUtils.formatCurrency(loanResult.totalInterest),
-                        "کارمزد اولیه" to PersianNumberUtils.formatCurrency(loanResult.initialFeeAmount),
-                        if (settlementMonth > 0) "صرفه‌جویی سود در تسویه زودهنگام" to PersianNumberUtils.formatCurrency(loanResult.totalInterestSaved) else "" to ""
-                    ).filter { it.first.isNotEmpty() },
-                    copySummaryText = copySummaryText,
-                    onPrintClick = { showPrintDialog = true }
-                )
-            } else {
-                ResultHeaderBanner(
-                    title = "حداکثر وام قابل دریافت",
-                    mainResultValue = PersianNumberUtils.formatCurrency(maxLoanReachable),
-                    mainResultLabel = "سقف وام با قسط ماهانه ${PersianNumberUtils.formatCurrency(desiredPmt)}",
-                    secondaryItems = listOf(
-                        "نرخ سود" to PersianNumberUtils.formatPercent(rate),
-                        "مدت بازپرداخت" to "${PersianNumberUtils.toPersianDigits(durationMonthsInput)} ماه"
-                    ),
-                    copySummaryText = copySummaryText,
-                    onPrintClick = { showPrintDialog = true }
-                )
-            }
-        }
-
-        // Schedule Table
-        if (!isReverseMode && loanResult.schedule.isNotEmpty()) {
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Mode switch
             item {
                 NotebookCard {
                     Text(
-                        text = "جدول استهلاک وام",
+                        text = "حالت محاسبه وام",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = AccentGold
@@ -346,53 +182,258 @@ fun LoanCalculatorScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    loanResult.schedule.take(12).forEach { row ->
-                        Row(
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { isReverseMode = false },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (!isReverseMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
+                            ),
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                                .weight(1f)
+                                .height(42.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                         ) {
-                            Text("ماه ${PersianNumberUtils.toPersianDigits(row.month.toString())}", fontWeight = FontWeight.Bold)
-                            Text("اصل: ${PersianNumberUtils.formatCurrency(row.principalPart, showSuffix = false)}", style = MaterialTheme.typography.bodySmall)
-                            Text("سود: ${PersianNumberUtils.formatCurrency(row.interestPart, showSuffix = false)}", style = MaterialTheme.typography.bodySmall)
-                            Text("مانده: ${PersianNumberUtils.formatCurrency(row.remainingBalance, showSuffix = false)}", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                text = "محاسبه قسط",
+                                color = if (!isReverseMode) Color.Black else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
                         }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+
+                        Button(
+                            onClick = { isReverseMode = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isReverseMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(42.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = "سقف وام",
+                                color = if (isReverseMode) Color.Black else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Form Inputs
+            item {
+                NotebookCard {
+                    if (!isReverseMode) {
+                        PersianNumberTextField(
+                            value = loanAmountInput,
+                            onValueChange = { loanAmountInput = it },
+                            label = "مبلغ اصل وام ($unitLabel)",
+                            suffix = unitLabel
+                        )
+                    } else {
+                        PersianNumberTextField(
+                            value = desiredPaymentInput,
+                            onValueChange = { desiredPaymentInput = it },
+                            label = "مبلغ قسط ماهانه دلخواه ($unitLabel)",
+                            suffix = unitLabel
+                        )
                     }
 
-                    if (loanResult.schedule.size > 12) {
-                        Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PersianNumberTextField(
+                            value = rateInput,
+                            onValueChange = { rateInput = it },
+                            label = "نرخ سود سالانه (٪)",
+                            suffix = "٪",
+                            modifier = Modifier.weight(1f),
+                            isDecimalAllowed = true
+                        )
+
+                        PersianNumberTextField(
+                            value = durationMonthsInput,
+                            onValueChange = { durationMonthsInput = it },
+                            label = "مدت بازپرداخت (ماه)",
+                            suffix = "ماه",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Optional Initial Fee & Early Settlement
+                    if (!isReverseMode) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PersianNumberTextField(
+                                value = initialFeePercentInput,
+                                onValueChange = { initialFeePercentInput = it },
+                                label = "کارمزد اولیه (٪)",
+                                suffix = "٪",
+                                modifier = Modifier.weight(1f),
+                                isDecimalAllowed = true
+                            )
+
+                            PersianNumberTextField(
+                                value = earlySettlementMonthInput,
+                                onValueChange = { earlySettlementMonthInput = it },
+                                label = "ماه تسویه زودهنگام",
+                                suffix = "ماه",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        if (settlementMonth > 0) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            PersianNumberTextField(
+                                value = penaltyPercentInput,
+                                onValueChange = { penaltyPercentInput = it },
+                                label = "جریمه تسویه زودهنگام (٪)",
+                                suffix = "٪",
+                                isDecimalAllowed = true
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = {
+                            val title = if (!isReverseMode) "وام - قسط ${PersianNumberUtils.formatCurrency(loanResult.monthlyPayment)}" else "وام معکوس - سقف ${PersianNumberUtils.formatCurrency(maxLoanReachable)}"
+                            val summary = if (!isReverseMode) "وام: ${PersianNumberUtils.formatCurrency(loanAmt)}" else "قسط: ${PersianNumberUtils.formatCurrency(desiredPmt)}"
+                            val params = "$isReverseMode|$loanAmountInput|$desiredPaymentInput|$rateInput|$durationMonthsInput|$initialFeePercentInput|$earlySettlementMonthInput|$penaltyPercentInput"
+                            onAddHistory(
+                                CalculationHistoryEntity(
+                                    sectionKey = "loan",
+                                    title = title,
+                                    summary = summary,
+                                    paramsJson = params
+                                )
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentGold)
+                    ) {
                         Text(
-                            text = "... و ${PersianNumberUtils.toPersianDigits((loanResult.schedule.size - 12).toString())} ماه دیگر (کامل در خروجی PDF/اشتراک)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AccentGold
+                            text = "ذخیره در تاریخچه",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
             }
-        }
 
-        // History Accordion
-        item {
-            HistoryAccordion(
-                historyList = historyList,
-                onSelectHistory = { hist ->
-                    val parts = hist.paramsJson.split("|")
-                    if (parts.size >= 8) {
-                        isReverseMode = parts[0].toBooleanStrictOrNull() ?: false
-                        loanAmountInput = parts[1]
-                        desiredPaymentInput = parts[2]
-                        rateInput = parts[3]
-                        durationMonthsInput = parts[4]
-                        initialFeePercentInput = parts[5]
-                        earlySettlementMonthInput = parts[6]
-                        penaltyPercentInput = parts[7]
+            // Result Banner
+            item {
+                if (!isReverseMode) {
+                    ResultHeaderBanner(
+                        title = "نتیجه محاسبات قسط وام",
+                        mainResultValue = PersianNumberUtils.formatCurrency(loanResult.monthlyPayment),
+                        mainResultLabel = "مبلغ قسط پرداختی در هر ماه",
+                        secondaryItems = listOf(
+                            "کل بازپرداخت" to PersianNumberUtils.formatCurrency(loanResult.totalRepayment),
+                            "کل سود وام" to PersianNumberUtils.formatCurrency(loanResult.totalInterest),
+                            "کارمزد اولیه" to PersianNumberUtils.formatCurrency(loanResult.initialFeeAmount),
+                            if (settlementMonth > 0) "صرفه‌جویی سود در تسویه" to PersianNumberUtils.formatCurrency(loanResult.totalInterestSaved) else "" to ""
+                        ).filter { it.first.isNotEmpty() },
+                        copySummaryText = copySummaryText,
+                        onPrintClick = { showPrintDialog = true }
+                    )
+                } else {
+                    ResultHeaderBanner(
+                        title = "حداکثر وام قابل دریافت",
+                        mainResultValue = PersianNumberUtils.formatCurrency(maxLoanReachable),
+                        mainResultLabel = "سقف وام با قسط ${PersianNumberUtils.formatCurrency(desiredPmt)}",
+                        secondaryItems = listOf(
+                            "نرخ سود" to PersianNumberUtils.formatPercent(rate),
+                            "مدت بازپرداخت" to "${PersianNumberUtils.toPersianDigits(durationMonthsInput)} ماه"
+                        ),
+                        copySummaryText = copySummaryText,
+                        onPrintClick = { showPrintDialog = true }
+                    )
+                }
+            }
+
+            // Schedule Table
+            if (!isReverseMode && loanResult.schedule.isNotEmpty()) {
+                item {
+                    NotebookCard {
+                        Text(
+                            text = "جدول استهلاک وام (سال اول)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentGold
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        loanResult.schedule.take(12).forEach { row ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("ماه ${PersianNumberUtils.toPersianDigits(row.month.toString())}", fontWeight = FontWeight.Bold)
+                                Text(PersianNumberUtils.formatCurrency(row.remainingBalance, showSuffix = false), style = MaterialTheme.typography.bodySmall)
+                                Icon(Icons.Default.ChevronLeft, null, tint = Slate600, modifier = Modifier.size(16.dp))
+                            }
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                        }
+
+                        if (loanResult.schedule.size > 12) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "... نمایش کامل در خروجی PDF",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = AccentGold
+                            )
+                        }
                     }
-                },
-                onDeleteHistory = onDeleteHistory,
-                onClearAll = onClearHistory
-            )
+                }
+            }
+
+            // History Accordion
+            item {
+                HistoryAccordion(
+                    historyList = historyList,
+                    onSelectHistory = { hist ->
+                        val parts = hist.paramsJson.split("|")
+                        if (parts.size >= 8) {
+                            isReverseMode = parts[0].toBooleanStrictOrNull() ?: false
+                            loanAmountInput = parts[1]
+                            desiredPaymentInput = parts[2]
+                            rateInput = parts[3]
+                            durationMonthsInput = parts[4]
+                            initialFeePercentInput = parts[5]
+                            earlySettlementMonthInput = parts[6]
+                            penaltyPercentInput = parts[7]
+                        }
+                    },
+                    onDeleteHistory = onDeleteHistory,
+                    onClearAll = onClearHistory
+                )
+            }
         }
     }
 

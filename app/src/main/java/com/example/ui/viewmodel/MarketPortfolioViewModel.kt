@@ -11,6 +11,7 @@ import com.example.data.local.TransactionType
 import com.example.data.repository.FinancialRepository
 import com.example.ui.components.BottomTab
 import com.example.util.FinancialFormulas
+import com.example.util.sumOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 class MarketPortfolioViewModel(
     private val repository: FinancialRepository
@@ -64,45 +66,44 @@ class MarketPortfolioViewModel(
             initialValue = emptyList()
         )
 
-    val totalLiquidity: StateFlow<Double> = repository.totalLiquidity
-        .map { it ?: 0.0 }
+    val totalLiquidity: StateFlow<BigDecimal> = repository.totalLiquidity
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 0.0
+            initialValue = BigDecimal.ZERO
         )
 
     // Total calculated portfolio balance (Sum of deposits + market investments - expenses)
     // Now also includes actual bank liquidity
-    val portfolioBalance: StateFlow<Double> = combine(
+    val portfolioBalance: StateFlow<BigDecimal> = combine(
         transactions,
         marketRates,
         mutualFunds,
         totalLiquidity
     ) { txList, rates, funds, liquidity ->
-        val initialCapital = 150000000.0 // Baseline capital
+        val initialCapital = BigDecimal("150000000") // Baseline capital
         val netTransactions = txList.sumOf { tx ->
             when (tx.type) {
                 TransactionType.DEPOSIT -> tx.amount
-                TransactionType.TRANSFER -> -tx.amount
-                TransactionType.EXPENSE -> -tx.amount
-                TransactionType.SWAP -> 0.0
+                TransactionType.TRANSFER -> tx.amount.negate()
+                TransactionType.EXPENSE -> tx.amount.negate()
+                TransactionType.SWAP -> BigDecimal.ZERO
             }
         }
-        initialCapital + netTransactions + liquidity
+        initialCapital.add(netTransactions).add(liquidity)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 150000000.0
+        initialValue = BigDecimal("150000000")
     )
 
-    val pnlPercentage: StateFlow<Double> = portfolioBalance.map { current ->
-        val initial = 150000000.0
+    val pnlPercentage: StateFlow<BigDecimal> = portfolioBalance.map { current ->
+        val initial = BigDecimal("150000000")
         FinancialFormulas.calculatePnLPercentage(initialCapital = initial, currentBalance = current)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 0.0
+        initialValue = BigDecimal.ZERO
     )
 
     init {
@@ -118,7 +119,7 @@ class MarketPortfolioViewModel(
         }
     }
 
-    fun addTransaction(title: String, amount: Double, type: TransactionType, category: String, accountId: Long? = null) {
+    fun addTransaction(title: String, amount: BigDecimal, type: TransactionType, category: String, accountId: Long? = null) {
         viewModelScope.launch {
             val tx = TransactionEntity(
                 title = title,
@@ -137,7 +138,7 @@ class MarketPortfolioViewModel(
         }
     }
 
-    fun addBankAccount(name: String, bankName: String, initialBalance: Double, colorHex: String) {
+    fun addBankAccount(name: String, bankName: String, initialBalance: BigDecimal, colorHex: String) {
         viewModelScope.launch {
             repository.addBankAccount(
                 BankAccountEntity(

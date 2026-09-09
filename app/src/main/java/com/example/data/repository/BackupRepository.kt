@@ -16,6 +16,7 @@ import com.squareup.moshi.adapter
 import androidx.room.withTransaction
 import com.example.data.local.AppDatabase
 import kotlinx.coroutines.flow.first
+import java.math.BigDecimal
 
 /**
  * Exports/imports the user's own data (purchases, sales, watchlist, alerts) as a single JSON
@@ -63,14 +64,14 @@ class BackupRepository(
             ?: throw IllegalArgumentException("فایل پشتیبان نامعتبر است")
 
         require(payload.version in 1..3) { "نسخه پشتیبان پشتیبانی نمی‌شود" }
-        require(payload.purchases.all { it.quantity > 0.0 && it.unitPriceRial > 0.0 }) {
+        require(payload.purchases.all { it.quantity > BigDecimal.ZERO && it.unitPriceRial > BigDecimal.ZERO }) {
             "فایل پشتیبان شامل خرید نامعتبر است"
         }
-        require(payload.sales.all { it.quantitySold > 0.0 && it.saleUnitPriceRial > 0.0 && it.costBasisRial >= 0.0 }) {
+        require(payload.sales.all { it.quantitySold > BigDecimal.ZERO && it.saleUnitPriceRial > BigDecimal.ZERO && it.costBasisRial >= BigDecimal.ZERO }) {
             "فایل پشتیبان شامل فروش نامعتبر است"
         }
         require(payload.watchlist.all { it.symbol.isNotBlank() }) { "نماد نامعتبر است" }
-        require(payload.alerts.all { it.assetCode.isNotBlank() && it.targetPriceRial > 0.0 }) {
+        require(payload.alerts.all { it.assetCode.isNotBlank() && it.targetPriceRial > BigDecimal.ZERO }) {
             "هشدار قیمت نامعتبر است"
         }
         require(payload.bankAccounts.all { it.name.isNotBlank() && it.bankName.isNotBlank() }) {

@@ -1,11 +1,12 @@
 package com.example.util
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.DecimalFormat
 
 object PersianNumberUtils {
 
     private val persianDigits = charArrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
-    private val arabicDigits = charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 
     /**
      * Converts Persian and Arabic digits in a string to standard ASCII English digits.
@@ -36,12 +37,12 @@ object PersianNumberUtils {
     }
 
     /**
-     * Parses a string containing numbers (with potential commas, Persian digits, spaces) into a Double.
+     * Parses a string containing numbers (with potential commas, Persian digits, spaces) into a BigDecimal.
      */
-    fun parseAmount(input: String): Double {
-        if (input.isBlank()) return 0.0
+    fun parseAmount(input: String): BigDecimal {
+        if (input.isBlank()) return BigDecimal.ZERO
         val clean = toEnglishDigits(input).replace(",", "").replace(" ", "").trim()
-        return clean.toDoubleOrNull() ?: 0.0
+        return clean.toBigDecimalOrNull() ?: BigDecimal.ZERO
     }
 
     /**
@@ -66,22 +67,22 @@ object PersianNumberUtils {
     /**
      * Converts user input amount string to Toman base amount for internal calculations.
      */
-    fun parseAmountToToman(input: String, isRial: Boolean): Double {
+    fun parseAmountToToman(input: String, isRial: Boolean): BigDecimal {
         val parsed = parseAmount(input)
-        return if (isRial) parsed / 10.0 else parsed
+        return if (isRial) parsed.safeDiv(BigDecimal("10")) else parsed
     }
 
     /**
-     * Formats Double or Long amount to formatted string with dynamic Toman/Rial currency suffix.
+     * Formats BigDecimal or Long amount to formatted string with dynamic Toman/Rial currency suffix.
      */
     fun formatCurrency(
-        amount: Double,
+        amount: BigDecimal,
         showSuffix: Boolean = true,
         usePersianDigits: Boolean = true,
         decimalPlaces: Int = 0,
         isRial: Boolean = false
     ): String {
-        val displayAmount = if (isRial) amount * 10.0 else amount
+        val displayAmount = if (isRial) amount.multiply(BigDecimal("10")) else amount
         val suffix = getCurrencyUnitLabel(isRial)
         val pattern = if (decimalPlaces > 0) {
             "#,##0." + "0".repeat(decimalPlaces)
@@ -97,13 +98,13 @@ object PersianNumberUtils {
     /**
      * Formats a percentage nicely (e.g. 18.5%).
      */
-    fun formatPercent(rate: Double, usePersianDigits: Boolean = true): String {
+    fun formatPercent(rate: BigDecimal, usePersianDigits: Boolean = true): String {
         val formatter = DecimalFormat("#,##0.##")
         val formatted = formatter.format(rate) + "%"
         return if (usePersianDigits) toPersianDigits(formatted) else formatted
     }
 
-    fun formatDecimal(value: Double, usePersianDigits: Boolean = true): String {
+    fun formatDecimal(value: BigDecimal, usePersianDigits: Boolean = true): String {
         val formatter = DecimalFormat("#,##0.###")
         val formatted = formatter.format(value)
         return if (usePersianDigits) toPersianDigits(formatted) else formatted

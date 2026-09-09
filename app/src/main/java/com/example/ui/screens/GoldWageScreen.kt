@@ -4,20 +4,29 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -30,21 +39,20 @@ import com.example.ui.components.PersianNumberTextField
 import com.example.ui.components.PrintPdfDialog
 import com.example.ui.components.ResultHeaderBanner
 import com.example.ui.theme.AccentGold
+import com.example.ui.theme.DaraTypography
+import com.example.ui.theme.IndigoElectric
+import com.example.ui.theme.ObsidianSlate900
+import com.example.ui.theme.Slate50
 import com.example.util.GoldMarketFormulas
 import com.example.util.PersianNumberUtils
 
-/**
- * اجرت و مالیات طلا — final purchase cost per the اتحادیه طلا formula for new
- * (base + wage + shop profit, VAT on wage+profit) and second-hand gold
- * (base + wage, VAT on wage only).
- */
 @Composable
 fun GoldWageScreen(
     historyList: List<CalculationHistoryEntity>,
-    currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
-    onClearHistory: () -> Unit
+    onClearHistory: () -> Unit,
+    onBack: () -> Unit
 ) {
     var isNew by remember { mutableStateOf(true) }
     var basePriceInput by remember { mutableStateOf("50000000") }
@@ -92,147 +100,173 @@ fun GoldWageScreen(
         )
     } ?: emptyList()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            NotebookCard {
-                Text(
-                    "نوع خرید",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentGold
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { isNew = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isNew) AccentGold else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            "طلای نو (فروشگاهی)",
-                            color = if (isNew) Color.Black else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = { isNew = false },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (!isNew) AccentGold else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            "دست‌دوم (از شخص)",
-                            color = if (!isNew) Color.Black else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            NotebookCard {
-                PersianNumberTextField(
-                    value = basePriceInput,
-                    onValueChange = { basePriceInput = it },
-                    label = "مظنه / ارزش ذاتی هر گرم (تومان)",
-                    suffix = "تومان"
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PersianNumberTextField(
-                    value = weightInput,
-                    onValueChange = { weightInput = it },
-                    label = "وزن (گرم)",
-                    suffix = "گرم",
-                    isDecimalAllowed = true
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PersianNumberTextField(
-                    value = wageInput,
-                    onValueChange = { wageInput = it },
-                    label = "اجرت ساخت (٪ مظنه)",
-                    suffix = "٪",
-                    isDecimalAllowed = true
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PersianNumberTextField(
-                    value = profitInput,
-                    onValueChange = { profitInput = it },
-                    label = "سود فروشنده (٪ — فقط طلای نو)",
-                    suffix = "٪",
-                    isDecimalAllowed = true
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                PersianNumberTextField(
-                    value = vatInput,
-                    onValueChange = { vatInput = it },
-                    label = "مالیات بر ارزش افزوده (٪)",
-                    suffix = "٪",
-                    isDecimalAllowed = true
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-                Button(
-                    onClick = {
-                        result ?: return@Button
-                        onAddHistory(
-                            CalculationHistoryEntity(
-                                sectionKey = "gold_wage",
-                                title = "قیمت تمام‌شده ${if (isNew) "طلای نو" else "طلای دست‌دوم"}",
-                                summary = "هر گرم: ${PersianNumberUtils.formatCurrency(result.finalPricePerGram, showSuffix = false)} | کل: ${PersianNumberUtils.formatCurrency(result.finalPriceTotal, showSuffix = false)}",
-                                paramsJson = "$isNew|$basePriceInput|$weightInput|$wageInput|$profitInput|$vatInput"
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth().height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentGold),
-                    enabled = result != null
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+                color = ObsidianSlate900.copy(alpha = 0.8f)
+            ) {
+                Row(
+                    modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("ذخیره در تاریخچه", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Slate50)
+                        }
+                        Column {
+                            Text("اجرت و مالیات طلا", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                            Text("محاسبه دقیق قیمت خرید", style = DaraTypography.labelSmall, color = IndigoElectric)
+                        }
+                    }
                 }
             }
         }
-
-        if (result != null) {
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             item {
-                ResultHeaderBanner(
-                    title = "قیمت تمام‌شده طلا (${if (isNew) "نو" else "دست‌دوم"})",
-                    mainResultValue = PersianNumberUtils.formatCurrency(result.finalPriceTotal, showSuffix = false),
-                    mainResultLabel = "کل خرید ${PersianNumberUtils.toPersianDigits(weightInput)} گرم",
-                    secondaryItems = listOf(
-                        "قیمت تمام‌شده هر گرم" to PersianNumberUtils.formatCurrency(result.finalPricePerGram, showSuffix = false),
-                        "اجرت + مالیات هر گرم" to PersianNumberUtils.formatCurrency(result.wagePerGram + result.sellerProfitPerGram + result.vatPerGram, showSuffix = false)
-                    ),
-                    copySummaryText = summaryText,
-                    onPrintClick = { showPrintDialog = true }
+                NotebookCard {
+                    Text(
+                        "نوع خرید",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AccentGold
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { isNew = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isNew) AccentGold else MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                "طلای نو",
+                                color = if (isNew) Color.Black else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = { isNew = false },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (!isNew) AccentGold else MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                "دست‌دوم",
+                                color = if (!isNew) Color.Black else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                NotebookCard {
+                    PersianNumberTextField(
+                        value = basePriceInput,
+                        onValueChange = { basePriceInput = it },
+                        label = "مظنه هر گرم (تومان)",
+                        suffix = "تومان"
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PersianNumberTextField(
+                        value = weightInput,
+                        onValueChange = { weightInput = it },
+                        label = "وزن (گرم)",
+                        suffix = "گرم",
+                        isDecimalAllowed = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PersianNumberTextField(
+                        value = wageInput,
+                        onValueChange = { wageInput = it },
+                        label = "اجرت ساخت (٪)",
+                        suffix = "٪",
+                        isDecimalAllowed = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PersianNumberTextField(
+                        value = profitInput,
+                        onValueChange = { profitInput = it },
+                        label = "سود فروشنده (٪)",
+                        suffix = "٪",
+                        isDecimalAllowed = true
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PersianNumberTextField(
+                        value = vatInput,
+                        onValueChange = { vatInput = it },
+                        label = "مالیات بر ارزش افزوده (٪)",
+                        suffix = "٪",
+                        isDecimalAllowed = true
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Button(
+                        onClick = {
+                            result ?: return@Button
+                            onAddHistory(
+                                CalculationHistoryEntity(
+                                    sectionKey = "gold_wage",
+                                    title = "قیمت تمام‌شده ${if (isNew) "طلای نو" else "طلای دست‌دوم"}",
+                                    summary = "هر گرم: ${PersianNumberUtils.formatCurrency(result.finalPricePerGram, showSuffix = false)}",
+                                    paramsJson = "$isNew|$basePriceInput|$weightInput|$wageInput|$profitInput|$vatInput"
+                                )
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentGold),
+                        enabled = result != null
+                    ) {
+                        Text("ذخیره در تاریخچه", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            if (result != null) {
+                item {
+                    ResultHeaderBanner(
+                        title = "قیمت تمام‌شده طلا (${if (isNew) "نو" else "دست‌دوم"})",
+                        mainResultValue = PersianNumberUtils.formatCurrency(result.finalPriceTotal, showSuffix = false),
+                        mainResultLabel = "کل خرید ${PersianNumberUtils.toPersianDigits(weightInput)} گرم",
+                        secondaryItems = listOf(
+                            "قیمت هر گرم" to PersianNumberUtils.formatCurrency(result.finalPricePerGram, showSuffix = false),
+                            "اجرت + مالیات" to PersianNumberUtils.formatCurrency(result.wagePerGram + result.sellerProfitPerGram + result.vatPerGram, showSuffix = false)
+                        ),
+                        copySummaryText = summaryText,
+                        onPrintClick = { showPrintDialog = true }
+                    )
+                }
+            }
+
+            item {
+                HistoryAccordion(
+                    historyList = historyList,
+                    onSelectHistory = { hist ->
+                        val parts = hist.paramsJson.split("|")
+                        if (parts.size >= 6) {
+                            isNew = parts[0].toBooleanStrictOrNull() ?: true
+                            basePriceInput = parts[1]
+                            weightInput = parts[2]
+                            wageInput = parts[3]
+                            profitInput = parts[4]
+                            vatInput = parts[5]
+                        }
+                    },
+                    onDeleteHistory = onDeleteHistory,
+                    onClearAll = onClearHistory
                 )
             }
-        }
-
-        item {
-            HistoryAccordion(
-                historyList = historyList,
-                onSelectHistory = { hist ->
-                    val parts = hist.paramsJson.split("|")
-                    if (parts.size >= 6) {
-                        isNew = parts[0].toBooleanStrictOrNull() ?: true
-                        basePriceInput = parts[1]
-                        weightInput = parts[2]
-                        wageInput = parts[3]
-                        profitInput = parts[4]
-                        vatInput = parts[5]
-                    }
-                },
-                onDeleteHistory = onDeleteHistory,
-                onClearAll = onClearHistory
-            )
         }
     }
 

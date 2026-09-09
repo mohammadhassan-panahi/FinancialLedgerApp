@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
 
 @Dao
 interface TransactionDao {
@@ -27,12 +28,7 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = :type ORDER BY timestamp DESC")
     fun getTransactionsByType(type: TransactionType): Flow<List<TransactionEntity>>
 
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'DEPOSIT'")
-    fun getTotalDeposits(): Flow<Double?>
-
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'DEPOSIT'")
-    fun getTotalIncome(): Flow<Double?>
-
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE'")
-    fun getTotalExpenses(): Flow<Double?>
+    // Return all amounts for specific type to sum in Kotlin for precision
+    @Query("SELECT amount FROM transactions WHERE type = :type")
+    fun getAmountsByType(type: TransactionType): Flow<List<BigDecimal>>
 }

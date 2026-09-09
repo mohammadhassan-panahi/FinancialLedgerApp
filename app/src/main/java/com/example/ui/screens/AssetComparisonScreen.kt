@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +24,7 @@ import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun AssetComparisonScreen(
@@ -106,16 +108,16 @@ fun ComparisonAssetSelector(marketRates: kotlin.collections.List<MarketRateEntit
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 AssetCompareItem(
                     title = "طلای ۱۸ عیار",
-                    price = PersianNumberUtils.formatCurrency(gold?.priceToman ?: 3500000.0, isRial = false),
-                    change = "${if ((gold?.changePercent ?: 0.0) >= 0.0) "+" else ""}${gold?.changePercent ?: 0.0}٪",
+                    price = PersianNumberUtils.formatCurrency(gold?.priceToman ?: BigDecimal("3500000"), isRial = false),
+                    change = "${if ((gold?.changePercent ?: BigDecimal.ZERO) >= BigDecimal.ZERO) "+" else ""}${gold?.changePercent ?: BigDecimal.ZERO}٪",
                     icon = Icons.Default.MonetizationOn,
                     color = RefinedAmberGold,
                     modifier = Modifier.weight(1f)
                 )
                 AssetCompareItem(
                     title = "دلار آمریکا",
-                    price = PersianNumberUtils.formatCurrency(usd?.priceToman ?: 65000.0, isRial = false),
-                    change = "${if ((usd?.changePercent ?: 0.0) >= 0.0) "+" else ""}${usd?.changePercent ?: 0.0}٪",
+                    price = PersianNumberUtils.formatCurrency(usd?.priceToman ?: BigDecimal("65000"), isRial = false),
+                    change = "${if ((usd?.changePercent ?: BigDecimal.ZERO) >= BigDecimal.ZERO) "+" else ""}${usd?.changePercent ?: BigDecimal.ZERO}٪",
                     icon = Icons.Default.CurrencyExchange,
                     color = EmeraldCore,
                     modifier = Modifier.weight(1f)

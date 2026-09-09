@@ -1,12 +1,8 @@
 package com.example.data.local
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
 
 @Dao
 interface BankAccountDao {
@@ -25,9 +21,10 @@ interface BankAccountDao {
     @Delete
     suspend fun deleteAccount(account: BankAccountEntity)
 
+    // Manual update should use BigDecimal
     @Query("UPDATE bank_accounts SET currentBalance = currentBalance + :amount WHERE id = :accountId")
-    suspend fun updateBalance(accountId: Long, amount: Double)
+    suspend fun updateBalance(accountId: Long, amount: BigDecimal)
 
-    @Query("SELECT SUM(currentBalance) FROM bank_accounts")
-    fun getTotalLiquidity(): Flow<Double?>
+    @Query("SELECT currentBalance FROM bank_accounts")
+    fun getAllBalances(): Flow<List<BigDecimal>>
 }

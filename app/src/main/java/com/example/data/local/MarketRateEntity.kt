@@ -3,6 +3,7 @@ package com.example.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.math.BigDecimal
 
 /**
  * Encrypted Room Entity for Financial Assets & Currency Market Rates.
@@ -16,10 +17,10 @@ data class MarketRateEntity(
     @PrimaryKey
     val assetCode: String, // e.g. "USD", "EUR", "GOLD_18K", "AZADI"
     val name: String,
-    val priceToman: Double,
-    val priceGlobal: Double = 0.0,
+    val priceToman: BigDecimal,
+    val priceGlobal: BigDecimal = BigDecimal.ZERO,
     val currency: String = "تومان",
-    val changePercent: Double,
+    val changePercent: BigDecimal,
     val updatedAt: Long = System.currentTimeMillis(),
     val isOfflineRate: Boolean = false
 )
@@ -35,8 +36,8 @@ data class MutualFundEntity(
     @PrimaryKey
     val id: String, // e.g. "FARABI", "MOFID", "ETEMAD"
     val name: String,
-    val navToman: Double,
-    val returnPercent: Double, // Monthly/Annual return
+    val navToman: BigDecimal,
+    val returnPercent: BigDecimal, // Monthly/Annual return
     val riskLevel: String, // Low, Medium, High
     val manager: String
 )

@@ -11,6 +11,8 @@ import com.example.domain.usecase.AddAssetPurchaseUseCase
 import com.example.domain.usecase.GetHoldingsUseCase
 import com.example.domain.usecase.GetPortfolioSummaryUseCase
 import com.example.ui.UiState
+import com.example.util.safeDiv
+import com.example.util.sumOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 class PortfolioViewModel(
     private val repository: PortfolioRepository,
@@ -53,9 +56,9 @@ class PortfolioViewModel(
     val bankAccounts: StateFlow<List<BankAccountEntity>> = repository.bankAccounts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val totalLiquidityToman: StateFlow<Double> = repository.totalLiquidityRial
-        .map { it / 10.0 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val totalLiquidityToman: StateFlow<BigDecimal> = repository.totalLiquidityRial
+        .map { it.safeDiv(BigDecimal("10")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     val purchases: StateFlow<List<AssetPurchaseEntity>> = repository.purchases
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -63,8 +66,8 @@ class PortfolioViewModel(
     val sales: StateFlow<List<AssetSaleEntity>> = repository.sales
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val totalRealizedPnlRial: StateFlow<Double> = repository.totalRealizedPnlRial
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val totalRealizedPnlRial: StateFlow<BigDecimal> = repository.totalRealizedPnlRial
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     val marketRates: StateFlow<List<com.example.data.local.MarketRateEntity>> = repository.marketRates
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -105,24 +108,24 @@ class PortfolioViewModel(
     val codalNotices = repository.codalNotices
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val totalDebtRial: StateFlow<Double> = repository.totalDebtRial
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val totalDebtRial: StateFlow<BigDecimal> = repository.totalDebtRial
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
-    val totalCreditRial: StateFlow<Double> = repository.totalCreditRial
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val totalCreditRial: StateFlow<BigDecimal> = repository.totalCreditRial
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
-    val goldPriceToman: StateFlow<Double> = repository.marketRates
-        .map { rates -> rates.find { it.assetCode == "GOLD_18K" }?.priceToman ?: 3500000.0 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3500000.0)
+    val goldPriceToman: StateFlow<BigDecimal> = repository.marketRates
+        .map { rates -> rates.find { it.assetCode == "GOLD_18K" }?.priceToman ?: BigDecimal("3500000") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("3500000"))
 
-    val usdPriceToman: StateFlow<Double> = repository.marketRates
-        .map { rates -> rates.find { it.assetCode == "USD" }?.priceToman ?: 65000.0 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 65000.0)
+    val usdPriceToman: StateFlow<BigDecimal> = repository.marketRates
+        .map { rates -> rates.find { it.assetCode == "USD" }?.priceToman ?: BigDecimal("65000") }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("65000"))
 
-    val assetAllocations: StateFlow<Map<PortfolioAssetType, Double>> = holdings
+    val assetAllocations: StateFlow<Map<PortfolioAssetType, BigDecimal>> = holdings
         .map { list -> 
             list.groupBy { it.assetType }
-                .mapValues { it.value.sumOf { h -> h.currentValueRial } / 10.0 } 
+                .mapValues { it.value.sumOf { h -> h.currentValueRial }.safeDiv(BigDecimal("10")) } 
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
@@ -132,9 +135,9 @@ class PortfolioViewModel(
     private val _isOfflineMode = MutableStateFlow(false)
     val isOfflineMode: StateFlow<Boolean> = _isOfflineMode.asStateFlow()
 
-    val totalPortfolioValueRial: StateFlow<Double> = holdings
+    val totalPortfolioValueRial: StateFlow<BigDecimal> = holdings
         .map { list: List<Holding> -> list.sumOf { it.currentValueRial } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     fun refreshAll(watchlistSymbols: List<String> = emptyList()) {
         viewModelScope.launch {
@@ -157,8 +160,8 @@ class PortfolioViewModel(
         assetType: PortfolioAssetType,
         assetCode: String,
         assetName: String,
-        quantity: Double,
-        unitPriceRial: Double,
+        quantity: BigDecimal,
+        unitPriceRial: BigDecimal,
         purchaseDate: Long,
         note: String = ""
     ) {
@@ -183,8 +186,8 @@ class PortfolioViewModel(
         assetType: PortfolioAssetType,
         assetCode: String,
         assetName: String,
-        quantitySold: Double,
-        saleUnitPriceRial: Double,
+        quantitySold: BigDecimal,
+        saleUnitPriceRial: BigDecimal,
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -204,7 +207,7 @@ class PortfolioViewModel(
     fun addAlert(alert: PriceAlertEntity) = viewModelScope.launch { repository.addAlert(alert) }
     fun deleteAlert(id: Long) = viewModelScope.launch { repository.deleteAlert(id) }
 
-    fun addBankAccount(name: String, bankName: String, initialBalance: Double, colorHex: String) {
+    fun addBankAccount(name: String, bankName: String, initialBalance: BigDecimal, colorHex: String) {
         viewModelScope.launch {
             repository.addBankAccount(
                 BankAccountEntity(
@@ -231,7 +234,7 @@ class PortfolioViewModel(
         viewModelScope.launch { repository.removeSymbolFromWatchlist(symbol) }
 
     // Debt & Credit
-    fun addDebtCredit(personName: String, amountRial: Double, type: com.example.data.local.DebtCreditType, description: String = "") {
+    fun addDebtCredit(personName: String, amountRial: BigDecimal, type: com.example.data.local.DebtCreditType, description: String = "") {
         viewModelScope.launch {
             repository.addDebtCredit(
                 com.example.data.local.DebtCreditEntity(
@@ -248,7 +251,7 @@ class PortfolioViewModel(
     fun settleDebtCredit(entity: com.example.data.local.DebtCreditEntity) = viewModelScope.launch { repository.updateDebtCredit(entity.copy(isSettled = true)) }
 
     // Reminders
-    fun addReminder(title: String, amountRial: Double, type: com.example.data.local.ReminderType, dueDate: Long, note: String = "") {
+    fun addReminder(title: String, amountRial: BigDecimal, type: com.example.data.local.ReminderType, dueDate: Long, note: String = "") {
         viewModelScope.launch {
             repository.addReminder(
                 com.example.data.local.ReminderEntity(
@@ -266,12 +269,12 @@ class PortfolioViewModel(
     fun markReminderAsPaid(entity: com.example.data.local.ReminderEntity) = viewModelScope.launch { repository.updateReminder(entity.copy(isPaid = true)) }
 
     // Goals
-    fun addGoal(title: String, targetAmountRial: Double, category: String = "سایر") {
+    fun addGoal(title: String, targetAmountRial: BigDecimal, category: String = "سایر") {
         viewModelScope.launch {
             repository.addGoal(com.example.data.local.GoalEntity(title = title, targetAmountRial = targetAmountRial, category = category))
         }
     }
-    fun updateGoalProgress(entity: com.example.data.local.GoalEntity, savedAmount: Double) {
+    fun updateGoalProgress(entity: com.example.data.local.GoalEntity, savedAmount: BigDecimal) {
         viewModelScope.launch {
             repository.updateGoal(entity.copy(currentSavedRial = savedAmount, isCompleted = savedAmount >= entity.targetAmountRial))
         }

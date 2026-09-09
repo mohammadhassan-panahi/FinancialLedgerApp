@@ -10,25 +10,72 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b1516b4c-618a-4e67-845a-22cf41644b2f" name="Changes" comment="update and fixing bug">
-      <change afterPath="$PROJECT_DIR$/.artifacts/89c78244-3612-4619-bae2-3dae654843cc/implementation_plan.artifact.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.artifacts/implementation_plan.artifact.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.artifacts/task.artifact.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/DebtCreditDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/GoalDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/ReminderDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/TypeConverters.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/BigDecimalExtensions.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/planningMode.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/planningMode.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/remote/IranEconomyRssService.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/NewsRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/NewsRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/ScoringEngine.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/ScoringEngine.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/CryptoAnalysisModels.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/CryptoAnalysisModels.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/TechnicalAnalysisEngine.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/TechnicalAnalysisEngine.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/AppDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/AppDatabase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/BankAccountDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/BankAccountDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/BankAccountEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/BankAccountEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/BourseEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/BourseEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/CryptoEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/CryptoEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/DebtCreditEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/DebtCreditEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/GoalEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/GoalEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/MarketRateEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/MarketRateEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PortfolioEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PortfolioEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PortfolioSnapshotEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PortfolioSnapshotEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/RealEstateEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/RealEstateEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/ReminderEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/ReminderEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/TransactionDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/TransactionDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/TransactionEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/TransactionEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/VehicleEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/VehicleEntities.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/remote/MarketMappers.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/remote/MarketMappers.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/BackupRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/BackupRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/CryptoRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/CryptoRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/FinancialRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/FinancialRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/PortfolioRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/PortfolioRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/BankAccount.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/BankAccount.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/Holding.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/Holding.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/MarketAsset.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/MarketAsset.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/PortfolioSummary.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/domain/model/PortfolioSummary.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/domain/usecase/AddAssetPurchaseUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/domain/usecase/AddAssetPurchaseUseCase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/domain/usecase/CalculatePortfolioValueUseCase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/domain/usecase/CalculatePortfolioValueUseCase.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/navigation/NavGraph.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/navigation/NavGraph.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/components/PortfolioDonutChart.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/components/PortfolioDonutChart.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/dashboard/DaraDashboardScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/dashboard/DaraDashboardScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/dashboard/MarketScannerScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/dashboard/MarketScannerScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/AddPurchaseScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/AddPurchaseScreen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/AssetComparisonScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/AssetComparisonScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CalculatorsHubScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CalculatorsHubScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoIntelligenceScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoIntelligenceScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/BankAccountsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/BankAccountsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CompoundInterestScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CompoundInterestScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoDetailScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoDetailScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CurrencyConverterScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CurrencyConverterScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/DebtCreditsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/DebtCreditsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoalsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoalsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoldBubbleScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoldBubbleScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoldDollarScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoldDollarScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoldWageScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/GoldWageScreen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/InflationCalculatorScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/InflationCalculatorScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/LoanCalculatorScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/LoanCalculatorScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MutualFundsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MutualFundsScreen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/PortfolioHomeScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/PortfolioHomeScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/ScenarioSimulatorScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/ScenarioSimulatorScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/news/NewsDetailScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/news/NewsDetailScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/news/NewsHubScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/news/NewsHubScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/NewsViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/NewsViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/SimpleInterestScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/SimpleInterestScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/AiAnalysisViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/AiAnalysisViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/MarketPortfolioViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/MarketPortfolioViewModel.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/PortfolioViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/PortfolioViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/util/FinancialFormulas.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/FinancialFormulas.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/util/GoldMarketFormulas.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/GoldMarketFormulas.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/util/PersianNumberUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/PersianNumberUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/util/RialUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/RialUtils.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,26 +134,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.google.services.firebase.aqiPopupShown&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;gradle.sync.parallel.migration.suppressed&quot;: &quot;false&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/PANAHI/Desktop/android appp/portfo app android v4/finapp&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;templates.modelproviders.configurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Android App.app.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.google.services.firebase.aqiPopupShown": "true",
+    "git-widget-placeholder": "master",
+    "gradle.sync.parallel.migration.suppressed": "false",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/PANAHI/Desktop/android appp/portfo app android v4/finapp",
+    "settings.editor.selected.configurable": "com.android.studio.ml.bot.mainConfigurable"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
       <module name="FinancialLedgerApp.app" />
@@ -359,7 +406,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788741347626</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="update and fixing bug">
+      <option name="closed" value="true" />
+      <created>1788892345082</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1788892345082</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

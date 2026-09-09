@@ -1,6 +1,7 @@
 package com.example.domain.model
 
 import androidx.compose.runtime.Immutable
+import java.math.BigDecimal
 
 /**
  * Summary of the entire portfolio.
@@ -8,15 +9,15 @@ import androidx.compose.runtime.Immutable
  */
 @Immutable
 data class PortfolioSummary(
-    val totalValueRial: Double,
-    val totalProfitLossRial: Double,
-    val totalProfitLossPercent: Double,
-    val todayProfitLossRial: Double,
-    val todayProfitLossPercent: Double,
+    val totalValueRial: BigDecimal,
+    val totalProfitLossRial: BigDecimal,
+    val totalProfitLossPercent: BigDecimal,
+    val todayProfitLossRial: BigDecimal,
+    val todayProfitLossPercent: BigDecimal,
     val lastUpdated: Long,
     val marketStatus: String,
-    val usdRateRial: Double,
-    val gold18kPriceRial: Double,
+    val usdRateRial: BigDecimal,
+    val gold18kPriceRial: BigDecimal,
     val bestPerformer: Holding? = null,
     val worstPerformer: Holding? = null,
     val allocationByAsset: List<AllocationItem> = emptyList(),
@@ -26,14 +27,14 @@ data class PortfolioSummary(
 )
 
 data class GoldPriceAnalysis(
-    val globalGoldChangePercent: Double,
-    val usdChangePercent: Double,
-    val localGoldChangePercent: Double,
+    val globalGoldChangePercent: BigDecimal,
+    val usdChangePercent: BigDecimal,
+    val localGoldChangePercent: BigDecimal,
     val primaryDriver: String
 )
 
 data class AllocationItem(
     val label: String,
-    val percentage: Double,
-    val valueRial: Double
+    val percentage: BigDecimal,
+    val valueRial: BigDecimal
 )

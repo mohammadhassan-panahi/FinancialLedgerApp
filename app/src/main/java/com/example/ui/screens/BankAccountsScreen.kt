@@ -29,6 +29,7 @@ import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 @Composable
 fun BankAccountsScreen(
@@ -143,7 +144,7 @@ fun BankHeader(onBack: () -> Unit) {
 
 @Composable
 fun TotalLiquidityCard(
-    totalToman: Double,
+    totalToman: BigDecimal,
     isVisible: Boolean,
     onToggleVisibility: () -> Unit
 ) {

@@ -3,6 +3,7 @@ package com.example.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.math.BigDecimal
 
 /**
  * Cached market data for one cryptocurrency, sourced from CoinMarketCap's free/Basic tier
@@ -25,18 +26,18 @@ data class CryptoAssetEntity(
     val name: String,                   // e.g. "Bitcoin"
     val slug: String? = null,
     val cmcRank: Int? = null,
-    val priceUsd: Double? = null,
-    val percentChange1h: Double? = null,
-    val percentChange24h: Double? = null,
-    val percentChange7d: Double? = null,
-    val percentChange30d: Double? = null,
-    val marketCapUsd: Double? = null,
-    val fullyDilutedMarketCapUsd: Double? = null,
-    val volume24hUsd: Double? = null,
-    val volumeChange24h: Double? = null,
-    val circulatingSupply: Double? = null,
-    val totalSupply: Double? = null,
-    val maxSupply: Double? = null,
+    val priceUsd: BigDecimal? = null,
+    val percentChange1h: BigDecimal? = null,
+    val percentChange24h: BigDecimal? = null,
+    val percentChange7d: BigDecimal? = null,
+    val percentChange30d: BigDecimal? = null,
+    val marketCapUsd: BigDecimal? = null,
+    val fullyDilutedMarketCapUsd: BigDecimal? = null,
+    val volume24hUsd: BigDecimal? = null,
+    val volumeChange24h: BigDecimal? = null,
+    val circulatingSupply: BigDecimal? = null,
+    val totalSupply: BigDecimal? = null,
+    val maxSupply: BigDecimal? = null,
     val infiniteSupply: Boolean = false,
     val platformName: String? = null,   // e.g. "Ethereum" for an ERC-20 token; null for native coins
     val tokenAddress: String? = null,

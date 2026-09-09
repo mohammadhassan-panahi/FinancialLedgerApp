@@ -22,9 +22,10 @@ import com.example.ui.viewmodel.CryptoViewModel
 import com.example.util.PersianNumberUtils
 import com.example.util.formatPercentSigned
 import com.example.util.formatUsd
+import java.math.BigDecimal
 
 @Composable
-fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: Double = 65000.0) {
+fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: BigDecimal = BigDecimal.valueOf(65000.0)) {
     val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
     val watchlist by viewModel.watchlist.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -98,13 +99,13 @@ fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: Double = 65000.0) {
 @Composable
 fun CryptoAssetCardPremium(
     asset: CryptoAssetEntity, 
-    usdRateToman: Double,
+    usdRateToman: BigDecimal,
     onToggleWatchlist: () -> Unit, 
     onClick: () -> Unit
 ) {
-    val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
-    val change = asset.percentChange24h ?: 0.0
-    val changeColor = if (change >= 0) EmeraldCore else RoseCoral
+    val priceToman = (asset.priceUsd ?: BigDecimal.ZERO).multiply(usdRateToman)
+    val change = asset.percentChange24h ?: BigDecimal.ZERO
+    val changeColor = if (change >= BigDecimal.ZERO) EmeraldCore else RoseCoral
 
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),

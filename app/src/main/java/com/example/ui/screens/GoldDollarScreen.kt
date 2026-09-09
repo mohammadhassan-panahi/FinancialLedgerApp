@@ -20,6 +20,7 @@ import com.example.ui.LocalIsRial
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.components.PriceAlertDialog
 import com.example.ui.theme.*
+import java.math.BigDecimal
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
 import com.example.util.priceRial
@@ -119,7 +120,7 @@ private fun RateCard(rate: MarketRateEntity, onSetAlert: () -> Unit) {
                 Text(
                     formatPercentSigned(rate.changePercent),
                     style = DaraTypography.labelSmall,
-                    color = if (rate.changePercent >= 0) EmeraldCore else RoseCoral,
+                    color = if (rate.changePercent >= BigDecimal.ZERO) EmeraldCore else RoseCoral,
                     fontWeight = FontWeight.Bold
                 )
             }

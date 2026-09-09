@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.squareup.moshi.JsonClass
+import java.math.BigDecimal
 
 /**
  * Portfolio module entities. ALL monetary fields across this module are stored in RIAL
@@ -25,9 +26,9 @@ data class AssetPurchaseEntity(
     val assetType: PortfolioAssetType,
     val assetCode: String,      // e.g. "GOLD_18K", "USD", or a TSE symbol like "فولاد"
     val assetName: String,      // display name at time of purchase
-    val quantity: Double,       // grams (gold), USD units (dollar), or share count (stock)
-    val unitPriceRial: Double,  // price per unit paid, in Rial
-    val totalPaidRial: Double,  // quantity * unitPriceRial (kept denormalized for fast sums)
+    val quantity: BigDecimal,   // grams (gold), USD units (dollar), or share count (stock)
+    val unitPriceRial: BigDecimal,  // price per unit paid, in Rial
+    val totalPaidRial: BigDecimal,  // quantity * unitPriceRial (kept denormalized for fast sums)
     val purchaseDate: Long = System.currentTimeMillis(),
     val note: String = ""
 )
@@ -46,11 +47,11 @@ data class AssetSaleEntity(
     val assetType: PortfolioAssetType,
     val assetCode: String,
     val assetName: String,
-    val quantitySold: Double,
-    val saleUnitPriceRial: Double,
-    val totalReceivedRial: Double,   // quantitySold * saleUnitPriceRial
-    val costBasisRial: Double,       // average cost of quantitySold, at time of sale
-    val realizedPnlRial: Double,     // totalReceivedRial - costBasisRial
+    val quantitySold: BigDecimal,
+    val saleUnitPriceRial: BigDecimal,
+    val totalReceivedRial: BigDecimal,   // quantitySold * saleUnitPriceRial
+    val costBasisRial: BigDecimal,       // average cost of quantitySold, at time of sale
+    val realizedPnlRial: BigDecimal,     // totalReceivedRial - costBasisRial
     val saleDate: Long = System.currentTimeMillis(),
     val note: String = ""
 )
@@ -61,8 +62,8 @@ data class MarketIndexEntity(
     @PrimaryKey
     val indexCode: String, // "TOTAL_INDEX" | "EQUAL_WEIGHT"
     val name: String,
-    val value: Double,
-    val changePercent: Double,
+    val value: BigDecimal,
+    val changePercent: BigDecimal,
     val updatedAt: Long = System.currentTimeMillis()
 )
 
@@ -73,10 +74,10 @@ data class StockSymbolEntity(
     @PrimaryKey
     val symbol: String, // e.g. "فولاد", "خودرو", or an ETF/fund symbol
     val fullName: String,
-    val lastPriceRial: Double,
-    val changePercent: Double,
-    val buyPriceRial: Double = 0.0,   // بهترین قیمت خرید (صف خرید) — ۰ یعنی هنوز دریافت نشده
-    val sellPriceRial: Double = 0.0,  // بهترین قیمت فروش (صف فروش) — ۰ یعنی هنوز دریافت نشده
+    val lastPriceRial: BigDecimal,
+    val changePercent: BigDecimal,
+    val buyPriceRial: BigDecimal = BigDecimal.ZERO,   // بهترین قیمت خرید (صف خرید) — ۰ یعنی هنوز دریافت نشده
+    val sellPriceRial: BigDecimal = BigDecimal.ZERO,  // بهترین قیمت فروش (صف فروش) — ۰ یعنی هنوز دریافت نشده
     val isInWatchlist: Boolean = true,
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -91,7 +92,7 @@ data class PriceAlertEntity(
     val id: Long = 0,
     val assetCode: String,
     val assetName: String,
-    val targetPriceRial: Double,
+    val targetPriceRial: BigDecimal,
     val direction: AlertDirection,
     val isActive: Boolean = true,
     val lastTriggeredAt: Long? = null,

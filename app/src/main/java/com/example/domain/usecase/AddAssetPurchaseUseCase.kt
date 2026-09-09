@@ -3,14 +3,15 @@ package com.example.domain.usecase
 import com.example.data.local.AssetPurchaseEntity
 import com.example.data.local.PortfolioAssetType
 import com.example.data.repository.PortfolioRepository
+import java.math.BigDecimal
 
 class AddAssetPurchaseUseCase(private val repository: PortfolioRepository) {
     suspend operator fun invoke(
         assetType: PortfolioAssetType,
         assetCode: String,
         assetName: String,
-        quantity: Double,
-        unitPriceRial: Double,
+        quantity: BigDecimal,
+        unitPriceRial: BigDecimal,
         purchaseDate: Long
     ) {
         repository.addPurchase(
@@ -20,7 +21,7 @@ class AddAssetPurchaseUseCase(private val repository: PortfolioRepository) {
                 assetName = assetName,
                 quantity = quantity,
                 unitPriceRial = unitPriceRial,
-                totalPaidRial = quantity * unitPriceRial,
+                totalPaidRial = quantity.multiply(unitPriceRial),
                 purchaseDate = purchaseDate
             )
         )

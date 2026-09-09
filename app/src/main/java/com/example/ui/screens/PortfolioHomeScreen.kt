@@ -32,6 +32,8 @@ import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.PersianDateUtils
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
+import com.example.util.safeDiv
+import java.math.BigDecimal
 import java.util.Locale
 
 enum class PortfolioUnit { TOMAN, USD, GOLD }
@@ -286,8 +288,8 @@ fun PortfolioHeroCard(
                     Text(if (isRial) "ارزش کل (ریال)" else "ارزش کل پورتفو", color = Slate400, fontSize = 12.sp)
                     val displayValue = when(selectedUnit) {
                         PortfolioUnit.TOMAN -> formatRial(summary.totalValueRial, isRial = isRial)
-                        PortfolioUnit.USD -> "$${String.format(Locale.US, "%,.2f", summary.totalValueRial / summary.usdRateRial)}"
-                        PortfolioUnit.GOLD -> "${String.format(Locale.US, "%,.3f", summary.totalValueRial / summary.gold18kPriceRial)} گرم طلا"
+                        PortfolioUnit.USD -> "$${String.format(Locale.US, "%,.2f", (summary.totalValueRial.safeDiv(summary.usdRateRial)).toDouble())}"
+                        PortfolioUnit.GOLD -> "${String.format(Locale.US, "%,.3f", (summary.totalValueRial.safeDiv(summary.gold18kPriceRial)).toDouble())} گرم طلا"
                     }
                     Text(displayValue, style = DaraTypography.headlineLarge, fontWeight = FontWeight.ExtraBold, color = Slate50)
                 }
@@ -349,7 +351,7 @@ fun UnitButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun InfoItem(label: String, value: Double, percent: Double) {
+fun InfoItem(label: String, value: BigDecimal, percent: BigDecimal) {
     val isRial = LocalIsRial.current
     Column {
         Text(label, color = Slate400, fontSize = 11.sp)
@@ -358,13 +360,13 @@ fun InfoItem(label: String, value: Double, percent: Double) {
                 formatRial(value, isRial = isRial),
                 style = DaraTypography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (value >= 0) EmeraldCore else RoseCoral
+                color = if (value >= BigDecimal.ZERO) EmeraldCore else RoseCoral
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 formatPercentSigned(percent),
                 style = DaraTypography.labelSmall,
-                color = if (percent >= 0) EmeraldCore else RoseCoral
+                color = if (percent >= BigDecimal.ZERO) EmeraldCore else RoseCoral
             )
         }
     }
@@ -485,7 +487,7 @@ fun HoldingCardPremium(holding: Holding, onSellClick: () -> Unit) {
                 )
                 Text(
                     text = formatPercentSigned(holding.profitLossPercent),
-                    color = if (holding.profitLossRial >= 0) EmeraldCore else RoseCoral,
+                    color = if (holding.profitLossRial >= BigDecimal.ZERO) EmeraldCore else RoseCoral,
                     style = DaraTypography.labelSmall,
                     fontWeight = FontWeight.Bold
                 )

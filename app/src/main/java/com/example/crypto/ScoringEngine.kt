@@ -1,7 +1,10 @@
 package com.example.crypto
 
 import com.example.data.local.CryptoAssetEntity
-import kotlin.math.abs
+import com.example.util.safeDiv
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.util.Locale
 import kotlin.math.ln
 
 /**
@@ -28,82 +31,94 @@ object ScoringEngine {
     /** Fundamental Score: market-cap rank, market cap size, and supply health. */
     fun fundamentalScore(asset: CryptoAssetEntity): ScoreResult {
         val reasons = mutableListOf<String>()
-        var score = 0.0
-        var weight = 0.0
+        var score = BigDecimal.ZERO
+        var weight = BigDecimal.ZERO
 
         asset.cmcRank?.let { rank ->
-            val rankScore = (100 - (ln(rank.toDouble()) * 12)).coerceIn(0.0, 100.0)
-            score += rankScore * 3; weight += 3
+            val rankScore = BigDecimal.valueOf((100 - (ln(rank.toDouble()) * 12)).coerceIn(0.0, 100.0))
+            score = score.add(rankScore.multiply(BigDecimal("3")))
+            weight = weight.add(BigDecimal("3"))
             reasons += "رتبه‌ی بازار #$rank"
         }
 
         asset.marketCapUsd?.let { cap ->
             val capScore = when {
-                cap >= 10_000_000_000 -> 100.0
-                cap >= 1_000_000_000 -> 75.0
-                cap >= 100_000_000 -> 50.0
-                cap >= 10_000_000 -> 25.0
-                else -> 10.0
+                cap >= BigDecimal("10000000000") -> BigDecimal("100")
+                cap >= BigDecimal("1000000000") -> BigDecimal("75")
+                cap >= BigDecimal("100000000") -> BigDecimal("50")
+                cap >= BigDecimal("10000000") -> BigDecimal("25")
+                else -> BigDecimal("10")
             }
-            score += capScore * 2; weight += 2
+            score = score.add(capScore.multiply(BigDecimal("2")))
+            weight = weight.add(BigDecimal("2"))
             reasons += "ارزش بازار ${formatUsdShort(cap)}"
         }
 
-        if (asset.maxSupply != null && asset.maxSupply!! > 0 && asset.circulatingSupply != null) {
-            val ratio = (asset.circulatingSupply!! / asset.maxSupply!!).coerceIn(0.0, 1.0)
-            score += (ratio * 100.0) * 1; weight += 1
-            reasons += "${(ratio * 100).toInt()}٪ از عرضه‌ی حداکثری در گردش است"
+        if (asset.maxSupply != null && asset.maxSupply!!.compareTo(BigDecimal.ZERO) > 0 && asset.circulatingSupply != null) {
+            val ratio = asset.circulatingSupply!!.safeDiv(asset.maxSupply!!).coerceIn(BigDecimal.ZERO, BigDecimal.ONE)
+            score = score.add((ratio.multiply(BigDecimal("100"))).multiply(BigDecimal.ONE))
+            weight = weight.add(BigDecimal.ONE)
+            reasons += "${(ratio.multiply(BigDecimal("100"))).setScale(0, RoundingMode.HALF_UP).toPlainString()}٪ از عرضه‌ی حداکثری در گردش است"
         } else if (asset.infiniteSupply) {
             reasons += "عرضه‌ی حداکثری نامحدود (تورمی)"
         }
 
-        if (weight == 0.0) return ScoreResult(0, "داده‌ی کافی برای محاسبه در دسترس نیست")
-        return ScoreResult((score / weight).toInt().coerceIn(0, 100), reasons.joinToString(" • "))
+        if (weight.compareTo(BigDecimal.ZERO) == 0) return ScoreResult(0, "داده‌ی کافی برای محاسبه در دسترس نیست")
+        return ScoreResult(score.safeDiv(weight, 0).toInt().coerceIn(0, 100), reasons.joinToString(" • "))
     }
 
     /** Risk Score: 0 = ریسک بسیار کم، 100 = ریسک بسیار زیاد (معکوس، طبق نیازمندی محصول). */
     fun riskScore(asset: CryptoAssetEntity): ScoreResult {
         val reasons = mutableListOf<String>()
-        var risk = 0.0
-        var weight = 0.0
+        var risk = BigDecimal.ZERO
+        var weight = BigDecimal.ZERO
 
         asset.percentChange24h?.let { change ->
-            risk += (abs(change) * 4).coerceIn(0.0, 100.0) * 2; weight += 2
+            val changeRisk = (change.abs().multiply(BigDecimal("4"))).coerceIn(BigDecimal.ZERO, BigDecimal("100"))
+            risk = risk.add(changeRisk.multiply(BigDecimal("2")))
+            weight = weight.add(BigDecimal("2"))
             reasons += "نوسان ۲۴ ساعته ${formatSigned(change)}٪"
         }
 
         asset.marketCapUsd?.let { cap ->
             val sizeRisk = when {
-                cap >= 10_000_000_000 -> 5.0
-                cap >= 1_000_000_000 -> 20.0
-                cap >= 100_000_000 -> 45.0
-                cap >= 10_000_000 -> 70.0
-                else -> 90.0
+                cap >= BigDecimal("10000000000") -> BigDecimal("5")
+                cap >= BigDecimal("1000000000") -> BigDecimal("20")
+                cap >= BigDecimal("100000000") -> BigDecimal("45")
+                cap >= BigDecimal("10000000") -> BigDecimal("70")
+                else -> BigDecimal("90")
             }
-            risk += sizeRisk * 2; weight += 2
+            risk = risk.add(sizeRisk.multiply(BigDecimal("2")))
+            weight = weight.add(BigDecimal("2"))
             reasons += "ارزش بازار ${formatUsdShort(cap)}"
         }
 
         if (asset.infiniteSupply) {
-            risk += 80.0; weight += 1
+            risk = risk.add(BigDecimal("80"))
+            weight = weight.add(BigDecimal.ONE)
             reasons += "عرضه‌ی حداکثری نامحدود (ریسک تورمی)"
-        } else if (asset.maxSupply != null && asset.maxSupply!! > 0 && asset.circulatingSupply != null) {
-            val ratio = (asset.circulatingSupply!! / asset.maxSupply!!).coerceIn(0.0, 1.0)
-            risk += (1.0 - ratio) * 60.0; weight += 1
+        } else if (asset.maxSupply != null && asset.maxSupply!!.compareTo(BigDecimal.ZERO) > 0 && asset.circulatingSupply != null) {
+            val ratio = asset.circulatingSupply!!.safeDiv(asset.maxSupply!!).coerceIn(BigDecimal.ZERO, BigDecimal.ONE)
+            risk = risk.add((BigDecimal.ONE.subtract(ratio)).multiply(BigDecimal("60")))
+            weight = weight.add(BigDecimal.ONE)
         }
 
-        if (weight == 0.0) return ScoreResult(50, "داده‌ی کافی برای محاسبه در دسترس نیست — مقدار پیش‌فرض")
-        return ScoreResult((risk / weight).toInt().coerceIn(0, 100), reasons.joinToString(" • "))
+        if (weight.compareTo(BigDecimal.ZERO) == 0) return ScoreResult(50, "داده‌ی کافی برای محاسبه در دسترس نیست — مقدار پیش‌فرض")
+        return ScoreResult(risk.safeDiv(weight, 0).toInt().coerceIn(0, 100), reasons.joinToString(" • "))
     }
 
-    private fun formatSigned(v: Double): String {
-        val sign = if (v >= 0) "+" else ""
-        return "$sign${"%.1f".format(v)}"
+    private fun formatSigned(v: BigDecimal): String {
+        val sign = if (v >= BigDecimal.ZERO) "+" else ""
+        return "$sign${String.format(Locale.US, "%.1f", v.toDouble())}"
     }
 
-    private fun formatUsdShort(v: Double): String = when {
-        v >= 1_000_000_000 -> "%.1f میلیارد دلار".format(v / 1_000_000_000)
-        v >= 1_000_000 -> "%.1f میلیون دلار".format(v / 1_000_000)
-        else -> "%.0f دلار".format(v)
+    private fun formatUsdShort(v: BigDecimal): String = when {
+        v >= BigDecimal("1000000000") -> String.format(Locale.US, "%.1f میلیارد دلار", v.divide(BigDecimal("1000000000"), 1, RoundingMode.HALF_UP).toDouble())
+        v >= BigDecimal("1000000") -> String.format(Locale.US, "%.1f میلیون دلار", v.divide(BigDecimal("1000000"), 1, RoundingMode.HALF_UP).toDouble())
+        else -> String.format(Locale.US, "%.0f دلار", v.toDouble())
     }
+}
+
+private fun BigDecimal.coerceIn(min: BigDecimal, max: BigDecimal): BigDecimal {
+    return if (this < min) min else if (this > max) max else this
 }

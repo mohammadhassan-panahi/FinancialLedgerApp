@@ -46,6 +46,8 @@ import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatRial
+import com.example.util.safeDiv
+import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,11 +115,11 @@ fun GoalsScreen(
 fun GoalCard(
     goal: GoalEntity,
     onDelete: () -> Unit,
-    onUpdateProgress: (Double) -> Unit
+    onUpdateProgress: (BigDecimal) -> Unit
 ) {
     val isRial = LocalIsRial.current
     var showUpdateDialog by remember { mutableStateOf(false) }
-    val progress = if (goal.targetAmountRial > 0) (goal.currentSavedRial / goal.targetAmountRial).toFloat().coerceIn(0f, 1f) else 0f
+    val progress = if (goal.targetAmountRial.compareTo(BigDecimal.ZERO) > 0) (goal.currentSavedRial.safeDiv(goal.targetAmountRial)).toFloat().coerceIn(0f, 1f) else 0f
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -170,7 +172,7 @@ fun GoalCard(
             },
             confirmButton = {
                 Button(onClick = {
-                    onUpdateProgress(newAmount.toDoubleOrNull() ?: goal.currentSavedRial)
+                    onUpdateProgress(newAmount.toBigDecimalOrNull() ?: goal.currentSavedRial)
                     showUpdateDialog = false
                 }) { Text("تأیید") }
             },
@@ -182,7 +184,7 @@ fun GoalCard(
 @Composable
 fun AddGoalDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, String) -> Unit
+    onConfirm: (String, BigDecimal, String) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var target by remember { mutableStateOf("") }
@@ -200,8 +202,8 @@ fun AddGoalDialog(
         },
         confirmButton = {
             Button(onClick = {
-                val targetVal = target.toDoubleOrNull() ?: 0.0
-                if (title.isNotBlank() && targetVal > 0) {
+                val targetVal = target.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                if (title.isNotBlank() && targetVal.compareTo(BigDecimal.ZERO) > 0) {
                     onConfirm(title, targetVal, category.ifBlank { "سایر" })
                 }
             }) { Text("تأیید") }

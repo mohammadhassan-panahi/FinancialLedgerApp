@@ -9,7 +9,10 @@ import com.example.data.local.TransactionDao
 import com.example.data.local.TransactionEntity
 import com.example.data.local.TransactionType
 import com.example.data.remote.MarketApiService
+import com.example.util.sum
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.math.BigDecimal
 
 class FinancialRepository(
     private val transactionDao: TransactionDao,
@@ -20,13 +23,13 @@ class FinancialRepository(
 ) {
 
     val allTransactions: Flow<List<TransactionEntity>> = transactionDao.getAllTransactions()
-    val totalIncome: Flow<Double?> = transactionDao.getTotalIncome()
-    val totalExpenses: Flow<Double?> = transactionDao.getTotalExpenses()
+    val totalIncome: Flow<BigDecimal> = transactionDao.getAmountsByType(TransactionType.DEPOSIT).map { it.sum() }
+    val totalExpenses: Flow<BigDecimal> = transactionDao.getAmountsByType(TransactionType.EXPENSE).map { it.sum() }
     val marketRates: Flow<List<MarketRateEntity>> = marketDao.getAllMarketRates()
     val mutualFunds: Flow<List<MutualFundEntity>> = marketDao.getAllMutualFunds()
 
     val allBankAccounts: Flow<List<BankAccountEntity>> = bankAccountDao.getAllAccounts()
-    val totalLiquidity: Flow<Double?> = bankAccountDao.getTotalLiquidity()
+    val totalLiquidity: Flow<BigDecimal> = bankAccountDao.getAllBalances().map { it.sum() }
 
     suspend fun addTransaction(transaction: TransactionEntity) {
         transactionDao.insertTransaction(transaction)
@@ -34,10 +37,10 @@ class FinancialRepository(
         transaction.accountId?.let { accountId ->
             val change = when (transaction.type) {
                 TransactionType.DEPOSIT -> transaction.amount
-                TransactionType.EXPENSE -> -transaction.amount
-                else -> 0.0
+                TransactionType.EXPENSE -> transaction.amount.negate()
+                else -> BigDecimal.ZERO
             }
-            if (change != 0.0) {
+            if (change.compareTo(BigDecimal.ZERO) != 0) {
                 bankAccountDao.updateBalance(accountId, change)
             }
         }
@@ -93,8 +96,8 @@ class FinancialRepository(
                         MarketRateEntity(
                             assetCode = dto.symbol,
                             name = dto.name,
-                            priceToman = dto.price,
-                            changePercent = dto.changePercent,
+                            priceToman = BigDecimal.valueOf(dto.price),
+                            changePercent = BigDecimal.valueOf(dto.changePercent),
                             isOfflineRate = false
                         )
                     }
@@ -126,10 +129,10 @@ class FinancialRepository(
     private suspend fun ensureDefaultsSeeded() {
         if (marketDao.getMarketRateCount() == 0) {
             val defaultRates = listOf(
-                MarketRateEntity("USD", "دلار آمریکا", 61500.0, changePercent = 0.45, isOfflineRate = true),
-                MarketRateEntity("GOLD_18K", "طلا ۱۸ عیار (گرم)", 3650000.0, changePercent = 1.2, isOfflineRate = true),
-                MarketRateEntity("AZADI", "سکه امامی", 42800000.0, changePercent = -0.3, isOfflineRate = true),
-                MarketRateEntity("EUR", "یورو", 66200.0, changePercent = 0.15, isOfflineRate = true)
+                MarketRateEntity("USD", "دلار آمریکا", BigDecimal("61500"), changePercent = BigDecimal("0.45"), isOfflineRate = true),
+                MarketRateEntity("GOLD_18K", "طلا ۱۸ عیار (گرم)", BigDecimal("3650000"), changePercent = BigDecimal("1.2"), isOfflineRate = true),
+                MarketRateEntity("AZADI", "سکه امامی", BigDecimal("42800000"), changePercent = BigDecimal("-0.3"), isOfflineRate = true),
+                MarketRateEntity("EUR", "یورو", BigDecimal("66200"), changePercent = BigDecimal("0.15"), isOfflineRate = true)
             )
             marketDao.insertMarketRates(defaultRates)
         }
@@ -139,9 +142,9 @@ class FinancialRepository(
     private suspend fun ensureDefaultFundsSeeded() {
         if (marketDao.getMutualFundCount() == 0) {
             val defaultFunds = listOf(
-                MutualFundEntity("FARABI", "صندوق اکسیر فارابی", 2450000.0, 24.5, "متوسط", "کارگزاری فارابی"),
-                MutualFundEntity("MOFID", "صندوق پیشتاز مفید", 1890000.0, 28.1, "پرریسک", "کارگزاری مفید"),
-                MutualFundEntity("ETEMAD", "صندوق اعتماد ملی", 3120000.0, 21.0, "کم‌ریسک", "سرمایه‌گذاری اعتماد")
+                MutualFundEntity("FARABI", "صندوق اکسیر فارابی", BigDecimal("2450000"), BigDecimal("24.5"), "متوسط", "کارگزاری فارابی"),
+                MutualFundEntity("MOFID", "صندوق پیشتاز مفید", BigDecimal("1890000"), BigDecimal("28.1"), "پرریسک", "کارگزاری مفید"),
+                MutualFundEntity("ETEMAD", "صندوق اعتماد ملی", BigDecimal("3120000"), BigDecimal("21.0"), "کم‌ریسک", "سرمایه‌گذاری اعتماد")
             )
             marketDao.insertMutualFunds(defaultFunds)
         }

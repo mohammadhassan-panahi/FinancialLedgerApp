@@ -45,6 +45,7 @@ import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -158,7 +159,7 @@ fun DebtCreditCard(
 @Composable
 fun AddDebtCreditDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, DebtCreditType, String) -> Unit
+    onConfirm: (String, BigDecimal, DebtCreditType, String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
@@ -183,8 +184,8 @@ fun AddDebtCreditDialog(
         },
         confirmButton = {
             Button(onClick = {
-                val amountVal = amount.toDoubleOrNull() ?: 0.0
-                if (name.isNotBlank() && amountVal > 0) {
+                val amountVal = amount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+                if (name.isNotBlank() && amountVal > BigDecimal.ZERO) {
                     onConfirm(name, amountVal, type, description)
                 }
             }) { Text("تأیید") }

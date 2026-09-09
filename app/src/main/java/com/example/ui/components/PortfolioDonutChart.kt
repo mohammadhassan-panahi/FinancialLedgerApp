@@ -28,8 +28,11 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.LocalIsRial
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
+import com.example.util.safeDiv
+import com.example.util.sumOf
+import java.math.BigDecimal
 
-data class DonutSlice(val label: String, val valueRial: Double, val color: Color)
+data class DonutSlice(val label: String, val valueRial: BigDecimal, val color: Color)
 
 /**
  * Portfolio-module donut chart for asset-type breakdown (gold / dollar / stock). Unlike
@@ -42,7 +45,7 @@ data class DonutSlice(val label: String, val valueRial: Double, val color: Color
 fun PortfolioDonutChart(slices: List<DonutSlice>, modifier: Modifier = Modifier) {
     val isRial = LocalIsRial.current
     val total = slices.sumOf { it.valueRial }
-    if (total <= 0) {
+    if (total <= BigDecimal.ZERO) {
         Box(
             modifier = modifier.fillMaxWidth().height(180.dp),
             contentAlignment = Alignment.Center
@@ -59,8 +62,8 @@ fun PortfolioDonutChart(slices: List<DonutSlice>, modifier: Modifier = Modifier)
         ) {
             Canvas(modifier = Modifier.fillMaxWidth().height(160.dp)) {
                 var startAngle = -90f
-                slices.filter { it.valueRial > 0 }.forEach { slice ->
-                    val sweepAngle = ((slice.valueRial / total) * 360f).toFloat()
+                slices.filter { it.valueRial > BigDecimal.ZERO }.forEach { slice ->
+                    val sweepAngle = (slice.valueRial.safeDiv(total).multiply(BigDecimal.valueOf(360.0))).toFloat()
                     drawArc(
                         color = slice.color,
                         startAngle = startAngle,
@@ -93,8 +96,8 @@ fun PortfolioDonutChart(slices: List<DonutSlice>, modifier: Modifier = Modifier)
             horizontalArrangement = Arrangement.Center,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            slices.filter { it.valueRial > 0 }.forEach { slice ->
-                val pct = (slice.valueRial / total) * 100
+            slices.filter { it.valueRial > BigDecimal.ZERO }.forEach { slice ->
+                val pct = (slice.valueRial.safeDiv(total)).multiply(BigDecimal.valueOf(100.0))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
                     Box(modifier = Modifier.size(10.dp).background(slice.color, CircleShape))
                     Spacer(modifier = Modifier.width(4.dp))

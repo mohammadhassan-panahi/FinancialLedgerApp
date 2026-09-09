@@ -3,15 +3,17 @@ package com.example.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+import java.math.BigDecimal
+
 @Entity(tableName = "initial_public_offerings")
 data class IpoEntity(
     @PrimaryKey val symbol: String,
     val companyName: String,
     val ipoDate: String, // شمسی
     val maxShares: Int,
-    val maxPriceRial: Double,
-    val minPriceRial: Double,
-    val requiredLiquidityRial: Double,
+    val maxPriceRial: BigDecimal,
+    val minPriceRial: BigDecimal,
+    val requiredLiquidityRial: BigDecimal,
     val status: String, // در حال عرضه، منقضی شده، به زودی
     val createdAt: Long = System.currentTimeMillis()
 )

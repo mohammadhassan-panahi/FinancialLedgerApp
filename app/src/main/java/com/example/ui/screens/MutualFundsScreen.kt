@@ -25,6 +25,7 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,14 +128,14 @@ fun FundCard(fund: MutualFundEntity) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("قیمت صدور (NAV)", color = TextSecondary, fontSize = 12.sp)
-                    Text(formatRial(fund.navToman * 10, isRial = isRial), fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(formatRial(fund.navToman.multiply(BigDecimal.valueOf(10)), isRial = isRial), fontWeight = FontWeight.Bold, color = TextPrimary)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("بازدهی ماهانه", color = TextSecondary, fontSize = 12.sp)
                     Text(
                         formatPercentSigned(fund.returnPercent),
                         fontWeight = FontWeight.Bold,
-                        color = if (fund.returnPercent >= 0) EmeraldProfit else RoseLoss
+                        color = if (fund.returnPercent >= BigDecimal.ZERO) EmeraldProfit else RoseLoss
                     )
                 }
             }

@@ -1,26 +1,36 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -35,8 +45,14 @@ import com.example.ui.components.PersianNumberTextField
 import com.example.ui.components.PrintPdfDialog
 import com.example.ui.components.ResultHeaderBanner
 import com.example.ui.theme.AccentGold
+import com.example.ui.theme.DaraTypography
+import com.example.ui.theme.IndigoElectric
 import com.example.ui.theme.LossRed
+import com.example.ui.theme.ObsidianSlate900
 import com.example.ui.theme.ProfitGreen
+import com.example.ui.theme.Slate400
+import com.example.ui.theme.Slate50
+import com.example.ui.theme.Slate600
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
 
@@ -48,7 +64,8 @@ fun CompoundInterestScreen(
     currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
-    onClearHistory: () -> Unit
+    onClearHistory: () -> Unit,
+    onBack: () -> Unit
 ) {
     val isRial = currencyUnit == "ریال"
     val unitLabel = PersianNumberUtils.getCurrencyUnitLabel(isRial)
@@ -58,7 +75,7 @@ fun CompoundInterestScreen(
     var initialPrincipalInput by remember { mutableStateOf(if (isRial) "500000000" else "50000000") }
     var monthlyDepositInput by remember { mutableStateOf(if (isRial) "50000000" else "5000000") }
     var targetValueInput by remember { mutableStateOf(if (isRial) "10000000000" else "1000000000") }
-    var rateInput by remember { mutableStateOf("25") }
+    var rateInput by remember { mutableStateOf("30") }
     var yearsInput by remember { mutableStateOf("5") }
     var inflationInput by remember { mutableStateOf(defaultInflation.toString()) }
     var taxInput by remember { mutableStateOf(defaultTax.toString()) }
@@ -100,10 +117,9 @@ fun CompoundInterestScreen(
             واریز ماهانه: ${PersianNumberUtils.formatCurrency(monthlyP, isRial = isRial)}
             نرخ سود سالانه: ${PersianNumberUtils.formatPercent(rate)}
             مدت: ${PersianNumberUtils.toPersianDigits(yearsInput)} سال
-            مجموع واریزی: ${PersianNumberUtils.formatCurrency(compResult.totalDeposited, isRial = isRial)}
             سود ناخالص: ${PersianNumberUtils.formatCurrency(compResult.grossInterest, isRial = isRial)}
             ارزش نهایی اسمی: ${PersianNumberUtils.formatCurrency(compResult.finalNominalValue, isRial = isRial)}
-            ارزش واقعی (پس از کسر تورم ${PersianNumberUtils.formatPercent(inflation)}): ${PersianNumberUtils.formatCurrency(compResult.finalRealValueInflationAdjusted, isRial = isRial)}
+            ارزش واقعی پس از تورم: ${PersianNumberUtils.formatCurrency(compResult.finalRealValueInflationAdjusted, isRial = isRial)}
         """.trimIndent()
     } else {
         """
@@ -124,292 +140,328 @@ fun CompoundInterestScreen(
             "مجموع کل اصل واریزی" to PersianNumberUtils.formatCurrency(compResult.totalDeposited, isRial = isRial),
             "سود ناخالص کسب شده" to PersianNumberUtils.formatCurrency(compResult.grossInterest, isRial = isRial),
             "ارزش نهایی اسمی" to PersianNumberUtils.formatCurrency(compResult.finalNominalValue, isRial = isRial),
-            "ارزش واقعی (پس از تورم)" to PersianNumberUtils.formatCurrency(compResult.finalRealValueInflationAdjusted, isRial = isRial)
+            "ارزش واقعی (قدرت خرید امروز)" to PersianNumberUtils.formatCurrency(compResult.finalRealValueInflationAdjusted, isRial = isRial)
         )
     } else {
         listOf(
-            "مبلغ اولیه" to PersianNumberUtils.formatCurrency(initialP, isRial = isRial),
             "مبلغ هدف نهایی" to PersianNumberUtils.formatCurrency(targetVal, isRial = isRial),
+            "مبلغ اولیه" to PersianNumberUtils.formatCurrency(initialP, isRial = isRial),
             "نرخ سود سالانه" to PersianNumberUtils.formatPercent(rate),
             "مدت زمان" to "${PersianNumberUtils.toPersianDigits(yearsInput)} سال",
             "واریز ماهانه مورد نیاز" to PersianNumberUtils.formatCurrency(requiredMonthlyP, isRial = isRial)
         )
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Mode Switcher
-        item {
-            NotebookCard {
-                Text(
-                    text = "حالت محاسبه سود مرکب",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentGold
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+                color = ObsidianSlate900.copy(alpha = 0.8f)
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(
-                        onClick = { isTargetMode = false },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (!isTargetMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(42.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = "ارزش نهایی",
-                            color = if (!isTargetMode) Color.Black else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Slate50)
+                        }
+                        Column {
+                            Text("سود مرکب", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                            Text("موتور محاسبات رشد", style = DaraTypography.labelSmall, color = IndigoElectric)
+                        }
                     }
-
-                    Button(
-                        onClick = { isTargetMode = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isTargetMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(42.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = "حالت معکوس (محاسبه پس‌انداز)",
-                            color = if (isTargetMode) Color.Black else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Default.Notifications, null, tint = Slate400)
                     }
                 }
             }
         }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Mode Switcher
+            item {
+                NotebookCard {
+                    Text(
+                        text = "حالت محاسبه سود مرکب",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AccentGold
+                    )
 
-        // Form Inputs
-        item {
-            NotebookCard {
-                PersianNumberTextField(
-                    value = initialPrincipalInput,
-                    onValueChange = { initialPrincipalInput = it },
-                    label = "مبلغ اولیه سرمایه ($unitLabel)",
-                    suffix = unitLabel
-                )
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { isTargetMode = false },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (!isTargetMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(42.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = "ارزش نهایی",
+                                color = if (!isTargetMode) Color.Black else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
-                if (!isTargetMode) {
+                        Button(
+                            onClick = { isTargetMode = true },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isTargetMode) AccentGold else MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(42.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = "پس‌انداز هدف",
+                                color = if (isTargetMode) Color.Black else MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Form Inputs
+            item {
+                NotebookCard {
                     PersianNumberTextField(
-                        value = monthlyDepositInput,
-                        onValueChange = { monthlyDepositInput = it },
-                        label = "واریزی ماهانه ($unitLabel)",
+                        value = initialPrincipalInput,
+                        onValueChange = { initialPrincipalInput = it },
+                        label = "مبلغ اولیه سرمایه ($unitLabel)",
                         suffix = unitLabel
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (!isTargetMode) {
+                        PersianNumberTextField(
+                            value = monthlyDepositInput,
+                            onValueChange = { monthlyDepositInput = it },
+                            label = "واریزی ماهانه ($unitLabel)",
+                            suffix = unitLabel
+                        )
+                    } else {
+                        PersianNumberTextField(
+                            value = targetValueInput,
+                            onValueChange = { targetValueInput = it },
+                            label = "مبلغ هدف نهایی ($unitLabel)",
+                            suffix = unitLabel
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PersianNumberTextField(
+                            value = rateInput,
+                            onValueChange = { rateInput = it },
+                            label = "نرخ سود (٪)",
+                            suffix = "٪",
+                            modifier = Modifier.weight(1f),
+                            isDecimalAllowed = true
+                        )
+
+                        PersianNumberTextField(
+                            value = yearsInput,
+                            onValueChange = { yearsInput = it },
+                            label = "مدت (سال)",
+                            suffix = "سال",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        PersianNumberTextField(
+                            value = inflationInput,
+                            onValueChange = { inflationInput = it },
+                            label = "نرخ تورم سالانه",
+                            suffix = "٪",
+                            modifier = Modifier.weight(1f),
+                            isDecimalAllowed = true
+                        )
+
+                        PersianNumberTextField(
+                            value = taxInput,
+                            onValueChange = { taxInput = it },
+                            label = "مالیات بر سود",
+                            suffix = "٪",
+                            modifier = Modifier.weight(1f),
+                            isDecimalAllowed = true
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = {
+                            val title = if (!isTargetMode) "سود مرکب - ارزش نهایی" else "سود مرکب - پس‌انداز هدف"
+                            val summary = if (!isTargetMode) "نهایی: ${PersianNumberUtils.formatCurrency(compResult.finalNominalValue)}" else "واریز ماهانه: ${PersianNumberUtils.formatCurrency(requiredMonthlyP)}"
+                            val params = "$isTargetMode|$initialPrincipalInput|$monthlyDepositInput|$targetValueInput|$rateInput|$yearsInput|$inflationInput|$taxInput"
+                            onAddHistory(
+                                CalculationHistoryEntity(
+                                    sectionKey = "compound",
+                                    title = title,
+                                    summary = summary,
+                                    paramsJson = params
+                                )
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentGold)
+                    ) {
+                        Text(
+                            text = "ذخیره در تاریخچه",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Results
+            item {
+                if (!isTargetMode) {
+                    ResultHeaderBanner(
+                        title = "نتیجه پیش‌بینی سرمایه",
+                        mainResultValue = PersianNumberUtils.formatCurrency(compResult.finalNominalValue),
+                        mainResultLabel = "ارزش کل اسمی پس از ${PersianNumberUtils.toPersianDigits(yearsInput)} سال",
+                        secondaryItems = listOf(
+                            "کل اصل واریزی" to PersianNumberUtils.formatCurrency(compResult.totalDeposited),
+                            "سود ناخالص" to PersianNumberUtils.formatCurrency(compResult.grossInterest),
+                            "ارزش واقعی (تورم‌زدا)" to PersianNumberUtils.formatCurrency(compResult.finalRealValueInflationAdjusted)
+                        ),
+                        copySummaryText = copySummaryText,
+                        onPrintClick = { showPrintDialog = true }
                     )
                 } else {
-                    PersianNumberTextField(
-                        value = targetValueInput,
-                        onValueChange = { targetValueInput = it },
-                        label = "مبلغ هدف نهایی ($unitLabel)",
-                        suffix = unitLabel
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PersianNumberTextField(
-                        value = rateInput,
-                        onValueChange = { rateInput = it },
-                        label = "نرخ سود سالانه (٪)",
-                        suffix = "٪",
-                        modifier = Modifier.weight(1f),
-                        isDecimalAllowed = true
-                    )
-
-                    PersianNumberTextField(
-                        value = yearsInput,
-                        onValueChange = { yearsInput = it },
-                        label = "مدت (سال)",
-                        suffix = "سال",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Optional Inflation & Tax Fields
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PersianNumberTextField(
-                        value = inflationInput,
-                        onValueChange = { inflationInput = it },
-                        label = "نرخ تورم سالانه (اختیاری)",
-                        suffix = "٪",
-                        modifier = Modifier.weight(1f),
-                        isDecimalAllowed = true
-                    )
-
-                    PersianNumberTextField(
-                        value = taxInput,
-                        onValueChange = { taxInput = it },
-                        label = "مالیات بر سود (اختیاری)",
-                        suffix = "٪",
-                        modifier = Modifier.weight(1f),
-                        isDecimalAllowed = true
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Button(
-                    onClick = {
-                        val title = if (!isTargetMode) "سود مرکب - ارزش نهایی" else "سود مرکب - حالت معکوس"
-                        val summary = if (!isTargetMode) "نهایی: ${PersianNumberUtils.formatCurrency(compResult.finalNominalValue)}" else "واریز ماهانه: ${PersianNumberUtils.formatCurrency(requiredMonthlyP)}"
-                        val params = "$isTargetMode|$initialPrincipalInput|$monthlyDepositInput|$targetValueInput|$rateInput|$yearsInput|$inflationInput|$taxInput"
-                        onAddHistory(
-                            CalculationHistoryEntity(
-                                sectionKey = "compound",
-                                title = title,
-                                summary = summary,
-                                paramsJson = params
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentGold)
-                ) {
-                    Text("ذخیره در تاریخچه", color = Color.Black, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // Result Banner
-        item {
-            if (!isTargetMode) {
-                ResultHeaderBanner(
-                    title = "نتیجه محاسبات سود مرکب",
-                    mainResultValue = PersianNumberUtils.formatCurrency(compResult.finalNominalValue),
-                    mainResultLabel = "ارزش نهایی اسمی سرمایه",
-                    secondaryItems = listOf(
-                        "مجموع اصل واریزی" to PersianNumberUtils.formatCurrency(compResult.totalDeposited),
-                        "سود ناخالص" to PersianNumberUtils.formatCurrency(compResult.grossInterest),
-                        "ارزش واقعی پس از تورم" to PersianNumberUtils.formatCurrency(compResult.finalRealValueInflationAdjusted)
-                    ),
-                    copySummaryText = copySummaryText,
-                    onPrintClick = { showPrintDialog = true }
-                )
-            } else {
-                ResultHeaderBanner(
-                    title = "نتیجه حالت معکوس (پس‌انداز هدف)",
-                    mainResultValue = PersianNumberUtils.formatCurrency(requiredMonthlyP),
-                    mainResultLabel = "واریز ماهانه مورد نیاز برای رسیدن به هدف",
-                    secondaryItems = listOf(
-                        "مبلغ هدف نهایی" to PersianNumberUtils.formatCurrency(targetVal),
-                        "مبلغ اولیه" to PersianNumberUtils.formatCurrency(initialP)
-                    ),
-                    copySummaryText = copySummaryText,
-                    onPrintClick = { showPrintDialog = true }
-                )
-            }
-        }
-
-        // Line Chart Growth
-        if (!isTargetMode && compResult.yearlyBreakdown.isNotEmpty()) {
-            item {
-                NotebookCard {
-                    Text(
-                        text = "نمودار رشد سرمایه مرکب در طول زمان",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = AccentGold
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val nominalPoints = compResult.yearlyBreakdown.map { Pair(it.year.toDouble(), it.endingBalance) }
-                    val realPoints = compResult.yearlyBreakdown.map { Pair(it.year.toDouble(), it.realValueInflationAdjusted) }
-
-                    ComposeLineChart(
-                        seriesList = listOf(
-                            LineChartSeries("ارزش اسمی", nominalPoints, AccentGold),
-                            LineChartSeries("ارزش واقعی (پس از تورم)", realPoints, ProfitGreen, isDotted = true)
+                    ResultHeaderBanner(
+                        title = "نتیجه پس‌انداز هدف",
+                        mainResultValue = PersianNumberUtils.formatCurrency(requiredMonthlyP),
+                        mainResultLabel = "واریز ماهانه مورد نیاز برای رسیدن به هدف",
+                        secondaryItems = listOf(
+                            "مبلغ هدف نهایی" to PersianNumberUtils.formatCurrency(targetVal),
+                            "مبلغ اولیه" to PersianNumberUtils.formatCurrency(initialP)
                         ),
-                        xAxisLabel = "سال"
+                        copySummaryText = copySummaryText,
+                        onPrintClick = { showPrintDialog = true }
                     )
                 }
             }
 
-            // Annual Breakdown Table
-            item {
-                NotebookCard {
-                    Text(
-                        text = "جدول تفکیک سالانه",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = AccentGold
-                    )
+            // Chart
+            if (!isTargetMode && compResult.yearlyBreakdown.isNotEmpty()) {
+                item {
+                    NotebookCard {
+                        Text(
+                            text = "نمودار رشد سرمایه مرکب",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentGold
+                        )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                    compResult.yearlyBreakdown.forEach { row ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("سال ${PersianNumberUtils.toPersianDigits(row.year.toString())}", fontWeight = FontWeight.Bold)
-                            Text("موجودی: ${PersianNumberUtils.formatCurrency(row.endingBalance)}", style = MaterialTheme.typography.bodySmall)
-                            Text("واقعی: ${PersianNumberUtils.formatCurrency(row.realValueInflationAdjusted)}", style = MaterialTheme.typography.bodySmall, color = ProfitGreen)
+                        val nominalPoints = compResult.yearlyBreakdown.map { Pair(it.year.toDouble(), it.endingBalance) }
+                        val realPoints = compResult.yearlyBreakdown.map { Pair(it.year.toDouble(), it.realValueInflationAdjusted) }
+
+                        Box(modifier = Modifier.height(200.dp).fillMaxWidth()) {
+                            ComposeLineChart(
+                                seriesList = listOf(
+                                    LineChartSeries("ارزش اسمی", nominalPoints, AccentGold),
+                                    LineChartSeries("ارزش واقعی", realPoints, ProfitGreen)
+                                ),
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                     }
                 }
             }
-        }
 
-        // History Accordion
-        item {
-            HistoryAccordion(
-                historyList = historyList,
-                onSelectHistory = { hist ->
-                    val parts = hist.paramsJson.split("|")
-                    if (parts.size >= 8) {
-                        isTargetMode = parts[0].toBooleanStrictOrNull() ?: false
-                        initialPrincipalInput = parts[1]
-                        monthlyDepositInput = parts[2]
-                        targetValueInput = parts[3]
-                        rateInput = parts[4]
-                        yearsInput = parts[5]
-                        inflationInput = parts[6]
-                        taxInput = parts[7]
+            // Yearly Breakdown
+            if (!isTargetMode && compResult.yearlyBreakdown.isNotEmpty()) {
+                item {
+                    NotebookCard {
+                        Text(
+                            text = "جزئیات رشد سالانه",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentGold
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        compResult.yearlyBreakdown.forEach { row ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("سال ${PersianNumberUtils.toPersianDigits(row.year.toString())}", fontWeight = FontWeight.Bold)
+                                Text(PersianNumberUtils.formatCurrency(row.endingBalance), style = MaterialTheme.typography.bodySmall)
+                                Icon(Icons.Default.ChevronLeft, null, tint = Slate600, modifier = Modifier.size(16.dp))
+                            }
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                        }
                     }
-                },
-                onDeleteHistory = onDeleteHistory,
-                onClearAll = onClearHistory
-            )
+                }
+            }
+
+            // History
+            item {
+                HistoryAccordion(
+                    historyList = historyList,
+                    onSelectHistory = { hist ->
+                        val parts = hist.paramsJson.split("|")
+                        if (parts.size >= 8) {
+                            isTargetMode = parts[0].toBooleanStrictOrNull() ?: false
+                            initialPrincipalInput = parts[1]
+                            monthlyDepositInput = parts[2]
+                            targetValueInput = parts[3]
+                            rateInput = parts[4]
+                            yearsInput = parts[5]
+                            inflationInput = parts[6]
+                            taxInput = parts[7]
+                        }
+                    },
+                    onDeleteHistory = onDeleteHistory,
+                    onClearAll = onClearHistory
+                )
+            }
         }
     }
 
