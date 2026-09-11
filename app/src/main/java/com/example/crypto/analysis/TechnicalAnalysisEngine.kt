@@ -195,33 +195,6 @@ object TechnicalAnalysisEngine {
         )
     }
 
-    private fun calculateRSI(closes: List<BigDecimal>, period: Int): BigDecimal {
-        if (closes.size <= period) return BigDecimal("50")
-        val changes = closes.zipWithNext { a, b -> b.subtract(a) }
-        var avgGain = changes.take(period).filter { it > BigDecimal.ZERO }.sumOf { it }.safeDiv(BigDecimal.valueOf(period.toLong()))
-        var avgLoss = changes.take(period).filter { it < BigDecimal.ZERO }.sumOf { it.abs() }.safeDiv(BigDecimal.valueOf(period.toLong()))
-
-        for (i in period until changes.size) {
-            val change = changes[i]
-            val gain = if (change > BigDecimal.ZERO) change else BigDecimal.ZERO
-            val loss = if (change < BigDecimal.ZERO) change.abs() else BigDecimal.ZERO
-            avgGain = (avgGain.multiply(BigDecimal.valueOf((period - 1).toLong())).add(gain)).safeDiv(BigDecimal.valueOf(period.toLong()))
-            avgLoss = (avgLoss.multiply(BigDecimal.valueOf((period - 1).toLong())).add(loss)).safeDiv(BigDecimal.valueOf(period.toLong()))
-        }
-        if (avgLoss.compareTo(BigDecimal.ZERO) == 0) return BigDecimal("100")
-        return BigDecimal("100").subtract(BigDecimal("100").safeDiv(BigDecimal.ONE.add(avgGain.safeDiv(avgLoss))))
-    }
-
-    private fun calculateEMA(values: List<BigDecimal>, period: Int): BigDecimal {
-        if (values.size < period) return values.lastOrNull() ?: BigDecimal.ZERO
-        val multiplier = BigDecimal("2").safeDiv(BigDecimal.valueOf((period + 1).toLong()))
-        var ema = calculateAverage(values.take(period))
-        for (i in period until values.size) {
-            ema = (values[i].subtract(ema)).multiply(multiplier).add(ema)
-        }
-        return ema
-    }
-
     private fun calculateATR(candles: List<CandleStick>, period: Int): BigDecimal {
         val trs = mutableListOf<BigDecimal>()
         for (i in 1 until candles.size) {

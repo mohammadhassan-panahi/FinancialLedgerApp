@@ -162,6 +162,9 @@ fun PriceHeroSection(asset: CryptoAssetEntity, usdRateToman: BigDecimal) {
 
 @Composable
 fun CandleChartCard(history: List<com.example.crypto.analysis.CandleStick>) {
+    var showEMA by remember { mutableStateOf(true) }
+    var showRSI by remember { mutableStateOf(true) }
+
     DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -179,17 +182,24 @@ fun CandleChartCard(history: List<com.example.crypto.analysis.CandleStick>) {
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.CandlestickChart, null, tint = Slate400, modifier = Modifier.size(20.dp))
+                    IconButton(onClick = { showEMA = !showEMA }, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Timeline, null, tint = if (showEMA) IndigoElectric else Slate600)
+                    }
+                    IconButton(onClick = { showRSI = !showRSI }, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.BarChart, null, tint = if (showRSI) Color(0xFF8B5CF6) else Slate600)
+                    }
                     Icon(Icons.Default.Fullscreen, null, tint = Slate400, modifier = Modifier.size(20.dp))
                 }
             }
             
-            // Real CandleStick Chart
+            // Real CandleStick Chart with Indicators
             CandleStickChart(
                 candles = history,
+                showEMA = showEMA,
+                showRSI = showRSI,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(if (showRSI) 260.dp else 180.dp)
                     .background(ObsidianSlate900.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
             )
             
