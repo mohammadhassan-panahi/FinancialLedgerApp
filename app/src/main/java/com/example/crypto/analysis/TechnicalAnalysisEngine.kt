@@ -41,9 +41,13 @@ object TechnicalAnalysisEngine {
         
         // --- 1. TREND ANALYSIS (20 pts) ---
         var trendScore = 0
-        val ema20 = calculateEMA(closes, 20)
-        val ema50 = calculateEMA(closes, 50)
-        val ema200 = calculateEMA(closes, 200)
+        val ema20List = Indicators.calculateEMA(closes, 20)
+        val ema50List = Indicators.calculateEMA(closes, 50)
+        val ema200List = Indicators.calculateEMA(closes, 200)
+        
+        val ema20 = ema20List.lastOrNull() ?: BigDecimal.ZERO
+        val ema50 = ema50List.lastOrNull() ?: BigDecimal.ZERO
+        val ema200 = ema200List.lastOrNull() ?: BigDecimal.ZERO
         
         val isBullishEMA = currentPrice > ema20 && ema20 > ema50 && ema50 > ema200
         val isBearishEMA = currentPrice < ema20 && ema20 < ema50 && ema50 < ema200
@@ -90,7 +94,8 @@ object TechnicalAnalysisEngine {
 
         // --- 3. RSI & TECHNICALS (15 pts) ---
         var technicalScore = 0
-        val rsi = calculateRSI(closes, 14)
+        val rsiList = Indicators.calculateRSI(closes, 14)
+        val rsi = rsiList.lastOrNull() ?: BigDecimal.valueOf(50)
         when {
             rsi < BigDecimal("30") -> { technicalScore += 15; reasons.add("اشباع فروش (قیمت جذاب)") }
             rsi > BigDecimal("70") -> { technicalScore -= 5; warnings.add("اشباع خرید (احتمال اصلاح)") }

@@ -9,23 +9,8 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b1516b4c-618a-4e67-845a-22cf41644b2f" name="Changes" comment="update &#10;add feature apply faz 0 1">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/Indicators.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/WatchlistDao.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/WatchlistEntities.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/components/AlertSetupDialog.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/AdvancedWatchlistScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/AppDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/AppDatabase.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/Migrations.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/Migrations.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PortfolioEntities.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PortfolioEntities.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/PortfolioRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/PortfolioRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/navigation/NavGraph.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/navigation/NavGraph.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoMarketDashboardScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoMarketDashboardScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/StockMarketScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/StockMarketScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/PortfolioViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/PortfolioViewModel.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/worker/PriceAlertWorker.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/worker/PriceAlertWorker.kt" afterDir="false" />
+    <list default="true" id="b1516b4c-618a-4e67-845a-22cf41644b2f" name="Changes" comment="update &#10;add feature apply faz 3">
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/TechnicalAnalysisEngine.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/analysis/TechnicalAnalysisEngine.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -380,7 +365,23 @@
       <option name="project" value="LOCAL" />
       <updated>1789085433587</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="update &#10;add feature apply faz 3">
+      <option name="closed" value="true" />
+      <created>1789157012267</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1789157012267</updated>
+    </task>
+    <task id="LOCAL-00027" summary="update &#10;add feature apply faz 3">
+      <option name="closed" value="true" />
+      <created>1789157206812</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1789157206812</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -402,7 +403,8 @@
     <MESSAGE value="update and fixing bug&#10;add ai" />
     <MESSAGE value="update and fixing bug" />
     <MESSAGE value="update &#10;add feature apply faz 0 1" />
-    <option name="LAST_COMMIT_MESSAGE" value="update &#10;add feature apply faz 0 1" />
+    <MESSAGE value="update &#10;add feature apply faz 3" />
+    <option name="LAST_COMMIT_MESSAGE" value="update &#10;add feature apply faz 3" />
   </component>
   <component name="play_dynamic_filters_status">
     <option name="appIdToCheckInfo">
