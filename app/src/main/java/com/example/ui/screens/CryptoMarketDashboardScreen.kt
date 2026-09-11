@@ -37,7 +37,8 @@ fun CryptoMarketDashboardScreen(
     viewModel: CryptoViewModel,
     onBack: () -> Unit,
     onAssetClick: (CryptoAssetEntity) -> Unit,
-    onNavigateToScanner: () -> Unit
+    onNavigateToScanner: () -> Unit,
+    onNavigateToWatchlist: () -> Unit
 ) {
     val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
     val globalMetrics by viewModel.globalMetrics.collectAsStateWithLifecycle()
@@ -49,7 +50,12 @@ fun CryptoMarketDashboardScreen(
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
-            DashboardHeader(onBack = onBack, onRefresh = { viewModel.refreshMarketData() }, isRefreshing = isRefreshing)
+            DashboardHeader(
+                onBack = onBack, 
+                onRefresh = { viewModel.refreshMarketData() }, 
+                isRefreshing = isRefreshing,
+                onNavigateToWatchlist = onNavigateToWatchlist
+            )
         }
     ) { padding ->
         LazyColumn(
@@ -121,7 +127,7 @@ fun CryptoMarketDashboardScreen(
 }
 
 @Composable
-fun DashboardHeader(onBack: () -> Unit, onRefresh: () -> Unit, isRefreshing: Boolean) {
+fun DashboardHeader(onBack: () -> Unit, onRefresh: () -> Unit, isRefreshing: Boolean, onNavigateToWatchlist: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().statusBarsPadding(),
         color = ObsidianSlate900.copy(alpha = 0.8f)
@@ -137,8 +143,13 @@ fun DashboardHeader(onBack: () -> Unit, onRefresh: () -> Unit, isRefreshing: Boo
                 }
                 Text("بازار کریپتوکارنسی", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
             }
-            IconButton(onClick = onRefresh, enabled = !isRefreshing) {
-                Icon(Icons.Default.Refresh, null, tint = if (isRefreshing) Slate600 else IndigoElectric)
+            Row {
+                IconButton(onClick = onNavigateToWatchlist) {
+                    Icon(Icons.Default.Star, null, tint = RefinedAmberGold)
+                }
+                IconButton(onClick = onRefresh, enabled = !isRefreshing) {
+                    Icon(Icons.Default.Refresh, null, tint = if (isRefreshing) Slate600 else IndigoElectric)
+                }
             }
         }
     }

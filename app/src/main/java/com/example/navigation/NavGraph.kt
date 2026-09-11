@@ -49,6 +49,7 @@ object Screen {
     const val PortfolioReport = "portfolio_report"
     const val CryptoIntelligence = "crypto_intelligence"
     const val CryptoDetail = "crypto_detail"
+    const val AdvancedWatchlist = "advanced_watchlist"
     const val AddAssetForm = "add_asset_form"
 
     // Previously unreachable screens — now wired in.
@@ -200,7 +201,27 @@ fun NavGraph(
                     cryptoViewModel.selectAsset(asset)
                     navController.navigate(Screen.CryptoDetail)
                 },
-                onNavigateToScanner = { navController.navigate(Screen.MarketScanner) }
+                onNavigateToScanner = { navController.navigate(Screen.MarketScanner) },
+                onNavigateToWatchlist = { navController.navigate(Screen.AdvancedWatchlist) }
+            )
+        }
+
+        composable(Screen.AdvancedWatchlist) {
+            com.example.ui.screens.AdvancedWatchlistScreen(
+                portfolioViewModel = viewModel,
+                cryptoViewModel = cryptoViewModel,
+                onBack = { navController.popBackStack() },
+                onAssetClick = { code, type ->
+                    // Navigate to detail based on type
+                    if (type == com.example.data.local.PortfolioAssetType.CRYPTO) {
+                        // Load and navigate
+                        val asset = cryptoViewModel.allAssets.value.find { it.symbol == code }
+                        asset?.let {
+                            cryptoViewModel.selectAsset(it)
+                            navController.navigate(Screen.CryptoDetail)
+                        }
+                    }
+                }
             )
         }
 

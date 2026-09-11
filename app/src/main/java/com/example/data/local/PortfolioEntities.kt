@@ -82,7 +82,7 @@ data class StockSymbolEntity(
     val updatedAt: Long = System.currentTimeMillis()
 )
 
-enum class AlertDirection { ABOVE, BELOW }
+enum class AlertDirection { ABOVE, BELOW, UP_PERCENT, DOWN_PERCENT }
 
 /** User-defined price alerts, checked periodically by PriceAlertWorker. */
 @JsonClass(generateAdapter = true)
@@ -92,7 +92,8 @@ data class PriceAlertEntity(
     val id: Long = 0,
     val assetCode: String,
     val assetName: String,
-    val targetPriceRial: BigDecimal,
+    val targetPriceRial: BigDecimal = BigDecimal.ZERO,
+    val thresholdPercent: BigDecimal = BigDecimal.ZERO, // e.g. 5.0 for 5%
     val direction: AlertDirection,
     val isActive: Boolean = true,
     val lastTriggeredAt: Long? = null,

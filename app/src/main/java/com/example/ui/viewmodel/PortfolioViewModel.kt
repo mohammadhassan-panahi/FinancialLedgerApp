@@ -108,6 +108,9 @@ class PortfolioViewModel(
     val codalNotices = repository.codalNotices
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val watchlistCategories = repository.watchlistCategories
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val totalDebtRial: StateFlow<BigDecimal> = repository.totalDebtRial
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
@@ -232,6 +235,21 @@ class PortfolioViewModel(
 
     fun removeSymbolFromWatchlist(symbol: String) =
         viewModelScope.launch { repository.removeSymbolFromWatchlist(symbol) }
+
+    // Watchlist Advanced
+    fun addWatchlistCategory(name: String, description: String = "") = 
+        viewModelScope.launch { repository.addWatchlistCategory(name, description) }
+    
+    fun deleteWatchlistCategory(category: WatchlistCategoryEntity) = 
+        viewModelScope.launch { repository.deleteWatchlistCategory(category) }
+    
+    fun addAssetToWatchlistCategory(categoryId: Long, assetCode: String, assetType: PortfolioAssetType) = 
+        viewModelScope.launch { repository.addAssetToWatchlistCategory(categoryId, assetCode, assetType) }
+    
+    fun removeAssetFromWatchlistCategory(categoryId: Long, assetCode: String) = 
+        viewModelScope.launch { repository.removeAssetFromWatchlistCategory(categoryId, assetCode) }
+
+    fun getWatchlistAssets(categoryId: Long) = repository.getAssetsForCategory(categoryId)
 
     // Debt & Credit
     fun addDebtCredit(personName: String, amountRial: BigDecimal, type: com.example.data.local.DebtCreditType, description: String = "") {

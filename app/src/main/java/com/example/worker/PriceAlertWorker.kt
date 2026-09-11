@@ -8,7 +8,9 @@ import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.R
+import com.example.data.local.AlertDirection
 import com.example.data.local.AppDatabase
+import com.example.data.local.PriceAlertEntity
 import com.example.data.repository.PortfolioRepository
 import com.example.util.formatRial
 
@@ -39,6 +41,7 @@ class PriceAlertWorker(
             vehicleDao = database.vehicleDao(),
             realEstateDao = database.realEstateDao(),
             snapshotDao = database.portfolioSnapshotDao(),
+            watchlistDao = database.watchlistDao(),
             apiKey = apiKey
         )
 
@@ -52,9 +55,14 @@ class PriceAlertWorker(
             val triggered = repository.checkAlerts(rates, stocks)
 
             triggered.forEach { alert ->
+                val message = when (alert.direction) {
+                    AlertDirection.ABOVE, AlertDirection.BELOW -> "قیمت به ${formatRial(alert.targetPriceRial, isRial = false)} رسید."
+                    AlertDirection.UP_PERCENT -> "قیمت بیش از ${alert.thresholdPercent}٪ افزایش یافت."
+                    AlertDirection.DOWN_PERCENT -> "قیمت بیش از ${alert.thresholdPercent}٪ کاهش یافت."
+                }
                 sendNotification(
-                    title = "هشدار قیمت: ${alert.assetName}",
-                    message = "قیمت به ${formatRial(alert.targetPriceRial, isRial = false)} رسید."
+                    title = "هشدار ${alert.assetName}",
+                    message = message
                 )
             }
             Result.success()

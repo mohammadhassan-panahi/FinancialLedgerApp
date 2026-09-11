@@ -34,6 +34,7 @@ class PortfolioRepository(
     private val vehicleDao: VehicleDao,
     private val realEstateDao: RealEstateDao,
     private val snapshotDao: PortfolioSnapshotDao,
+    private val watchlistDao: WatchlistDao,
     private val apiKey: String = "",
     private val marketApiService: MarketApiService? = if (apiKey.isNotBlank()) MarketApiService.create() else null,
     private val tsetmcApiService: TsetmcApiClient? = if (apiKey.isNotBlank()) TsetmcApiClient(TsetmcApiService.create(), apiKey) else null
@@ -59,6 +60,7 @@ class PortfolioRepository(
     val ipos: Flow<List<IpoEntity>> = bourseDao.getAllIpos()
     val codalNotices: Flow<List<CodalEntity>> = bourseDao.getAllCodalNotices()
     val snapshots: Flow<List<PortfolioSnapshotEntity>> = snapshotDao.getAllSnapshots()
+    val watchlistCategories: Flow<List<WatchlistCategoryEntity>> = watchlistDao.getAllCategories()
 
     val totalDebtRial: Flow<BigDecimal> = debtCreditDao.getTotalDebtFlow().map { it.sumOf { it } }
     val totalCreditRial: Flow<BigDecimal> = debtCreditDao.getTotalCreditFlow().map { it.sumOf { it } }
@@ -355,6 +357,16 @@ class PortfolioRepository(
     suspend fun updateGoal(entity: GoalEntity) = goalDao.update(entity)
     suspend fun deleteGoal(entity: GoalEntity) = goalDao.delete(entity)
 
+    // Watchlist Categories
+    suspend fun addWatchlistCategory(name: String, description: String = "") = 
+        watchlistDao.insertCategory(WatchlistCategoryEntity(name = name, description = description))
+    suspend fun deleteWatchlistCategory(category: WatchlistCategoryEntity) = watchlistDao.deleteCategory(category)
+    fun getAssetsForCategory(categoryId: Long) = watchlistDao.getAssetsForCategory(categoryId)
+    suspend fun addAssetToWatchlistCategory(categoryId: Long, assetCode: String, assetType: PortfolioAssetType) = 
+        watchlistDao.addAssetToWatchlist(WatchlistAssetEntity(categoryId, assetCode, assetType))
+    suspend fun removeAssetFromWatchlistCategory(categoryId: Long, assetCode: String) = 
+        watchlistDao.removeAssetFromWatchlist(categoryId, assetCode)
+
     suspend fun refreshGoldAndDollar(): Boolean {
         val response = try { marketApiService?.getGoldCurrency(apiKey) } catch(e: Exception) { null }
         if (response == null || !response.isSuccessful || response.body() == null) return false
@@ -405,16 +417,29 @@ class PortfolioRepository(
         val triggered = mutableListOf<PriceAlertEntity>()
         
         allAlerts.forEach { alert ->
-            val currentPriceRial = when {
-                rates.any { it.assetCode == alert.assetCode } -> rates.find { it.assetCode == alert.assetCode }!!.priceToman.multiply(RIAL_PER_TOMAN)
-                stocks.any { it.symbol == alert.assetCode } -> stocks.find { it.symbol == alert.assetCode }!!.lastPriceRial
-                else -> null
+            val currentPriceRial: BigDecimal?
+            val changePercent: BigDecimal?
+
+            val rateMatch = rates.find { it.assetCode == alert.assetCode }
+            val stockMatch = stocks.find { it.symbol == alert.assetCode }
+
+            if (rateMatch != null) {
+                currentPriceRial = rateMatch.priceToman.multiply(RIAL_PER_TOMAN)
+                changePercent = rateMatch.changePercent
+            } else if (stockMatch != null) {
+                currentPriceRial = stockMatch.lastPriceRial
+                changePercent = stockMatch.changePercent
+            } else {
+                currentPriceRial = null
+                changePercent = null
             }
             
             if (currentPriceRial != null) {
                 val isTriggered = when (alert.direction) {
                     AlertDirection.ABOVE -> currentPriceRial.compareTo(alert.targetPriceRial) >= 0
                     AlertDirection.BELOW -> currentPriceRial.compareTo(alert.targetPriceRial) <= 0
+                    AlertDirection.UP_PERCENT -> changePercent != null && changePercent.compareTo(alert.thresholdPercent) >= 0
+                    AlertDirection.DOWN_PERCENT -> changePercent != null && changePercent.compareTo(alert.thresholdPercent.negate()) <= 0
                 }
                 
                 if (isTriggered) {

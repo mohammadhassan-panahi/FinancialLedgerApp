@@ -179,19 +179,13 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
     }
 
     alertTarget?.let { stock ->
-        PriceAlertDialog(
+        com.example.ui.components.AlertSetupDialog(
             assetName = stock.fullName,
+            assetCode = stock.symbol,
             currentPriceRial = stock.lastPriceRial,
             onDismiss = { alertTarget = null },
-            onConfirm = { target, direction ->
-                viewModel.addAlert(
-                    PriceAlertEntity(
-                        assetCode = stock.symbol,
-                        assetName = stock.fullName,
-                        targetPriceRial = target,
-                        direction = direction
-                    )
-                )
+            onConfirm = { alert ->
+                viewModel.addAlert(alert)
                 alertTarget = null
             }
         )

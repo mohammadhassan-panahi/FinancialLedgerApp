@@ -93,6 +93,7 @@ class MainActivity : FragmentActivity() {
             vehicleDao = database.vehicleDao(),
             realEstateDao = database.realEstateDao(),
             snapshotDao = database.portfolioSnapshotDao(),
+            watchlistDao = database.watchlistDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
         val cryptoRepository = CryptoRepository(
