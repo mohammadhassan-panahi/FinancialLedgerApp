@@ -77,11 +77,11 @@ fun LoanCalculatorScreen(
 
     val loanAmt = PersianNumberUtils.parseAmountToToman(loanAmountInput, isRial)
     val desiredPmt = PersianNumberUtils.parseAmountToToman(desiredPaymentInput, isRial)
-    val rate = rateInput.toDoubleOrNull() ?: 0.0
+    val rate = PersianNumberUtils.parseAmount(rateInput)
     val months = durationMonthsInput.toIntOrNull() ?: 12
-    val feePct = initialFeePercentInput.toDoubleOrNull() ?: 0.0
+    val feePct = PersianNumberUtils.parseAmount(initialFeePercentInput)
     val settlementMonth = earlySettlementMonthInput.toIntOrNull() ?: 0
-    val penaltyPct = penaltyPercentInput.toDoubleOrNull() ?: 0.0
+    val penaltyPct = PersianNumberUtils.parseAmount(penaltyPercentInput)
 
     val loanResult = FinancialFormulas.calculateLoan(
         loanAmount = loanAmt,
@@ -98,7 +98,7 @@ fun LoanCalculatorScreen(
             annualRatePercent = rate,
             durationMonths = months
         )
-    } else 0.0
+    } else java.math.BigDecimal.ZERO
 
     val copySummaryText = if (!isReverseMode) {
         """

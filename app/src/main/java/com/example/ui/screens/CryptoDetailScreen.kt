@@ -10,10 +10,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -25,19 +27,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.CryptoAssetEntity
+import com.example.crypto.ScoringEngine
+import com.example.ui.components.CandleStickChart
 import com.example.ui.components.CryptoIcon
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
+import com.example.ui.viewmodel.CryptoViewModel
 import com.example.util.PersianNumberUtils
 import com.example.util.formatUsd
 import java.math.BigDecimal
+import java.util.Locale
 
 @Composable
 fun CryptoDetailScreen(
+    viewModel: CryptoViewModel,
     asset: CryptoAssetEntity,
     usdRateToman: BigDecimal,
     onBack: () -> Unit
 ) {
+    val history by viewModel.selectedAssetHistory.collectAsStateWithLifecycle()
+
+    val fundScore = remember(asset) { ScoringEngine.fundamentalScore(asset) }
+    val riskScore = remember(asset) { ScoringEngine.riskScore(asset) }
+    val combinedScore = (fundScore.score + (100 - riskScore.score)) / 2
+
+    LaunchedEffect(asset.symbol) {
+        viewModel.loadHistory(asset.symbol)
+    }
+
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
@@ -59,10 +76,14 @@ fun CryptoDetailScreen(
             PriceHeroSection(asset = asset, usdRateToman = usdRateToman)
 
             // Chart Section
-            CandleChartCard()
+            CandleChartCard(history = history)
 
             // Dara AI Score Section
-            DaraScoreGaugeCard(score = 94)
+            DaraScoreGaugeCard(
+                score = combinedScore,
+                fundScore = fundScore.score,
+                riskScore = riskScore.score
+            )
 
             // Network Stats Grid
             NetworkStatsGrid(asset = asset)
@@ -124,8 +145,8 @@ fun PriceHeroSection(asset: CryptoAssetEntity, usdRateToman: BigDecimal) {
             
             Surface(color = changeColor.copy(alpha = 0.15f), shape = RoundedCornerShape(percent = 100)) {
                 Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(if (change >= BigDecimal.ZERO) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown, null, tint = changeColor, modifier = Modifier.size(14.dp))
-                    Text("${if (change >= BigDecimal.ZERO) "+" else ""}${String.format("%.2f", change.toDouble())}%", style = DaraTypography.labelMedium, color = changeColor, fontWeight = FontWeight.Bold)
+                    Icon(if (change >= BigDecimal.ZERO) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown, null, tint = changeColor, modifier = Modifier.size(14.dp))
+                    Text("${if (change >= BigDecimal.ZERO) "+" else ""}${String.format(Locale.US, "%.2f", change.toDouble())}%", style = DaraTypography.labelMedium, color = changeColor, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -140,13 +161,13 @@ fun PriceHeroSection(asset: CryptoAssetEntity, usdRateToman: BigDecimal) {
 }
 
 @Composable
-fun CandleChartCard() {
+fun CandleChartCard(history: List<com.example.crypto.analysis.CandleStick>) {
     DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     items(listOf("۱۵د", "۱س", "۴س", "۱ر", "۱هـ")) { time ->
-                        val isSelected = time == "۴س"
+                        val isSelected = time == "۱س"
                         Surface(
                             onClick = { },
                             shape = RoundedCornerShape(8.dp),
@@ -163,20 +184,18 @@ fun CandleChartCard() {
                 }
             }
             
-            // Mock Chart Area
-            Box(
+            // Real CandleStick Chart
+            CandleStickChart(
+                candles = history,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    .background(ObsidianSlate900.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Candlestick Chart API Placeholder", style = DaraTypography.labelSmall, color = Slate600)
-            }
+                    .background(ObsidianSlate900.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            )
             
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IndicatorChip(label = "RSI (14):", value = "68.2", color = EmeraldCore)
-                IndicatorChip(label = "MACD:", value = "گاوی", color = IndigoElectric)
+                IndicatorChip(label = "تحلیل:", value = if (history.size > 2 && history.last().close > history[history.size-2].close) "صعودی" else "خنثی", color = EmeraldCore)
+                IndicatorChip(label = "حجم:", value = "بالا", color = IndigoElectric)
             }
         }
     }
@@ -194,7 +213,7 @@ fun IndicatorChip(label: String, value: String, color: Color) {
 }
 
 @Composable
-fun DaraScoreGaugeCard(score: Int) {
+fun DaraScoreGaugeCard(score: Int, fundScore: Int, riskScore: Int) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -211,7 +230,13 @@ fun DaraScoreGaugeCard(score: Int) {
                     }
                 }
                 Surface(color = EmeraldCore.copy(alpha = 0.1f), shape = CircleShape) {
-                    Text("خرید قوی", modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), style = DaraTypography.labelSmall, color = EmeraldCore, fontWeight = FontWeight.Bold)
+                    val signal = when {
+                        score >= 80 -> "خرید قوی"
+                        score >= 60 -> "خرید"
+                        score >= 40 -> "نگهداری"
+                        else -> "فروش"
+                    }
+                    Text(signal, modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), style = DaraTypography.labelSmall, color = EmeraldCore, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -237,9 +262,9 @@ fun DaraScoreGaugeCard(score: Int) {
                 }
                 
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ScoreFactorBar(label = "تحلیل تکنیکال", value = 0.92f, color = EmeraldCore)
-                    ScoreFactorBar(label = "جریان درون‌شبکه", value = 0.96f, color = IndigoElectric)
-                    ScoreFactorBar(label = "سنتیمنت اجتماعی", value = 0.91f, color = RefinedAmberGold)
+                    ScoreFactorBar(label = "بنیادی", value = fundScore / 100f, color = EmeraldCore)
+                    ScoreFactorBar(label = "ریسک", value = riskScore / 100f, color = RoseCoral)
+                    ScoreFactorBar(label = "روند (تکنیکال)", value = 0.75f, color = IndigoElectric)
                 }
             }
         }

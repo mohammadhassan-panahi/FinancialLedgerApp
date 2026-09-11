@@ -55,6 +55,8 @@ import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.GoldAccent
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.MarketPortfolioViewModel
+import com.example.util.sumOf
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -73,10 +75,11 @@ fun AnalyticsScreen(
     val totalTransfers = transactions.filter { it.type == TransactionType.TRANSFER }.sumOf { it.amount }
     val totalExpenses = transactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
 
-    val formattedBalance = NumberFormat.getNumberInstance(Locale.US).format(balance.toLong())
-    val formattedDeposits = NumberFormat.getNumberInstance(Locale.US).format(totalDeposits.toLong())
-    val formattedTransfers = NumberFormat.getNumberInstance(Locale.US).format(totalTransfers.toLong())
-    val formattedExpenses = NumberFormat.getNumberInstance(Locale.US).format(totalExpenses.toLong())
+    val formatter = NumberFormat.getNumberInstance(Locale.US)
+    val formattedBalance = formatter.format(balance.toLong())
+    val formattedDeposits = formatter.format(totalDeposits.toLong())
+    val formattedTransfers = formatter.format(totalTransfers.toLong())
+    val formattedExpenses = formatter.format(totalExpenses.toLong())
 
     Scaffold(
         topBar = {
@@ -187,7 +190,7 @@ fun AnalyticsScreen(
 
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (pnl >= 0) EmeraldProfit.copy(alpha = 0.15f) else RoseLoss.copy(alpha = 0.15f)
+                                color = if (pnl >= BigDecimal.ZERO) EmeraldProfit.copy(alpha = 0.15f) else RoseLoss.copy(alpha = 0.15f)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -196,14 +199,14 @@ fun AnalyticsScreen(
                                     Icon(
                                         imageVector = Icons.Default.TrendingUp,
                                         contentDescription = null,
-                                        tint = if (pnl >= 0) EmeraldProfit else RoseLoss,
+                                        tint = if (pnl >= BigDecimal.ZERO) EmeraldProfit else RoseLoss,
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = if (pnl >= 0) "+${String.format(Locale.US, "%.2f", pnl)}%" else "${String.format(Locale.US, "%.2f", pnl)}%",
+                                        text = if (pnl >= BigDecimal.ZERO) "+${String.format(Locale.US, "%.2f", pnl.toDouble())}%" else "${String.format(Locale.US, "%.2f", pnl.toDouble())}%",
                                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                        color = if (pnl >= 0) EmeraldProfit else RoseLoss,
+                                        color = if (pnl >= BigDecimal.ZERO) EmeraldProfit else RoseLoss,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )

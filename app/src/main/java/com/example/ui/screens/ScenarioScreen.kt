@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
 import com.example.data.local.CalculationHistoryEntity
 import com.example.data.local.PortfolioAssetType
 import com.example.ui.LocalIsRial
@@ -68,7 +69,7 @@ fun ScenarioScreen(
     val portfolioLegs = remember(holdings) {
         PortfolioAssetType.entries.mapNotNull { type ->
             val value = holdings.filter { it.assetType == type }.sumOf { it.currentValueRial }
-            if (value > 0) Triple(type.displayName(), value, type) else null
+            if (value.signum() > 0) Triple(type.displayName(), value, type) else null
         }
     }
 
@@ -83,13 +84,13 @@ fun ScenarioScreen(
     var realEstatePct by remember { mutableStateOf(0f) }
     var vehiclePct by remember { mutableStateOf(0f) }
 
-    val legs: List<Triple<String, Double, Double>> = if (manualMode) {
+    val legs: List<Triple<String, BigDecimal, BigDecimal>> = if (manualMode) {
         listOf(
-            Triple("طلا", PersianNumberUtils.parseAmount(goldManual), goldPct.toDouble()),
-            Triple("دلار", PersianNumberUtils.parseAmount(usdManual), usdPct.toDouble()),
-            Triple("سهام", PersianNumberUtils.parseAmount(stockManual), stockPct.toDouble()),
-            Triple("ملک", 0.0, realEstatePct.toDouble()),
-            Triple("خودرو", 0.0, vehiclePct.toDouble())
+            Triple("طلا", PersianNumberUtils.parseAmount(goldManual), goldPct.toBigDecimal()),
+            Triple("دلار", PersianNumberUtils.parseAmount(usdManual), usdPct.toBigDecimal()),
+            Triple("سهام", PersianNumberUtils.parseAmount(stockManual), stockPct.toBigDecimal()),
+            Triple("ملک", BigDecimal.ZERO, realEstatePct.toBigDecimal()),
+            Triple("خودرو", BigDecimal.ZERO, vehiclePct.toBigDecimal())
         )
     } else {
         portfolioLegs.map { (name, value, type) ->
@@ -103,7 +104,7 @@ fun ScenarioScreen(
                 PortfolioAssetType.REAL_ESTATE -> realEstatePct
                 PortfolioAssetType.VEHICLE -> vehiclePct
             }
-            Triple(name, value, pct.toDouble())
+            Triple(name, value, pct.toBigDecimal())
         }
     }
 
@@ -198,7 +199,7 @@ fun ScenarioScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    val positive = result.changeAmount >= 0
+                    val positive = result.changeAmount.signum() >= 0
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -272,7 +273,7 @@ private fun ScenarioSlider(label: String, value: Float, onChange: (Float) -> Uni
         ) {
             Text(label, fontWeight = FontWeight.Bold)
             Text(
-                formatPercentSigned(value.toDouble()),
+                formatPercentSigned(value.toBigDecimal()),
                 color = if (value >= 0) ProfitGreen else LossRed,
                 fontWeight = FontWeight.Bold
             )

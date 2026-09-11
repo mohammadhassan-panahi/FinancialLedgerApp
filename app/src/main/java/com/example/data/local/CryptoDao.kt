@@ -37,4 +37,10 @@ interface CryptoDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInfo(info: CryptoInfoEntity)
+
+    @Query("SELECT * FROM global_market_metrics WHERE id = 1 LIMIT 1")
+    fun getGlobalMetrics(): Flow<GlobalMetricsEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertGlobalMetrics(metrics: GlobalMetricsEntity)
 }

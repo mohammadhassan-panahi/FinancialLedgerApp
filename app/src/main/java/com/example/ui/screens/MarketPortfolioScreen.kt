@@ -68,6 +68,7 @@ import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.GoldAccent
 import com.example.ui.theme.RoseLoss
 import com.example.ui.viewmodel.MarketPortfolioViewModel
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -395,12 +396,12 @@ private fun MarketRateSmallCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = if (rate.changePercent >= 0) "+${rate.changePercent}%" else "${rate.changePercent}%",
+                text = if (rate.changePercent.compareTo(BigDecimal.ZERO) >= 0) "+${rate.changePercent}%" else "${rate.changePercent}%",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp
                 ),
-                color = if (rate.changePercent >= 0) EmeraldProfit else RoseLoss,
+                color = if (rate.changePercent.compareTo(BigDecimal.ZERO) >= 0) EmeraldProfit else RoseLoss,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

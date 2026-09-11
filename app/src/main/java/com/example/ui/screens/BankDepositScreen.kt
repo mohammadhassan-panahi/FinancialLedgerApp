@@ -31,12 +31,13 @@ import com.example.ui.components.ResultHeaderBanner
 import com.example.ui.theme.AccentGold
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun BankDepositScreen(
     historyList: List<CalculationHistoryEntity>,
-    defaultInflation: Double,
-    defaultTax: Double,
+    defaultInflation: BigDecimal,
+    defaultTax: BigDecimal,
     currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
@@ -46,25 +47,25 @@ fun BankDepositScreen(
     val unitLabel = PersianNumberUtils.getCurrencyUnitLabel(isRial)
 
     val presets = listOf(
-        "کوتاه‌مدت (۵٪)" to 5.0,
-        "۳ ماهه (۱۲٪)" to 12.0,
-        "۶ ماهه (۱۶٪)" to 16.0,
-        "۱ ساله (۲۰.۵٪)" to 20.5,
-        "۲ ساله (۲۲.۵٪)" to 22.5
+        "کوتاه‌مدت (۵٪)" to BigDecimal("5"),
+        "۳ ماهه (۱۲٪)" to BigDecimal("12"),
+        "۶ ماهه (۱۶٪)" to BigDecimal("16"),
+        "۱ ساله (۲۰.۵٪)" to BigDecimal("20.5"),
+        "۲ ساله (۲۲.۵٪)" to BigDecimal("22.5")
     )
 
     var principalInput by remember { mutableStateOf(if (isRial) "1000000000" else "100000000") }
     var selectedPresetLabel by remember { mutableStateOf("۱ ساله (۲۰.۵٪)") }
     var rateInput by remember { mutableStateOf("20.5") }
-    var taxInput by remember { mutableStateOf(defaultTax.toString()) }
-    var inflationInput by remember { mutableStateOf(defaultInflation.toString()) }
+    var taxInput by remember { mutableStateOf(defaultTax.toPlainString()) }
+    var inflationInput by remember { mutableStateOf(defaultInflation.toPlainString()) }
 
     var showPrintDialog by remember { mutableStateOf(false) }
 
     val principal = PersianNumberUtils.parseAmountToToman(principalInput, isRial)
-    val rate = rateInput.toDoubleOrNull() ?: 0.0
-    val tax = taxInput.toDoubleOrNull() ?: 0.0
-    val inflation = inflationInput.toDoubleOrNull() ?: 0.0
+    val rate = PersianNumberUtils.parseAmount(rateInput)
+    val tax = PersianNumberUtils.parseAmount(taxInput)
+    val inflation = PersianNumberUtils.parseAmount(inflationInput)
 
     val depositResult = FinancialFormulas.calculateBankDeposit(
         principal = principal,
@@ -118,7 +119,7 @@ fun BankDepositScreen(
                         Button(
                             onClick = {
                                 selectedPresetLabel = label
-                                rateInput = r.toString()
+                                rateInput = r.toPlainString()
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (selectedPresetLabel == label) AccentGold else MaterialTheme.colorScheme.surfaceVariant
@@ -151,7 +152,7 @@ fun BankDepositScreen(
                         Button(
                             onClick = {
                                 selectedPresetLabel = label
-                                rateInput = r.toString()
+                                rateInput = r.toPlainString()
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (selectedPresetLabel == label) AccentGold else MaterialTheme.colorScheme.surfaceVariant

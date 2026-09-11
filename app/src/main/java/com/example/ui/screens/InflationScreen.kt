@@ -33,11 +33,12 @@ import com.example.ui.theme.AccentGold
 import com.example.ui.theme.LossRed
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun InflationScreen(
     historyList: List<CalculationHistoryEntity>,
-    defaultInflation: Double,
+    defaultInflation: BigDecimal,
     currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
@@ -47,13 +48,13 @@ fun InflationScreen(
     val unitLabel = PersianNumberUtils.getCurrencyUnitLabel(isRial)
 
     var amountInput by remember { mutableStateOf(if (isRial) "10000000000" else "1000000000") } // 1 Billion
-    var inflationInput by remember { mutableStateOf(defaultInflation.toString()) }
+    var inflationInput by remember { mutableStateOf(defaultInflation.toPlainString()) }
     var yearsInput by remember { mutableStateOf("5") }
 
     var showPrintDialog by remember { mutableStateOf(false) }
 
     val amount = PersianNumberUtils.parseAmountToToman(amountInput, isRial)
-    val inflation = inflationInput.toDoubleOrNull() ?: 0.0
+    val inflation = PersianNumberUtils.parseAmount(inflationInput)
     val years = yearsInput.toIntOrNull() ?: 1
 
     val infResult = FinancialFormulas.calculateInflation(

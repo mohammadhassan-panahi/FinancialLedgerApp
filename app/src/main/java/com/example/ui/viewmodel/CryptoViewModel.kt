@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.CryptoAssetEntity
 import com.example.data.local.CryptoInfoEntity
+import com.example.data.local.GlobalMetricsEntity
 import com.example.data.repository.CryptoRepository
 import com.example.data.repository.GlobalMarketSnapshot
+import com.example.crypto.analysis.CandleStick
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,14 +23,17 @@ class CryptoViewModel(private val repository: CryptoRepository) : ViewModel() {
     val watchlist: StateFlow<List<CryptoAssetEntity>> = repository.watchlist
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val globalMetrics: StateFlow<GlobalMetricsEntity?> = repository.globalMetrics
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val _globalSnapshot = MutableStateFlow<GlobalMarketSnapshot?>(null)
-    val globalSnapshot: StateFlow<GlobalMarketSnapshot?> = _globalSnapshot.asStateFlow()
+    private val _globalSnapshot = MutableStateFlow<GlobalMetricsEntity?>(null)
+    val globalSnapshot: StateFlow<GlobalMetricsEntity?> = _globalSnapshot.asStateFlow()
 
     // --- Detail screen state (Phase 2: per-coin info) ---
     private val _selectedAsset = MutableStateFlow<CryptoAssetEntity?>(null)
@@ -39,6 +44,9 @@ class CryptoViewModel(private val repository: CryptoRepository) : ViewModel() {
 
     private val _isLoadingInfo = MutableStateFlow(false)
     val isLoadingInfo: StateFlow<Boolean> = _isLoadingInfo.asStateFlow()
+
+    private val _selectedAssetHistory = MutableStateFlow<List<CandleStick>>(emptyList())
+    val selectedAssetHistory: StateFlow<List<CandleStick>> = _selectedAssetHistory.asStateFlow()
 
     fun refreshMarketData() {
         viewModelScope.launch {
@@ -92,5 +100,16 @@ class CryptoViewModel(private val repository: CryptoRepository) : ViewModel() {
     fun closeDetail() {
         _selectedAsset.value = null
         _selectedInfo.value = null
+        _selectedAssetHistory.value = emptyList()
+    }
+
+    fun loadHistory(symbol: String, interval: String = "1h") {
+        viewModelScope.launch {
+            repository.fetchHistory(symbol, interval).onSuccess {
+                _selectedAssetHistory.value = it
+            }.onFailure {
+                _selectedAssetHistory.value = emptyList()
+            }
+        }
     }
 }

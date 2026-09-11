@@ -136,9 +136,9 @@ fun PortfolioHomeScreen(
                     val points = snapshots.map {
                         BenchmarkPoint(
                             date = PersianDateUtils.formatJalaliDate(java.util.Date(it.timestamp)),
-                            portfolioValue = it.totalValueRial,
-                            goldValue = it.goldPriceRial,
-                            usdValue = it.usdPriceRial
+                            portfolioValue = it.totalValueRial.toDouble(),
+                            goldValue = it.goldPriceRial.toDouble(),
+                            usdValue = it.usdPriceRial.toDouble()
                         )
                     }
                     DaraGlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -360,13 +360,13 @@ fun InfoItem(label: String, value: BigDecimal, percent: BigDecimal) {
                 formatRial(value, isRial = isRial),
                 style = DaraTypography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (value >= BigDecimal.ZERO) EmeraldCore else RoseCoral
+                color = if (value.compareTo(BigDecimal.ZERO) >= 0) EmeraldCore else RoseCoral
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 formatPercentSigned(percent),
                 style = DaraTypography.labelSmall,
-                color = if (percent >= BigDecimal.ZERO) EmeraldCore else RoseCoral
+                color = if (percent.compareTo(BigDecimal.ZERO) >= 0) EmeraldCore else RoseCoral
             )
         }
     }
@@ -487,7 +487,7 @@ fun HoldingCardPremium(holding: Holding, onSellClick: () -> Unit) {
                 )
                 Text(
                     text = formatPercentSigned(holding.profitLossPercent),
-                    color = if (holding.profitLossRial >= BigDecimal.ZERO) EmeraldCore else RoseCoral,
+                    color = if (holding.profitLossRial.compareTo(BigDecimal.ZERO) >= 0) EmeraldCore else RoseCoral,
                     style = DaraTypography.labelSmall,
                     fontWeight = FontWeight.Bold
                 )

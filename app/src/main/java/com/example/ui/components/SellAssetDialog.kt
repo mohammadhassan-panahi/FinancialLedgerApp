@@ -20,6 +20,7 @@ import com.example.domain.model.Holding
 import com.example.ui.LocalIsRial
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
+import java.math.BigDecimal
 
 /**
  * Sells some quantity of an existing holding. Pre-fills the sale price with the current
@@ -30,7 +31,7 @@ fun SellAssetDialog(
     holding: Holding,
     errorMessage: String?,
     onDismiss: () -> Unit,
-    onConfirm: (quantitySold: Double, saleUnitPriceRial: Double) -> Unit
+    onConfirm: (quantitySold: BigDecimal, saleUnitPriceRial: BigDecimal) -> Unit
 ) {
     val isRial = LocalIsRial.current
     var quantityText by remember { mutableStateOf(formatRial(holding.quantity, showSuffix = false, decimalPlaces = 2, isRial = isRial)) }
@@ -74,7 +75,7 @@ fun SellAssetDialog(
             Button(onClick = {
                 val q = PersianNumberUtils.parseAmount(quantityText)
                 val p = PersianNumberUtils.parseAmount(priceText)
-                if (q > 0 && p > 0) onConfirm(q, p)
+                if (q.compareTo(BigDecimal.ZERO) > 0 && p.compareTo(BigDecimal.ZERO) > 0) onConfirm(q, p)
             }) { Text("ثبت فروش") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("انصراف") } }

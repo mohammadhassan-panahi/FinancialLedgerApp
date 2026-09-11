@@ -8,6 +8,7 @@ import com.example.domain.model.AllocationItem
 import com.example.domain.model.GoldPriceAnalysis
 import com.example.domain.model.Holding
 import com.example.domain.model.PortfolioSummary
+import com.example.util.BigDecimalAdapter
 import com.example.util.safeDiv
 import com.example.util.sumOf
 import kotlinx.coroutines.flow.Flow
@@ -289,6 +290,7 @@ class PortfolioRepository(
     suspend fun saveSnapshot() {
         val summary = portfolioSummary.first()
         val moshi = com.squareup.moshi.Moshi.Builder()
+            .add(BigDecimalAdapter())
             .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
             .build()
         

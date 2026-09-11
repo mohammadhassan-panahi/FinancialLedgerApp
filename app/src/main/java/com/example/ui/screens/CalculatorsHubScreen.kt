@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.DaraGlassCard
@@ -22,11 +23,12 @@ import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.CalculatorViewModel
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun CalculatorsHubScreen(
     viewModel: CalculatorViewModel,
-    goldPriceToman: Double,
+    goldPriceToman: BigDecimal,
     onBack: () -> Unit,
     onNavigateToCurrencyConverter: () -> Unit,
     onNavigateToCryptoConverter: () -> Unit,
@@ -35,31 +37,20 @@ fun CalculatorsHubScreen(
     var goldWeight by remember { mutableStateOf("1") }
     
     val weightValue = PersianNumberUtils.parseAmount(goldWeight)
-    val totalGoldValue = weightValue * goldPriceToman
+    val totalGoldValue = weightValue.multiply(goldPriceToman)
 
     Scaffold(
-        containerColor = ObsidianSlate900,
-        topBar = {
-            CalculatorHeader(onBack = onBack)
-        }
-    ) { innerPadding: PaddingValues ->
+        topBar = { CalculatorHeader(onBack = onBack) },
+        containerColor = ObsidianSlate900
+    ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Surface(color = ObsidianSlate800.copy(alpha = 0.6f), shape = CircleShape) {
-                        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Box(modifier = Modifier.size(6.dp).background(EmeraldCore, CircleShape))
-                            Text("محاسبات بلادرنگ و تبدیل هوشمند", style = DaraTypography.labelSmall, color = Slate400)
-                        }
-                    }
-                    Text("جعبه ابزار مالی دارا", style = DaraTypography.headlineLarge, color = Slate50, fontWeight = FontWeight.Bold)
-                }
-            }
-
+            // Gold Instant Calculator
             item {
                 GoldCalculatorCard(
                     weight = goldWeight,
@@ -68,53 +59,48 @@ fun CalculatorsHubScreen(
                 )
             }
 
+            // Categories
             item {
-                Text("ابزارهای محاسباتی هوشمند", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    SecondaryToolCard(
-                        title = "مبدل ارزها", 
-                        desc = "دلار، یورو و درهم", 
-                        icon = Icons.Default.CurrencyExchange, 
-                        color = EmeraldCore, 
-                        modifier = Modifier.weight(1f),
-                        onClick = onNavigateToCurrencyConverter
-                    )
-                    SecondaryToolCard(
-                        title = "رمزارز به تومان", 
-                        desc = "تتر و بیت‌کوین", 
-                        icon = Icons.Default.CurrencyBitcoin, 
-                        color = IndigoElectric, 
-                        modifier = Modifier.weight(1f),
-                        onClick = onNavigateToCryptoConverter
-                    )
-                }
+                Text(
+                    "ابزارهای مالی دارا",
+                    style = DaraTypography.titleLarge,
+                    color = Slate50,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             item {
-                Surface(
-                    onClick = onNavigateToCompoundInterest,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = ObsidianSlate800.copy(alpha = 0.6f),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
-                ) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Box(modifier = Modifier.size(44.dp).background(EmeraldCore.copy(alpha = 0.1f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Percent, null, tint = EmeraldCore)
-                            }
-                            Column {
-                                Text("سود سپرده مرکب", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
-                                Text("سود مؤثر سالانه ۳۱.۵٪", style = DaraTypography.labelSmall, color = Slate600)
-                            }
-                        }
-                        Icon(Icons.Default.ChevronLeft, null, tint = Slate600)
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SecondaryToolCard(
+                        "مبدل واحد پولی",
+                        "تبدیل آنی ریال و تومان با دقت بالا",
+                        Icons.Default.CurrencyExchange,
+                        IndigoElectric,
+                        onClick = onNavigateToCurrencyConverter
+                    )
+                    SecondaryToolCard(
+                        "سود مرکب",
+                        "محاسبه رشد سرمایه در بلندمدت",
+                        Icons.Default.TrendingUp,
+                        EmeraldCore,
+                        onClick = onNavigateToCompoundInterest
+                    )
+                    SecondaryToolCard(
+                        "محاسبه حباب طلا",
+                        "تشخیص اختلاف قیمت بازار با ارزش ذاتی",
+                        Icons.Default.BubbleChart,
+                        RefinedAmberGold,
+                        onClick = { /* TODO */ }
+                    )
+                    SecondaryToolCard(
+                        "اقساط وام",
+                        "برنامه‌ریزی بازپرداخت تسهیلات",
+                        Icons.Default.AccountBalance,
+                        Slate400,
+                        onClick = { /* TODO */ }
+                    )
                 }
             }
-            
-            item { Spacer(modifier = Modifier.height(100.dp)) }
         }
     }
 }
@@ -147,71 +133,97 @@ fun CalculatorHeader(onBack: () -> Unit) {
 }
 
 @Composable
-fun GoldCalculatorCard(weight: String, onWeightChange: (String) -> Unit, totalValue: Double) {
-    DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+fun GoldCalculatorCard(
+    weight: String,
+    onWeightChange: (String) -> Unit,
+    totalValue: BigDecimal
+) {
+    DaraGlassCard {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Balance, null, tint = RefinedAmberGold, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("محاسبه آنی ارزش طلا (۱۸ عیار)", style = DaraTypography.labelMedium, color = Slate400)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(modifier = Modifier.size(40.dp).background(RefinedAmberGold.copy(alpha = 0.1f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.MonetizationOn, null, tint = RefinedAmberGold)
-                }
-                Column {
-                    Text("ماشین‌حساب پیشرفته طلا", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
-                    Text("محاسبه حباب، مظنه و مالیات", style = DaraTypography.labelSmall, color = Slate400)
-                }
-            }
-            
-            PersianNumberTextField(
-                value = weight,
-                onValueChange = onWeightChange,
-                label = "وزن طلا (گرم)",
-                isDecimalAllowed = true
-            )
-            
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("عیار و استاندارد طلا", style = DaraTypography.labelSmall, color = Slate600)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CaratChip(label = "۱۸ عیار", isSelected = true, modifier = Modifier.weight(1f))
-                    CaratChip(label = "۲۴ عیار", isSelected = false, modifier = Modifier.weight(1f))
+                PersianNumberTextField(
+                    value = weight,
+                    onValueChange = onWeightChange,
+                    label = "وزن (گرم)",
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Column(modifier = Modifier.weight(1.5f), horizontalAlignment = Alignment.End) {
+                    Text(
+                        PersianNumberUtils.formatCurrency(totalValue),
+                        style = DaraTypography.titleLarge,
+                        color = Slate50,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text("ارزش کل روز", style = DaraTypography.labelSmall, color = Slate400)
                 }
             }
             
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = ObsidianSlate800.copy(alpha = 0.6f)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("ارزش تمام شده کل (تخمین)", style = DaraTypography.labelSmall, color = Slate400)
-                    Text(PersianNumberUtils.formatCurrency(totalValue, showSuffix = true), style = DaraTypography.headlineSmall, color = Slate50, fontWeight = FontWeight.Black)
-                }
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CaratChip("۱۸ عیار", true, Modifier.weight(1f))
+                CaratChip("۲۴ عیار", false, Modifier.weight(1f))
+                CaratChip("انس", false, Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-fun CaratChip(label: String, isSelected: Boolean, modifier: Modifier) {
+fun CaratChip(label: String, selected: Boolean, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
-        color = if (isSelected) IndigoElectric.copy(alpha = 0.2f) else ObsidianSlate800,
-        border = BorderStroke(1.dp, if (isSelected) IndigoElectric else Color.Transparent)
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) RefinedAmberGold.copy(alpha = 0.2f) else ObsidianSlate700,
+        border = BorderStroke(1.dp, if (selected) RefinedAmberGold else Color.Transparent)
     ) {
-        Box(modifier = Modifier.padding(12.dp), contentAlignment = Alignment.Center) {
-            Text(label, style = DaraTypography.labelMedium, color = if (isSelected) IndigoElectric else Slate400, fontWeight = FontWeight.Bold)
-        }
+        Text(
+            label,
+            modifier = Modifier.padding(vertical = 8.dp),
+            textAlign = TextAlign.Center,
+            style = DaraTypography.labelSmall,
+            color = if (selected) RefinedAmberGold else Slate400
+        )
     }
 }
 
 @Composable
-fun SecondaryToolCard(title: String, desc: String, icon: ImageVector, color: Color, modifier: Modifier, onClick: () -> Unit) {
-    DaraGlassCard(modifier = modifier.height(140.dp).clickable { onClick() }) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
-            Column {
-                Text(title, style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
-                Text(desc, style = DaraTypography.labelSmall, color = Slate600, maxLines = 1)
+fun SecondaryToolCard(
+    title: String,
+    desc: String,
+    icon: ImageVector,
+    accent: Color,
+    onClick: () -> Unit
+) {
+    DaraGlassCard(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = accent.copy(alpha = 0.1f)
+            ) {
+                Icon(icon, null, tint = accent, modifier = Modifier.padding(12.dp))
             }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(desc, style = DaraTypography.bodySmall, color = Slate400)
+            }
+            Icon(Icons.Default.ChevronLeft, null, tint = Slate400)
         }
     }
 }

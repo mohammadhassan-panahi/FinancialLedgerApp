@@ -60,6 +60,8 @@ import com.example.data.local.TransactionType
 import com.example.ui.theme.CredifyIndigo
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.viewmodel.MarketPortfolioViewModel
+import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -98,10 +100,9 @@ fun DepositScreen(
     var categoryExpanded by remember { mutableStateOf(false) }
 
     // Input Sanitization
-    val sanitizedAmount = amountInput.filter { it.isDigit() }
-    val parsedAmount = sanitizedAmount.toDoubleOrNull() ?: 0.0
-    val formattedToman = if (parsedAmount > 0) NumberFormat.getNumberInstance(Locale.US).format(parsedAmount.toLong()) else "۰"
-    val formattedRial = if (parsedAmount > 0) NumberFormat.getNumberInstance(Locale.US).format((parsedAmount * 10).toLong()) else "۰"
+    val parsedAmount = PersianNumberUtils.parseAmount(amountInput)
+    val formattedToman = if (parsedAmount.compareTo(BigDecimal.ZERO) > 0) NumberFormat.getNumberInstance(Locale.US).format(parsedAmount.toLong()) else "۰"
+    val formattedRial = if (parsedAmount.compareTo(BigDecimal.ZERO) > 0) NumberFormat.getNumberInstance(Locale.US).format(parsedAmount.multiply(BigDecimal("10")).toLong()) else "۰"
 
     Scaffold(
         topBar = {
@@ -199,7 +200,7 @@ fun DepositScreen(
                     OutlinedTextField(
                         value = amountInput,
                         onValueChange = { input ->
-                            val digitsOnly = input.filter { it.isDigit() }
+                            val digitsOnly = PersianNumberUtils.toEnglishDigits(input).filter { it.isDigit() }
                             // Prevent overflow (max 100 Billion Toman)
                             if (digitsOnly.length <= 12) {
                                 amountInput = digitsOnly
@@ -360,11 +361,11 @@ fun DepositScreen(
             // Submit Button
             Button(
                 onClick = {
-                    if (parsedAmount <= 0.0) {
+                    if (parsedAmount.compareTo(BigDecimal.ZERO) <= 0) {
                         errorMessage = "لطفاً مبلغ معتبری بیشتر از صفر وارد نمایید."
                         return@Button
                     }
-                    if (parsedAmount > 100_000_000_000.0) {
+                    if (parsedAmount.compareTo(BigDecimal("100000000000")) > 0) {
                         errorMessage = "مبلغ وارد شده خارج از سقف مجاز می‌باشد."
                         return@Button
                     }

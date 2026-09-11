@@ -39,6 +39,7 @@ fun BankAccountsScreen(
     val bankAccounts by viewModel.bankAccounts.collectAsStateWithLifecycle()
     val totalLiquidity by viewModel.totalLiquidityToman.collectAsStateWithLifecycle()
     var isBalanceVisible by remember { mutableStateOf(true) }
+    var showAddAccountDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = ObsidianSlate900,
@@ -69,7 +70,7 @@ fun BankAccountsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("کارت‌های متصل و سپرده‌ها", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
-                        TextButton(onClick = { /* TODO: Add Card */ }) {
+                        TextButton(onClick = { showAddAccountDialog = true }) {
                             Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = IndigoElectric)
                             Text("افزودن", color = IndigoElectric, style = DaraTypography.labelLarge)
                         }
@@ -103,16 +104,110 @@ fun BankAccountsScreen(
                 }
             }
 
-            // Section 4: Transaction Ledger (Mocked for UI)
+            // Section 4: Transaction Ledger
             item {
                 Text("گردش حساب و تراکنش‌ها", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
             }
-            
-            items(5) {
-                MockTransactionItem()
+
+            item {
+                // No real per-account transaction feed is wired yet — showing an honest empty
+                // state instead of fabricated ledger rows (Dara never displays fake financial data).
+                DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.ReceiptLong, null, tint = Slate600, modifier = Modifier.size(32.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("گردش حساب هنوز ثبت نشده", color = Slate400, style = DaraTypography.bodyMedium)
+                    }
+                }
             }
         }
     }
+
+    if (showAddAccountDialog) {
+        AddBankAccountDialog(
+            onDismiss = { showAddAccountDialog = false },
+            onConfirm = { name, bankName, initialBalance, colorHex ->
+                viewModel.addBankAccount(name, bankName, initialBalance, colorHex)
+                showAddAccountDialog = false
+            }
+        )
+    }
+}
+
+private val bankAccountColorSwatches = listOf(
+    "#6366F1", // IndigoElectric
+    "#10B981", // EmeraldCore
+    "#F59E0B", // RefinedAmberGold
+    "#8B5CF6",
+    "#EF4444"
+)
+
+@Composable
+fun AddBankAccountDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, bankName: String, initialBalance: BigDecimal, colorHex: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var bankName by remember { mutableStateOf("") }
+    var balanceText by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableStateOf(bankAccountColorSwatches.first()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("افزودن کارت/حساب بانکی") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = bankName,
+                    onValueChange = { bankName = it },
+                    label = { Text("نام بانک") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("عنوان حساب (مثلاً حساب جاری)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = balanceText,
+                    onValueChange = { balanceText = it },
+                    label = { Text("موجودی اولیه (تومان)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text("رنگ کارت", style = DaraTypography.labelMedium, color = Slate400)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    bankAccountColorSwatches.forEach { hex ->
+                        val color = try { Color(android.graphics.Color.parseColor(hex)) } catch (e: Exception) { IndigoElectric }
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .border(
+                                    width = if (selectedColor == hex) 2.dp else 0.dp,
+                                    color = Color.White,
+                                    shape = CircleShape
+                                )
+                                .clickable { selectedColor = hex }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val balance = PersianNumberUtils.parseAmount(balanceText)
+                if (bankName.isNotBlank() && name.isNotBlank()) {
+                    onConfirm(name, bankName, balance, selectedColor)
+                }
+            }) { Text("افزودن") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("انصراف") } }
+    )
 }
 
 @Composable
@@ -278,32 +373,5 @@ fun BankQuickAction(icon: ImageVector, label: String, color: Color) {
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(label, style = DaraTypography.labelSmall, color = Slate50)
-    }
-}
-
-@Composable
-fun MockTransactionItem() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(ObsidianSlate800.copy(alpha = 0.5f))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(EmeraldCore.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.TrendingUp, null, tint = EmeraldCore, modifier = Modifier.size(20.dp))
-            }
-            Column {
-                Text("سود ماهانه سپرده", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
-                Text("بانک سامان", style = DaraTypography.labelSmall, color = Slate400)
-            }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text("+۱,۳۸۰,۰۰۰", style = DaraTypography.titleMedium, color = EmeraldCore, fontWeight = FontWeight.Bold)
-            Text("امروز، ۰۸:۰۰", style = DaraTypography.labelSmall, color = Slate600)
-        }
     }
 }

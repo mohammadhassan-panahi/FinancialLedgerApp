@@ -251,10 +251,11 @@ class PortfolioViewModel(
     fun settleDebtCredit(entity: com.example.data.local.DebtCreditEntity) = viewModelScope.launch { repository.updateDebtCredit(entity.copy(isSettled = true)) }
 
     // Reminders
-    fun addReminder(title: String, amountRial: BigDecimal, type: com.example.data.local.ReminderType, dueDate: Long, note: String = "") {
+    fun addReminder(title: String, amountRial: BigDecimal, type: com.example.data.local.ReminderType, dueDate: Long, note: String = "", id: Long = 0) {
         viewModelScope.launch {
             repository.addReminder(
                 com.example.data.local.ReminderEntity(
+                    id = id,
                     title = title,
                     amountRial = amountRial,
                     type = type,

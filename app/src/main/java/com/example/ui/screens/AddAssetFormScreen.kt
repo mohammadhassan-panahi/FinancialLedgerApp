@@ -23,18 +23,36 @@ import com.example.data.local.PortfolioAssetType
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
+import com.example.util.PersianDateUtils
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddAssetFormScreen(
     assetType: PortfolioAssetType,
     onBack: () -> Unit,
-    onSubmit: (String, Double, Double, String) -> Unit
+    onSubmit: (String, BigDecimal, BigDecimal, Long) -> Unit
 ) {
     var assetName by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("۱") }
     var unitPrice by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("امروز") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+    val purchaseDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = { TextButton(onClick = { showDatePicker = false }) { Text("تأیید") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("انصراف") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    val q = PersianNumberUtils.parseAmount(quantity)
+    val p = PersianNumberUtils.parseAmount(unitPrice)
 
     Scaffold(
         containerColor = ObsidianSlate900,
@@ -43,8 +61,8 @@ fun AddAssetFormScreen(
         },
         bottomBar = {
             SubmitAssetFooter(
-                total = (quantity.toDoubleOrNull() ?: 0.0) * (unitPrice.toDoubleOrNull() ?: 0.0),
-                onClick = { onSubmit(assetName, quantity.toDoubleOrNull() ?: 0.0, unitPrice.toDoubleOrNull() ?: 0.0, date) }
+                total = q.multiply(p),
+                onClick = { onSubmit(assetName, q, p, purchaseDate) }
             )
         }
     ) { padding ->
@@ -84,7 +102,7 @@ fun AddAssetFormScreen(
                         PersianNumberTextField(
                             value = unitPrice,
                             onValueChange = { unitPrice = it },
-                            label = "قیمت واحد (تومان)",
+                            label = "قیمت واحد (ریال)",
                             isDecimalAllowed = true
                         )
                     }
@@ -99,10 +117,10 @@ fun AddAssetFormScreen(
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Icon(Icons.Default.CalendarToday, null, tint = IndigoElectric, modifier = Modifier.size(20.dp))
-                            Text("تاریخ معامله: $date", style = DaraTypography.bodyMedium, color = Slate50)
+                            Text("تاریخ معامله: ${PersianDateUtils.formatJalaliDate(java.util.Date(purchaseDate))}", style = DaraTypography.bodyMedium, color = Slate50)
                         }
-                        IconButton(onClick = { }) {
-                            Icon(Icons.Default.EditCalendar, null, tint = Slate600)
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.EditCalendar, null, tint = IndigoElectric)
                         }
                     }
                 }
@@ -190,7 +208,7 @@ fun AssetVisualHighlight(assetType: PortfolioAssetType) {
 }
 
 @Composable
-fun SubmitAssetFooter(total: Double, onClick: () -> Unit) {
+fun SubmitAssetFooter(total: BigDecimal, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
         color = ObsidianSlate900,
@@ -199,7 +217,7 @@ fun SubmitAssetFooter(total: Double, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("مبلغ کل خرید:", style = DaraTypography.bodySmall, color = Slate400)
-                Text(PersianNumberUtils.formatCurrency(total, isRial = false) + " تومان", style = DaraTypography.titleLarge, color = EmeraldCore, fontWeight = FontWeight.Black)
+                Text(com.example.util.formatRial(total, isRial = false), style = DaraTypography.titleLarge, color = EmeraldCore, fontWeight = FontWeight.Black)
             }
             Button(
                 onClick = onClick,

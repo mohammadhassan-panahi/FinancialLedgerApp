@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.math.BigDecimal
 import com.example.data.local.CryptoAssetEntity
 import com.example.ui.components.CryptoIcon
 import com.example.ui.components.DaraGlassCard
@@ -32,7 +33,7 @@ import com.example.util.PersianNumberUtils
 @Composable
 fun CryptoIntelligenceScreen(
     viewModel: CryptoViewModel,
-    usdRateToman: Double = 65000.0,
+    usdRateToman: BigDecimal = BigDecimal("65000"),
     onBack: () -> Unit,
     onAssetClick: (CryptoAssetEntity) -> Unit
 ) {
@@ -207,9 +208,9 @@ fun AiAllocationCallout() {
 }
 
 @Composable
-fun IntelligenceAssetCard(asset: CryptoAssetEntity, usdRateToman: Double, onClick: () -> Unit) {
-    val priceToman = (asset.priceUsd ?: 0.0) * usdRateToman
-    val change = asset.percentChange24h ?: 0.0
+fun IntelligenceAssetCard(asset: CryptoAssetEntity, usdRateToman: BigDecimal, onClick: () -> Unit) {
+    val priceToman = (asset.priceUsd ?: BigDecimal.ZERO) * usdRateToman
+    val change = asset.percentChange24h?.toDouble() ?: 0.0
     val aiScore = remember(asset.symbol) { (85..98).random() }
 
     Surface(
@@ -230,7 +231,7 @@ fun IntelligenceAssetCard(asset: CryptoAssetEntity, usdRateToman: Double, onClic
                 Text("قیمت: ${PersianNumberUtils.formatCurrency(priceToman, isRial = false)} ت", style = DaraTypography.labelSmall, color = Slate600)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(formatUsd(asset.priceUsd ?: 0.0), style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(formatUsd(asset.priceUsd ?: BigDecimal.ZERO), style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     val icon = if (change >= 0) Icons.AutoMirrored.Filled.TrendingUp else Icons.Default.TrendingDown
                     val color = if (change >= 0) EmeraldCore else RoseCoral

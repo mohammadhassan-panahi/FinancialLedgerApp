@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
+import java.math.RoundingMode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.MarketIndexEntity
 import com.example.data.local.PriceAlertEntity
@@ -46,10 +48,10 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
     // Breadth analysis (for simulated heatmap feel)
     val advancedStats = remember(watchlist) {
         if (watchlist.isEmpty()) null else {
-            val gainers = watchlist.count { it.changePercent > 0 }
-            val losers = watchlist.count { it.changePercent < 0 }
+            val gainers = watchlist.count { it.changePercent.signum() > 0 }
+            val losers = watchlist.count { it.changePercent.signum() < 0 }
             val neutral = watchlist.size - gainers - losers
-            val avgChange = watchlist.map { it.changePercent }.average()
+            val avgChange = if (watchlist.isEmpty()) 0.0 else watchlist.map { it.changePercent }.sumOf { it }.divide(watchlist.size.toBigDecimal(), RoundingMode.HALF_UP).toDouble()
             MarketBreadth(gainers, losers, neutral, avgChange)
         }
     }
@@ -290,7 +292,7 @@ fun MarketBreadthCard(stats: MarketBreadth) {
                 Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                     Text("میانگین تغییر", style = MaterialTheme.typography.labelSmall)
                     Text(
-                        com.example.util.formatPercentSigned(stats.avgChange),
+                        com.example.util.formatPercentSigned(stats.avgChange.toBigDecimal()),
                         color = if (stats.avgChange >= 0) EmeraldProfit else RoseLoss,
                         fontWeight = FontWeight.Bold
                     )
@@ -375,11 +377,11 @@ fun MainIndexHero(index: MarketIndexEntity) {
                 }
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = (if (index.changePercent >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)).copy(alpha = 0.2f)
+                    color = (if (index.changePercent.signum() >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)).copy(alpha = 0.2f)
                 ) {
                     Text(
                         text = formatPercentSigned(index.changePercent),
-                        color = if (index.changePercent >= 0) Color(0xFF81C784) else Color(0xFFFF8A80),
+                        color = if (index.changePercent.signum() >= 0) Color(0xFF81C784) else Color(0xFFFF8A80),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
@@ -415,7 +417,7 @@ fun MiniIndexCard(index: MarketIndexEntity) {
                 Text(
                     formatPercentSigned(index.changePercent),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (index.changePercent >= 0) EmeraldProfit else RoseLoss
+                    color = if (index.changePercent.signum() >= 0) EmeraldProfit else RoseLoss
                 )
             }
         }
@@ -437,12 +439,12 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                     Text(symbol.fullName, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (symbol.lastPriceRial > 0.0) {
+                    if (symbol.lastPriceRial.signum() > 0) {
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
                             Text(formatRial(symbol.lastPriceRial, isRial = isRial), fontWeight = FontWeight.Bold)
                             Text(
                                 formatPercentSigned(symbol.changePercent),
-                                color = if (symbol.changePercent >= 0) EmeraldProfit else RoseLoss
+                                color = if (symbol.changePercent.signum() >= 0) EmeraldProfit else RoseLoss
                             )
                         }
                     } else {
@@ -460,7 +462,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                     }
                 }
             }
-            if (symbol.buyPriceRial > 0.0 || symbol.sellPriceRial > 0.0) {
+            if (symbol.buyPriceRial.signum() > 0 || symbol.sellPriceRial.signum() > 0) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -468,7 +470,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                     Column {
                         Text("قیمت خرید", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            if (symbol.buyPriceRial > 0.0) formatRial(symbol.buyPriceRial, isRial = isRial) else "—",
+                            if (symbol.buyPriceRial.signum() > 0) formatRial(symbol.buyPriceRial, isRial = isRial) else "—",
                             style = MaterialTheme.typography.labelMedium,
                             color = EmeraldProfit
                         )
@@ -476,7 +478,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                     Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
                         Text("قیمت فروش", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            if (symbol.sellPriceRial > 0.0) formatRial(symbol.sellPriceRial, isRial = isRial) else "—",
+                            if (symbol.sellPriceRial.signum() > 0) formatRial(symbol.sellPriceRial, isRial = isRial) else "—",
                             style = MaterialTheme.typography.labelMedium,
                             color = RoseLoss
                         )

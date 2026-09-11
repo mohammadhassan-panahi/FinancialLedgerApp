@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.data.local.AlertDirection
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 /**
  * Small dialog for setting a price alert on one asset. Direction (ABOVE/BELOW) is inferred
@@ -20,9 +21,9 @@ import com.example.util.PersianNumberUtils
 @Composable
 fun PriceAlertDialog(
     assetName: String,
-    currentPriceRial: Double,
+    currentPriceRial: BigDecimal,
     onDismiss: () -> Unit,
-    onConfirm: (targetPriceRial: Double, direction: AlertDirection) -> Unit
+    onConfirm: (targetPriceRial: BigDecimal, direction: AlertDirection) -> Unit
 ) {
     var target by remember { mutableStateOf("") }
 
@@ -39,7 +40,7 @@ fun PriceAlertDialog(
         confirmButton = {
             Button(onClick = {
                 val t = PersianNumberUtils.parseAmount(target)
-                if (t > 0) {
+                if (t.compareTo(BigDecimal.ZERO) > 0) {
                     val direction = if (t >= currentPriceRial) AlertDirection.ABOVE else AlertDirection.BELOW
                     onConfirm(t, direction)
                 }

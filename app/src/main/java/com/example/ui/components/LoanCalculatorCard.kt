@@ -38,6 +38,8 @@ import com.example.ui.theme.CredifyIndigo
 import com.example.ui.theme.EmeraldProfit
 import com.example.ui.theme.GoldAccent
 import com.example.util.FinancialFormulas
+import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -49,8 +51,8 @@ fun LoanCalculatorCard(
     var rateInput by remember { mutableStateOf("23") }
     var monthsInput by remember { mutableStateOf("12") }
 
-    var calculatedInstallment by remember { mutableStateOf<Double?>(null) }
-    var calculatedTotalInterest by remember { mutableStateOf<Double?>(null) }
+    var calculatedInstallment by remember { mutableStateOf<BigDecimal?>(null) }
+    var calculatedTotalInterest by remember { mutableStateOf<BigDecimal?>(null) }
 
     val formatter = remember { NumberFormat.getNumberInstance(Locale.US) }
 
@@ -145,12 +147,12 @@ fun LoanCalculatorCard(
 
             Button(
                 onClick = {
-                    val p = principalInput.toDoubleOrNull() ?: 0.0
-                    val r = rateInput.toDoubleOrNull() ?: 0.0
+                    val p = PersianNumberUtils.parseAmount(principalInput)
+                    val r = PersianNumberUtils.parseAmount(rateInput)
                     val m = monthsInput.toIntOrNull() ?: 0
                     val monthly = FinancialFormulas.calculateLoanInstallment(p, r, m)
                     calculatedInstallment = monthly
-                    calculatedTotalInterest = (monthly * m) - p
+                    calculatedTotalInterest = monthly.multiply(BigDecimal(m)).subtract(p)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -215,7 +217,7 @@ fun LoanCalculatorCard(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = "${formatter.format(interest.coerceAtLeast(0.0).toLong())} تومان",
+                                    text = "${formatter.format(interest.max(BigDecimal.ZERO).toLong())} تومان",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.SemiBold
                                     ),

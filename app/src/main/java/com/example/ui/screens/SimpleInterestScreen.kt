@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
 import com.example.data.local.CalculationHistoryEntity
 import com.example.ui.components.HistoryAccordion
 import com.example.ui.components.NotebookCard
@@ -65,8 +66,8 @@ fun SimpleInterestScreen(
     var showPrintDialog by remember { mutableStateOf(false) }
 
     val principal = PersianNumberUtils.parseAmountToToman(principalInput, isRial)
-    val rate = rateInput.toDoubleOrNull() ?: 0.0
-    val durationVal = durationValueInput.toDoubleOrNull() ?: 0.0
+    val rate = rateInput.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    val durationVal = durationValueInput.toBigDecimalOrNull() ?: BigDecimal.ZERO
 
     val result = FinancialFormulas.calculateSimpleInterest(
         principal = principal,

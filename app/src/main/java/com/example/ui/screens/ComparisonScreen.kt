@@ -52,11 +52,12 @@ import com.example.ui.theme.LossRed
 import com.example.ui.theme.ProfitGreen
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun ComparisonScreen(
     historyList: List<CalculationHistoryEntity>,
-    defaultInflation: Double,
+    defaultInflation: BigDecimal,
     currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
@@ -67,16 +68,16 @@ fun ComparisonScreen(
 
     val scenarios = remember {
         mutableStateListOf(
-            FinancialFormulas.ComparisonScenarioInput("صندوق درآمد ثابت", 100000000.0, 5000000.0, 24.0, 5),
-            FinancialFormulas.ComparisonScenarioInput("طلا و سکه", 100000000.0, 5000000.0, 45.0, 5)
+            FinancialFormulas.ComparisonScenarioInput("صندوق درآمد ثابت", BigDecimal("100000000"), BigDecimal("5000000"), BigDecimal("24"), 5),
+            FinancialFormulas.ComparisonScenarioInput("طلا و سکه", BigDecimal("100000000"), BigDecimal("5000000"), BigDecimal("45"), 5)
         )
     }
 
     var includeInflationEffect by remember { mutableStateOf(true) }
-    var inflationRateInput by remember { mutableStateOf(defaultInflation.toString()) }
+    var inflationRateInput by remember { mutableStateOf(defaultInflation.toPlainString()) }
     var showPrintDialog by remember { mutableStateOf(false) }
 
-    val inflation = inflationRateInput.toDoubleOrNull() ?: 0.0
+    val inflation = PersianNumberUtils.parseAmount(inflationRateInput)
 
     val results = FinancialFormulas.compareScenarios(scenarios, inflation)
 
@@ -162,7 +163,7 @@ fun ComparisonScreen(
                                 scenarios.add(
                                     FinancialFormulas.ComparisonScenarioInput(
                                         "گزینه جدید ${PersianNumberUtils.toPersianDigits((scenarios.size + 1).toString())}",
-                                        100000000.0, 2000000.0, 30.0, 5
+                                        BigDecimal("100000000"), BigDecimal("2000000"), BigDecimal("30"), 5
                                     )
                                 )
                             },
@@ -188,9 +189,9 @@ fun ComparisonScreen(
 
                 scenarios.forEachIndexed { idx, sc ->
                     var nameState by remember(sc.name) { mutableStateOf(sc.name) }
-                    var initAmtState by remember(sc.initialAmount) { mutableStateOf(sc.initialAmount.toLong().toString()) }
-                    var monthDepState by remember(sc.monthlyDeposit) { mutableStateOf(sc.monthlyDeposit.toLong().toString()) }
-                    var rateState by remember(sc.annualRatePercent) { mutableStateOf(sc.annualRatePercent.toString()) }
+                    var initAmtState by remember(sc.initialAmount) { mutableStateOf(sc.initialAmount.toPlainString()) }
+                    var monthDepState by remember(sc.monthlyDeposit) { mutableStateOf(sc.monthlyDeposit.toPlainString()) }
+                    var rateState by remember(sc.annualRatePercent) { mutableStateOf(sc.annualRatePercent.toPlainString()) }
                     var yearsState by remember(sc.durationYears) { mutableStateOf(sc.durationYears.toString()) }
 
                     Card(
@@ -264,7 +265,7 @@ fun ComparisonScreen(
                                     value = rateState,
                                     onValueChange = {
                                         rateState = it
-                                        val v = it.toDoubleOrNull() ?: 0.0
+                                        val v = PersianNumberUtils.parseAmount(it)
                                         scenarios[idx] = scenarios[idx].copy(annualRatePercent = v)
                                     },
                                     label = "نرخ سود سالانه (٪)",
@@ -295,7 +296,7 @@ fun ComparisonScreen(
                     onClick = {
                         val title = "مقایسه ${PersianNumberUtils.toPersianDigits(scenarios.size.toString())} گزینه"
                         val best = results.maxByOrNull { it.finalNominalValue }
-                        val summary = "بهترین: ${best?.name} (${PersianNumberUtils.formatCurrency(best?.finalNominalValue ?: 0.0)})"
+                        val summary = "بهترین: ${best?.name} (${PersianNumberUtils.formatCurrency(best?.finalNominalValue ?: BigDecimal.ZERO)})"
                         val params = scenarios.joinToString(";") { "${it.name},${it.initialAmount},${it.monthlyDeposit},${it.annualRatePercent},${it.durationYears}" }
                         onAddHistory(
                             CalculationHistoryEntity(
@@ -351,7 +352,7 @@ fun ComparisonScreen(
             val best = results.maxByOrNull { it.finalNominalValue }
             ResultHeaderBanner(
                 title = "نتیجه مقایسه گزینه‌ها",
-                mainResultValue = PersianNumberUtils.formatCurrency(best?.finalNominalValue ?: 0.0, isRial = isRial),
+                mainResultValue = PersianNumberUtils.formatCurrency(best?.finalNominalValue ?: BigDecimal.ZERO, isRial = isRial),
                 mainResultLabel = "بهترین عملکرد مربوط به گزینه «${best?.name}»",
                 secondaryItems = results.map { res ->
                     res.name to PersianNumberUtils.formatCurrency(res.finalNominalValue, isRial = isRial)
@@ -375,9 +376,9 @@ fun ComparisonScreen(
                                 scenarios.add(
                                     FinancialFormulas.ComparisonScenarioInput(
                                         name = parts[0],
-                                        initialAmount = parts[1].toDoubleOrNull() ?: 100000000.0,
-                                        monthlyDeposit = parts[2].toDoubleOrNull() ?: 0.0,
-                                        annualRatePercent = parts[3].toDoubleOrNull() ?: 20.0,
+                                        initialAmount = parts[1].toBigDecimalOrNull() ?: BigDecimal("100000000"),
+                                        monthlyDeposit = parts[2].toBigDecimalOrNull() ?: BigDecimal.ZERO,
+                                        annualRatePercent = parts[3].toBigDecimalOrNull() ?: BigDecimal("20"),
                                         durationYears = parts[4].toIntOrNull() ?: 5
                                     )
                                 )

@@ -4,9 +4,11 @@ import com.example.crypto.analysis.CandleStick
 import com.example.data.local.CryptoAssetEntity
 import com.example.data.local.CryptoDao
 import com.example.data.local.CryptoInfoEntity
+import com.example.data.local.GlobalMetricsEntity
 import com.example.data.remote.BinanceApiService
 import com.example.data.remote.CmcCoinDto
 import com.example.data.remote.CoinMarketCapApiService
+import com.example.data.remote.FearGreedApiService
 import kotlinx.coroutines.flow.Flow
 import java.math.BigDecimal
 
@@ -31,10 +33,12 @@ class CryptoRepository(
     private val cryptoDao: CryptoDao,
     private val apiKey: String = "",
     private val apiService: CoinMarketCapApiService? = if (apiKey.isNotBlank()) CoinMarketCapApiService.create() else null,
-    private val binanceService: BinanceApiService = BinanceApiService.create()
+    private val binanceService: BinanceApiService = BinanceApiService.create(),
+    private val fngService: FearGreedApiService = FearGreedApiService.create()
 ) {
     val allAssets: Flow<List<CryptoAssetEntity>> = cryptoDao.getAllAssets()
     val watchlist: Flow<List<CryptoAssetEntity>> = cryptoDao.getWatchlist()
+    val globalMetrics: Flow<GlobalMetricsEntity?> = cryptoDao.getGlobalMetrics()
 
     /**
      * Fetches historical OHLC data from Binance for technical analysis.
@@ -177,7 +181,7 @@ class CryptoRepository(
     suspend fun getCachedInfo(cmcId: Int): CryptoInfoEntity? = cryptoDao.getInfo(cmcId)
 
     /** Global market snapshot: total market cap, BTC/ETH dominance. Cheap call, 1 credit. */
-    suspend fun fetchGlobalMetrics(): Result<GlobalMarketSnapshot> {
+    suspend fun fetchGlobalMetrics(): Result<GlobalMetricsEntity> {
         val service = apiService ?: return Result.failure(IllegalStateException("کلید CoinMarketCap تنظیم نشده است"))
         return try {
             val response = service.getGlobalMetrics(apiKey = apiKey, convert = "USD")
@@ -189,22 +193,43 @@ class CryptoRepository(
                 )
             }
             val usdQuote = data.quote?.get("USD")
-            Result.success(
-                GlobalMarketSnapshot(
-                    totalMarketCapUsd = usdQuote?.totalMarketCap?.toBigDecimal(),
-                    totalVolume24hUsd = usdQuote?.totalVolume24h?.toBigDecimal(),
-                    btcDominance = data.btcDominance?.toBigDecimal(),
-                    ethDominance = data.ethDominance?.toBigDecimal(),
-                    activeCryptocurrencies = data.activeCryptocurrencies
-                )
+            
+            // Try to fetch Fear & Greed as well
+            val fng = try {
+                val fngRes = fngService.getFearAndGreed()
+                fngRes.body()?.data?.firstOrNull()
+            } catch (e: Exception) { null }
+
+            val entity = GlobalMetricsEntity(
+                totalMarketCapUsd = usdQuote?.totalMarketCap?.toBigDecimal(),
+                totalVolume24hUsd = usdQuote?.totalVolume24h?.toBigDecimal(),
+                btcDominance = data.btcDominance?.toBigDecimal(),
+                ethDominance = data.ethDominance?.toBigDecimal(),
+                activeCryptocurrencies = data.activeCryptocurrencies,
+                fearAndGreedValue = fng?.value?.toIntOrNull(),
+                fearAndGreedLabel = translateFngLabel(fng?.valueClassification),
+                lastUpdated = System.currentTimeMillis()
             )
+            
+            cryptoDao.insertGlobalMetrics(entity)
+            Result.success(entity)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
+    private fun translateFngLabel(label: String?): String = when (label?.lowercase()) {
+        "extreme fear" -> "ترس شدید"
+        "fear" -> "ترس"
+        "neutral" -> "خنثی"
+        "greed" -> "طمع"
+        "extreme greed" -> "طمع شدید"
+        else -> "نامشخص"
+    }
 }
 
 /** "Global Market" section of the requested feature list — total cap + BTC/ETH dominance. */
+@Deprecated("Use GlobalMetricsEntity instead", ReplaceWith("GlobalMetricsEntity"))
 data class GlobalMarketSnapshot(
     val totalMarketCapUsd: BigDecimal?,
     val totalVolume24hUsd: BigDecimal?,

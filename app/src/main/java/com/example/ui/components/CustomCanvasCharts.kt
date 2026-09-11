@@ -31,10 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.AccentGold
-import com.example.ui.theme.LossRed
-import com.example.ui.theme.PrimaryNavy
-import com.example.ui.theme.ProfitGreen
 import com.example.util.PersianNumberUtils
+import com.example.util.safeDiv
+import com.example.util.sumOf
+import java.math.BigDecimal
 
 val chartColors = listOf(
     Color(0xFFC9A24B), // Gold
@@ -49,7 +49,7 @@ val chartColors = listOf(
 // --- 1. PIE / DONUT CHART ---
 data class PieChartSlice(
     val label: String,
-    val value: Double,
+    val value: BigDecimal,
     val color: Color
 )
 
@@ -60,7 +60,7 @@ fun ComposePieChart(
     modifier: Modifier = Modifier
 ) {
     val total = slices.sumOf { it.value }
-    if (total <= 0) {
+    if (total.compareTo(BigDecimal.ZERO) <= 0) {
         Box(
             modifier = modifier
                 .fillMaxWidth()
@@ -85,7 +85,7 @@ fun ComposePieChart(
             Canvas(modifier = Modifier.fillMaxWidth().height(160.dp)) {
                 var startAngle = -90f
                 slices.forEach { slice ->
-                    val sweepAngle = ((slice.value / total) * 360f).toFloat()
+                    val sweepAngle = (slice.value.safeDiv(total).multiply(BigDecimal("360"))).toFloat()
                     drawArc(
                         color = slice.color,
                         startAngle = startAngle,
@@ -112,7 +112,7 @@ fun ComposePieChart(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             slices.forEach { slice ->
-                val pct = (slice.value / total) * 100
+                val pct = slice.value.safeDiv(total).multiply(BigDecimal("100"))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -137,7 +137,7 @@ fun ComposePieChart(
 // --- 2. LINE CHART ---
 data class LineChartSeries(
     val name: String,
-    val points: List<Pair<Double, Double>>, // (x: year/index, y: value)
+    val points: List<Pair<Double, BigDecimal>>, // (x: year/index, y: value)
     val color: Color,
     val isDotted: Boolean = false
 )
@@ -153,8 +153,8 @@ fun ComposeLineChart(
     val allY = seriesList.flatMap { it.points.map { p -> p.second } }
     if (allY.isEmpty()) return
 
-    val minY = 0.0
-    val maxY = (allY.maxOrNull() ?: 1.0) * 1.1
+    val minY = BigDecimal.ZERO
+    val maxY = (allY.maxOfOrNull { it } ?: BigDecimal.ONE).multiply(BigDecimal("1.1"))
 
     val allX = seriesList.flatMap { it.points.map { p -> p.first } }
     val minX = allX.minOrNull() ?: 0.0
@@ -205,7 +205,7 @@ fun ComposeLineChart(
                 val path = Path()
                 series.points.forEachIndexed { idx, pt ->
                     val xRatio = if (maxX > minX) (pt.first - minX) / (maxX - minX) else 0.0
-                    val yRatio = if (maxY > minY) (pt.second - minY) / (maxY - minY) else 0.0
+                    val yRatio = if (maxY.compareTo(minY) > 0) pt.second.subtract(minY).safeDiv(maxY.subtract(minY)).toDouble() else 0.0
 
                     val x = (xRatio * width).toFloat()
                     val y = (height - (yRatio * height)).toFloat()
@@ -257,7 +257,7 @@ fun ComposeLineChart(
 // --- 3. BAR CHART ---
 data class BarChartItem(
     val label: String,
-    val value: Double,
+    val value: BigDecimal,
     val color: Color
 )
 
@@ -267,7 +267,7 @@ fun ComposeBarChart(
     modifier: Modifier = Modifier
 ) {
     if (items.isEmpty()) return
-    val maxValue = (items.maxOfOrNull { it.value } ?: 1.0) * 1.1
+    val maxValue = (items.maxOfOrNull { it.value } ?: BigDecimal.ONE).multiply(BigDecimal("1.1"))
 
     Column(modifier = modifier.fillMaxWidth()) {
         Canvas(
@@ -285,7 +285,7 @@ fun ComposeBarChart(
             val barWidth = (width / (items.size * 2)).coerceIn(16f, 40f)
 
             items.forEachIndexed { idx, bar ->
-                val ratio = if (maxValue > 0) bar.value / maxValue else 0.0
+                val ratio = if (maxValue.compareTo(BigDecimal.ZERO) > 0) bar.value.safeDiv(maxValue).toDouble() else 0.0
                 val barHeight = (ratio * height).toFloat()
                 val x = idx * (width / items.size) + (width / items.size - barWidth) / 2
                 val y = height - barHeight

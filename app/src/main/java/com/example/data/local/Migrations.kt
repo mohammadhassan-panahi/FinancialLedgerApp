@@ -381,9 +381,30 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `global_market_metrics` (
+                `id` INTEGER NOT NULL,
+                `totalMarketCapUsd` TEXT,
+                `totalVolume24hUsd` TEXT,
+                `btcDominance` TEXT,
+                `ethDominance` TEXT,
+                `activeCryptocurrencies` INTEGER,
+                `fearAndGreedValue` INTEGER,
+                `fearAndGreedLabel` TEXT,
+                `lastUpdated` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+    }
+}
+
 /** All migrations in order — pass this whole array to `.addMigrations(...)`. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8,
     MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
-    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17
+    MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18
 )

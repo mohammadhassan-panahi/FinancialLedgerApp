@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
+import java.math.RoundingMode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.PortfolioAssetType
 import com.example.ui.components.DaraGlassCard
@@ -38,35 +40,35 @@ fun ScenarioSimulatorScreen(
     var cryptoChange by remember { mutableStateOf(35f) }
 
     // Real base values from user portfolio
-    val baseWorth = (summary?.totalValueRial ?: 0.0) / 10.0 // To Toman
+    val baseWorth = (summary?.totalValueRial ?: BigDecimal.ZERO).divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP)
     
-    var goldBase = 0.0
-    var stockBase = 0.0
-    var usdBase = 0.0
-    var cryptoBase = 0.0
+    var goldBase = BigDecimal.ZERO
+    var stockBase = BigDecimal.ZERO
+    var usdBase = BigDecimal.ZERO
+    var cryptoBase = BigDecimal.ZERO
     
     val iterator = holdings.iterator()
     while (iterator.hasNext()) {
         val holding = iterator.next()
         when (holding.assetType) {
-            PortfolioAssetType.GOLD -> goldBase += holding.currentValueRial / 10.0
-            PortfolioAssetType.STOCK -> stockBase += holding.currentValueRial / 10.0
-            PortfolioAssetType.USD -> usdBase += holding.currentValueRial / 10.0
-            PortfolioAssetType.CRYPTO -> cryptoBase += holding.currentValueRial / 10.0
+            PortfolioAssetType.GOLD -> goldBase = goldBase.add(holding.currentValueRial.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP))
+            PortfolioAssetType.STOCK -> stockBase = stockBase.add(holding.currentValueRial.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP))
+            PortfolioAssetType.USD -> usdBase = usdBase.add(holding.currentValueRial.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP))
+            PortfolioAssetType.CRYPTO -> cryptoBase = cryptoBase.add(holding.currentValueRial.divide(BigDecimal.TEN, 2, RoundingMode.HALF_UP))
             else -> {}
         }
     }
     
-    val otherBase = baseWorth - (goldBase + stockBase + usdBase + cryptoBase)
+    val otherBase = baseWorth.subtract(goldBase.add(stockBase).add(usdBase).add(cryptoBase))
 
-    val goldSim = goldBase * (1 + goldChange / 100)
-    val stockSim = stockBase * (1 + stockChange / 100)
-    val usdSim = usdBase * (1 + usdChange / 100)
-    val cryptoSim = cryptoBase * (1 + cryptoChange / 100)
+    val goldSim = goldBase.multiply(BigDecimal.ONE.add(goldChange.toBigDecimal().divide(BigDecimal("100"), 4, RoundingMode.HALF_UP)))
+    val stockSim = stockBase.multiply(BigDecimal.ONE.add(stockChange.toBigDecimal().divide(BigDecimal("100"), 4, RoundingMode.HALF_UP)))
+    val usdSim = usdBase.multiply(BigDecimal.ONE.add(usdChange.toBigDecimal().divide(BigDecimal("100"), 4, RoundingMode.HALF_UP)))
+    val cryptoSim = cryptoBase.multiply(BigDecimal.ONE.add(cryptoChange.toBigDecimal().divide(BigDecimal("100"), 4, RoundingMode.HALF_UP)))
 
-    val totalProjected = goldSim + stockSim + usdSim + cryptoSim + otherBase
-    val delta = totalProjected - baseWorth
-    val percentDelta = if (baseWorth > 0) ((delta / baseWorth) * 100).toFloat() else 0f
+    val totalProjected = goldSim.add(stockSim).add(usdSim).add(cryptoSim).add(otherBase)
+    val delta = totalProjected.subtract(baseWorth)
+    val percentDelta = if (baseWorth.signum() > 0) delta.divide(baseWorth, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100")).toFloat() else 0f
 
     Scaffold(
         containerColor = ObsidianSlate900,
@@ -208,7 +210,7 @@ fun EngineStatusStrip() {
 }
 
 @Composable
-fun ProjectedWealthCard(total: Double, percent: Float, delta: Double) {
+fun ProjectedWealthCard(total: BigDecimal, percent: Float, delta: BigDecimal) {
     DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("ارزش برآوردی ثروت در افق سناریو", style = DaraTypography.labelSmall, color = Slate400)
@@ -229,7 +231,7 @@ fun ProjectedWealthCard(total: Double, percent: Float, delta: Double) {
             }
             HorizontalDivider(color = GlassBorderLight)
             Text(
-                "اختلاف خالص: ${if (delta >= 0) "+" else ""}${PersianNumberUtils.formatDecimal(delta)} تومان",
+                "اختلاف خالص: ${if (delta.signum() >= 0) "+" else ""}${PersianNumberUtils.formatDecimal(delta)} تومان",
                 style = DaraTypography.bodySmall,
                 color = Slate400
             )

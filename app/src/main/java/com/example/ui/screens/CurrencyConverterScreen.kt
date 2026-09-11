@@ -78,15 +78,15 @@ fun CurrencyConverterScreen(onBack: () -> Unit = {}) {
 
     val parsedVal = PersianNumberUtils.parseAmount(inputString)
 
-    val tomanAmount: Double
-    val rialAmount: Double
+    val tomanAmount: java.math.BigDecimal
+    val rialAmount: java.math.BigDecimal
 
     if (isTomanToRial) {
         tomanAmount = parsedVal
-        rialAmount = parsedVal * 10.0
+        rialAmount = parsedVal.multiply(java.math.BigDecimal("10"))
     } else {
         rialAmount = parsedVal
-        tomanAmount = parsedVal / 10.0
+        tomanAmount = parsedVal.divide(java.math.BigDecimal("10"), 2, java.math.RoundingMode.HALF_UP)
     }
 
     val formattedToman = PersianNumberUtils.formatCurrency(tomanAmount, showSuffix = true)

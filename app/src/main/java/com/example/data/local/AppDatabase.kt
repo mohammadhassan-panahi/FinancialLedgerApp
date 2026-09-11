@@ -38,9 +38,10 @@ import java.math.BigDecimal
         RiskProfileEntity::class,
         InvestmentRoadmapEntity::class,
         NewsEntity::class,
-        PortfolioSnapshotEntity::class
+        PortfolioSnapshotEntity::class,
+        GlobalMetricsEntity::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = false
 )
 @TypeConverters(BigDecimalConverter::class)

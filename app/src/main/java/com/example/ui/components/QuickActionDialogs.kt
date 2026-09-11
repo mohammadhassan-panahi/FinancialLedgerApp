@@ -26,12 +26,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.data.local.TransactionType
 import com.example.ui.theme.CredifyIndigo
+import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun TransactionActionDialog(
     actionType: QuickActionType,
     onDismiss: () -> Unit,
-    onConfirmTransaction: (title: String, amount: Double, type: TransactionType, category: String) -> Unit
+    onConfirmTransaction: (title: String, amount: BigDecimal, type: TransactionType, category: String) -> Unit
 ) {
     var titleInput by remember {
         mutableStateOf(
@@ -93,7 +95,7 @@ fun TransactionActionDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val amount = amountInput.toDoubleOrNull() ?: 0.0
+                    val amount = PersianNumberUtils.parseAmount(amountInput)
                     val type = when (actionType) {
                         QuickActionType.DEPOSIT -> TransactionType.DEPOSIT
                         QuickActionType.TRANSFER -> TransactionType.TRANSFER

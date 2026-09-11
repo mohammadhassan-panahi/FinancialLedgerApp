@@ -39,6 +39,7 @@ fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: BigDecimal = BigDecim
 
     if (selectedAsset != null) {
         CryptoDetailScreen(
+            viewModel = viewModel,
             asset = selectedAsset!!, 
             usdRateToman = usdRateToman,
             onBack = { viewModel.closeDetail() }
@@ -124,7 +125,7 @@ fun CryptoAssetCardPremium(
                 Text(asset.symbol, style = DaraTypography.labelSmall, color = Slate400)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(formatUsd(asset.priceUsd ?: 0.0), style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(formatUsd(asset.priceUsd ?: BigDecimal.ZERO), style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
                 Text(
                     PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " ت",
                     style = DaraTypography.labelSmall,

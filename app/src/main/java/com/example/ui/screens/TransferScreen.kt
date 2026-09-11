@@ -56,6 +56,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.TransactionType
 import com.example.ui.theme.CredifyIndigo
@@ -103,8 +104,8 @@ fun TransferScreen(
     var categoryExpanded by remember { mutableStateOf(false) }
 
     val sanitizedAmount = amountInput.filter { it.isDigit() }
-    val parsedAmount = sanitizedAmount.toDoubleOrNull() ?: 0.0
-    val formattedToman = if (parsedAmount > 0) NumberFormat.getNumberInstance(Locale.US).format(parsedAmount.toLong()) else "۰"
+    val parsedAmount = sanitizedAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    val formattedToman = if (parsedAmount.signum() > 0) NumberFormat.getNumberInstance(Locale.US).format(parsedAmount.toLong()) else "۰"
     val formattedBalance = NumberFormat.getNumberInstance(Locale.US).format(availableBalance.toLong())
 
     val isInsufficientBalance = parsedAmount > availableBalance
@@ -414,7 +415,7 @@ fun TransferScreen(
             // Submit Button
             Button(
                 onClick = {
-                    if (parsedAmount <= 0.0) {
+                    if (parsedAmount.signum() <= 0) {
                         errorMessage = "لطفاً مبلغ معتبری بیشتر از صفر وارد نمایید."
                         return@Button
                     }
@@ -434,7 +435,7 @@ fun TransferScreen(
                     Toast.makeText(context, "انتقال $formattedToman تومان با موفقیت انجام شد.", Toast.LENGTH_SHORT).show()
                     onBack()
                 },
-                enabled = !isInsufficientBalance && parsedAmount > 0,
+                enabled = !isInsufficientBalance && parsedAmount.signum() > 0,
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CredifyViolet),
                 modifier = Modifier

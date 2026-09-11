@@ -47,21 +47,22 @@ import com.example.ui.theme.CredifyIndigo
 import com.example.ui.theme.CredifyViolet
 import com.example.ui.theme.DarkSlateSurface
 import com.example.ui.theme.GoldAccent
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
 fun CredifyHeaderCard(
-    portfolioBalanceToman: Double,
+    portfolioBalanceToman: BigDecimal,
     cardHolderName: String = "دفتر محاسبات مالی VIP",
     cardNumberMasked: String = "6037 •••• •••• 8842",
-    pnlPercentage: Double = 12.4,
+    pnlPercentage: BigDecimal = BigDecimal("12.4"),
     modifier: Modifier = Modifier
 ) {
     var isBalanceVisible by remember { mutableStateOf(true) }
 
     val formattedBalance = remember(portfolioBalanceToman) {
-        val formatter = NumberFormat.getNumberInstance(Locale.US)
+        val formatter = java.text.NumberFormat.getNumberInstance(java.util.Locale.US)
         formatter.format(portfolioBalanceToman.toLong())
     }
 
@@ -229,17 +230,17 @@ fun CredifyHeaderCard(
                         modifier = Modifier
                             .clip(CircleShape)
                             .background(
-                                if (pnlPercentage >= 0) Color(0xFF10B981).copy(alpha = 0.25f)
+                                if (pnlPercentage >= BigDecimal.ZERO) Color(0xFF10B981).copy(alpha = 0.25f)
                                 else Color(0xFFEF4444).copy(alpha = 0.25f)
                             )
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = if (pnlPercentage >= 0) "+${pnlPercentage}% سود" else "${pnlPercentage}% زیان",
+                            text = if (pnlPercentage >= BigDecimal.ZERO) "+${pnlPercentage}% سود" else "${pnlPercentage}% زیان",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = if (pnlPercentage >= 0) Color(0xFF34D399) else Color(0xFFF87171),
+                            color = if (pnlPercentage >= BigDecimal.ZERO) Color(0xFF34D399) else Color(0xFFF87171),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )

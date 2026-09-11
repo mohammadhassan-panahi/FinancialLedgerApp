@@ -47,7 +47,6 @@ import com.example.ui.components.ResultHeaderBanner
 import com.example.ui.theme.AccentGold
 import com.example.ui.theme.DaraTypography
 import com.example.ui.theme.IndigoElectric
-import com.example.ui.theme.LossRed
 import com.example.ui.theme.ObsidianSlate900
 import com.example.ui.theme.ProfitGreen
 import com.example.ui.theme.Slate400
@@ -55,12 +54,13 @@ import com.example.ui.theme.Slate50
 import com.example.ui.theme.Slate600
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
+import java.math.BigDecimal
 
 @Composable
 fun CompoundInterestScreen(
     historyList: List<CalculationHistoryEntity>,
-    defaultInflation: Double,
-    defaultTax: Double,
+    defaultInflation: BigDecimal,
+    defaultTax: BigDecimal,
     currencyUnit: String = "تومان",
     onAddHistory: (CalculationHistoryEntity) -> Unit,
     onDeleteHistory: (Long) -> Unit,
@@ -77,23 +77,23 @@ fun CompoundInterestScreen(
     var targetValueInput by remember { mutableStateOf(if (isRial) "10000000000" else "1000000000") }
     var rateInput by remember { mutableStateOf("30") }
     var yearsInput by remember { mutableStateOf("5") }
-    var inflationInput by remember { mutableStateOf(defaultInflation.toString()) }
-    var taxInput by remember { mutableStateOf(defaultTax.toString()) }
+    var inflationInput by remember { mutableStateOf(defaultInflation.toPlainString()) }
+    var taxInput by remember { mutableStateOf(defaultTax.toPlainString()) }
 
     var showPrintDialog by remember { mutableStateOf(false) }
 
     val initialP = PersianNumberUtils.parseAmountToToman(initialPrincipalInput, isRial)
     val monthlyP = PersianNumberUtils.parseAmountToToman(monthlyDepositInput, isRial)
     val targetVal = PersianNumberUtils.parseAmountToToman(targetValueInput, isRial)
-    val rate = rateInput.toDoubleOrNull() ?: 0.0
+    val rate = PersianNumberUtils.parseAmount(rateInput)
     val years = yearsInput.toIntOrNull() ?: 1
-    val inflation = inflationInput.toDoubleOrNull() ?: 0.0
-    val tax = taxInput.toDoubleOrNull() ?: 0.0
+    val inflation = PersianNumberUtils.parseAmount(inflationInput)
+    val tax = PersianNumberUtils.parseAmount(taxInput)
 
     // Calculations
     val compResult = FinancialFormulas.calculateCompoundInterest(
         initialPrincipal = initialP,
-        monthlyDeposit = if (isTargetMode) 0.0 else monthlyP,
+        monthlyDeposit = if (isTargetMode) BigDecimal.ZERO else monthlyP,
         annualRatePercent = rate,
         years = years,
         compoundingFrequency = "monthly",
@@ -108,7 +108,7 @@ fun CompoundInterestScreen(
             annualRatePercent = rate,
             years = years
         )
-    } else 0.0
+    } else BigDecimal.ZERO
 
     val copySummaryText = if (!isTargetMode) {
         """

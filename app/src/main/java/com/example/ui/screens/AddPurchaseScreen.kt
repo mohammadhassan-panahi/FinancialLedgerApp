@@ -31,10 +31,12 @@ import com.example.ui.components.DaraGlassCard
 import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
+import com.example.util.PersianDateUtils
 import com.example.util.PersianNumberUtils
 import com.example.util.formatRial
 import java.math.BigDecimal
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPurchaseScreen(
     viewModel: PortfolioViewModel,
@@ -48,6 +50,19 @@ fun AddPurchaseScreen(
     var assetName by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
     var unitPrice by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+    val purchaseDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = { TextButton(onClick = { showDatePicker = false }) { Text("تأیید") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("انصراف") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     val allMarketRates by viewModel.marketRates.collectAsStateWithLifecycle()
     val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle()
@@ -115,6 +130,8 @@ fun AddPurchaseScreen(
                         onQuantityChange = { quantity = it },
                         unitPrice = unitPrice,
                         onUnitPriceChange = { unitPrice = it },
+                        purchaseDate = purchaseDate,
+                        onPickDate = { showDatePicker = true },
                         onAutoFill = { autoFillPrice() },
                         onSubmit = {
                             val q = PersianNumberUtils.parseAmount(quantity)
@@ -125,7 +142,7 @@ fun AddPurchaseScreen(
                                 assetName = assetName,
                                 quantity = q,
                                 unitPriceRial = p,
-                                purchaseDate = System.currentTimeMillis()
+                                purchaseDate = purchaseDate
                             )
                             // Reset and go back or show success
                             currentStep = 1
@@ -305,6 +322,8 @@ fun AssetDetailsFormStep(
     onQuantityChange: (String) -> Unit,
     unitPrice: String,
     onUnitPriceChange: (String) -> Unit,
+    purchaseDate: Long,
+    onPickDate: () -> Unit,
     onAutoFill: () -> Unit,
     onSubmit: () -> Unit
 ) {
@@ -356,6 +375,31 @@ fun AssetDetailsFormStep(
                         label = "قیمت به ریال",
                         suffix = "ریال"
                     )
+                }
+
+                // Purchase Date
+                Column {
+                    Text("تاریخ خرید", style = DaraTypography.labelMedium, color = Slate400)
+                    Surface(
+                        onClick = onPickDate,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = ObsidianSlate600.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, ObsidianSlate600)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                PersianDateUtils.formatJalaliDate(java.util.Date(purchaseDate)),
+                                style = DaraTypography.bodyMedium,
+                                color = Slate50
+                            )
+                            Icon(Icons.Default.CalendarMonth, null, tint = IndigoElectric, modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
 
                 // Total Calculation

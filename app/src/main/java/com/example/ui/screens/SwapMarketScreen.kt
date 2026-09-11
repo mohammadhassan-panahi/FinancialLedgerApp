@@ -61,6 +61,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.math.BigDecimal
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.TransactionType
 import com.example.ui.theme.CredifyIndigo
@@ -109,17 +110,17 @@ fun SwapMarketScreen(
     var fundDropdownExpanded by remember { mutableStateOf(false) }
 
     // Calculation logic
-    val currentRate = defaultRates[selectedAsset] ?: 3850000.0
-    val parsedQty = assetQuantityInput.toDoubleOrNull() ?: 0.0
-    val rawGoldToman = parsedQty * currentRate
-    val feeRate = 0.0015 // 0.15% brokerage fee
-    val feeToman = rawGoldToman * feeRate
-    val netGoldToman = rawGoldToman - feeToman
+    val currentRate = BigDecimal.valueOf(defaultRates[selectedAsset] ?: 3850000.0)
+    val parsedQty = assetQuantityInput.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    val rawGoldToman = parsedQty.multiply(currentRate)
+    val feeRate = BigDecimal("0.0015") // 0.15% brokerage fee
+    val feeToman = rawGoldToman.multiply(feeRate)
+    val netGoldToman = rawGoldToman.subtract(feeToman)
 
-    val currentFundNav = funds.find { it.name == selectedFundName }?.navToman ?: 1250.0
-    val parsedUnits = fundUnitsInput.toDoubleOrNull() ?: 0.0
-    val rawFundToman = parsedUnits * currentFundNav
-    val netFundToman = rawFundToman - (rawFundToman * feeRate)
+    val currentFundNav = funds.find { it.name == selectedFundName }?.navToman ?: BigDecimal("1250")
+    val parsedUnits = fundUnitsInput.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    val rawFundToman = parsedUnits.multiply(currentFundNav)
+    val netFundToman = rawFundToman.subtract(rawFundToman.multiply(feeRate))
 
     val formattedNetGold = NumberFormat.getNumberInstance(Locale.US).format(netGoldToman.toLong())
     val formattedNetFund = NumberFormat.getNumberInstance(Locale.US).format(netFundToman.toLong())
@@ -396,7 +397,7 @@ fun SwapMarketScreen(
 
                 Button(
                     onClick = {
-                        if (netGoldToman <= 0) {
+                        if (netGoldToman.signum() <= 0) {
                             Toast.makeText(context, "لطفاً مقادیر معتبری وارد نمایید.", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
@@ -558,7 +559,7 @@ fun SwapMarketScreen(
 
                 Button(
                     onClick = {
-                        if (netFundToman <= 0) {
+                        if (netFundToman.signum() <= 0) {
                             Toast.makeText(context, "لطفاً تعداد واحدهای معتبری وارد نمایید.", Toast.LENGTH_SHORT).show()
                             return@Button
                         }

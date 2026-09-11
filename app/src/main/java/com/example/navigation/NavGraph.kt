@@ -48,6 +48,7 @@ object Screen {
     const val AssetComparison = "asset_comparison"
     const val PortfolioReport = "portfolio_report"
     const val CryptoIntelligence = "crypto_intelligence"
+    const val CryptoDetail = "crypto_detail"
     const val AddAssetForm = "add_asset_form"
 
     // Previously unreachable screens — now wired in.
@@ -192,11 +193,31 @@ fun NavGraph(
         }
 
         composable(Screen.CryptoIntelligence) {
-            com.example.ui.screens.CryptoIntelligenceScreen(
+            com.example.ui.screens.CryptoMarketDashboardScreen(
                 viewModel = cryptoViewModel,
                 onBack = { navController.popBackStack() },
-                onAssetClick = { /* Handle asset click */ }
+                onAssetClick = { asset ->
+                    cryptoViewModel.selectAsset(asset)
+                    navController.navigate(Screen.CryptoDetail)
+                },
+                onNavigateToScanner = { navController.navigate(Screen.MarketScanner) }
             )
+        }
+
+        composable(Screen.CryptoDetail) {
+            val asset by cryptoViewModel.selectedAsset.collectAsStateWithLifecycle()
+            val usdRateToman = BigDecimal("65000") // In a real app, fetch from repository
+            asset?.let {
+                com.example.ui.screens.CryptoDetailScreen(
+                    viewModel = cryptoViewModel,
+                    asset = it,
+                    usdRateToman = usdRateToman,
+                    onBack = {
+                        navController.popBackStack()
+                        cryptoViewModel.closeDetail()
+                    }
+                )
+            }
         }
 
         composable(Screen.Portfolio) {
@@ -303,8 +324,8 @@ fun NavGraph(
             com.example.ui.screens.AddAssetFormScreen(
                 assetType = assetType,
                 onBack = { navController.popBackStack() },
-                onSubmit = { name, qty, price, date ->
-                    viewModel.addPurchase(assetType, name, name, qty, price, System.currentTimeMillis(), "Manual")
+                onSubmit = { name, qty, price, purchaseDate ->
+                    viewModel.addPurchase(assetType, name, name, qty, price, purchaseDate, "Manual")
                     navController.navigate(Screen.Portfolio) {
                         popUpTo(Screen.Dashboard) { inclusive = false }
                     }
@@ -336,8 +357,8 @@ fun NavGraph(
             val history by calculatorViewModel.getHistoryForSection("compound").collectAsStateWithLifecycle(initialValue = emptyList())
             com.example.ui.screens.CompoundInterestScreen(
                 historyList = history,
-                defaultInflation = 40.0,
-                defaultTax = 0.0,
+                defaultInflation = java.math.BigDecimal("40.0"),
+                defaultTax = java.math.BigDecimal("0.0"),
                 onAddHistory = { calculatorViewModel.addHistory(it) },
                 onDeleteHistory = { calculatorViewModel.deleteHistory(it) },
                 onClearHistory = { calculatorViewModel.clearSectionHistory("compound") },

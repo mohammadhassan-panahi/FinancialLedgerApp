@@ -34,14 +34,12 @@ import com.example.ui.components.PersianNumberTextField
 import com.example.ui.components.PrintPdfDialog
 import com.example.ui.components.ResultHeaderBanner
 import com.example.ui.theme.AccentGold
-import com.example.ui.theme.LossRed
-import com.example.ui.theme.ProfitGreen
 import com.example.util.FinancialFormulas
 import com.example.util.PersianNumberUtils
 import com.example.data.local.MarketRateEntity
 import com.example.data.local.CryptoAssetEntity
-import com.example.ui.components.PersianNumberTextField
 import com.example.util.RIAL_PER_TOMAN
+import java.math.BigDecimal
 
 @Composable
 fun GoldFxScreen(
@@ -67,12 +65,12 @@ fun GoldFxScreen(
 
     var showPrintDialog by remember { mutableStateOf(false) }
     
-    val usdRate = marketRates.find { it.assetCode == "USD" }?.priceToman ?: 60000.0
+    val usdRate = marketRates.find { it.assetCode == "USD" }?.priceToman ?: BigDecimal("60000")
 
     val buyP = PersianNumberUtils.parseAmountToToman(buyPriceInput, isRial)
     val sellP = PersianNumberUtils.parseAmountToToman(sellPriceInput, isRial)
-    val qty = quantityInput.toDoubleOrNull() ?: 1.0
-    val targetPct = targetProfitPercentInput.toDoubleOrNull() ?: 0.0
+    val qty = PersianNumberUtils.parseAmount(quantityInput)
+    val targetPct = PersianNumberUtils.parseAmount(targetProfitPercentInput)
 
     val tradeResult = FinancialFormulas.calculateTradeProfit(
         assetName = assetNameInput,
@@ -83,7 +81,7 @@ fun GoldFxScreen(
 
     val requiredSellP = if (isReverseMode) {
         FinancialFormulas.calculateRequiredSellingPrice(buyP, targetPct)
-    } else 0.0
+    } else BigDecimal.ZERO
 
     val copySummaryText = if (!isReverseMode) {
         """
@@ -349,7 +347,7 @@ fun GoldFxScreen(
                             supportingContent = { Text(PersianNumberUtils.formatCurrency(rate.priceToman, isRial = false) + " تومان") },
                             modifier = Modifier.clickable {
                                 assetNameInput = rate.name
-                                val price = if (isRial) rate.priceToman * 10 else rate.priceToman
+                                val price = if (isRial) rate.priceToman.multiply(BigDecimal("10")) else rate.priceToman
                                 sellPriceInput = price.toLong().toString()
                                 showLiveSelector = false
                             }
@@ -357,13 +355,13 @@ fun GoldFxScreen(
                     }
                     item { Text("رمزارزها (به تومان)", fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
                     items(cryptoAssets) { crypto ->
-                        val priceToman = (crypto.priceUsd ?: 0.0) * usdRate
+                        val priceToman = (crypto.priceUsd ?: BigDecimal.ZERO).multiply(usdRate)
                         androidx.compose.material3.ListItem(
                             headlineContent = { Text("${crypto.name} (${crypto.symbol})") },
                             supportingContent = { Text(PersianNumberUtils.formatCurrency(priceToman, isRial = false) + " تومان") },
                             modifier = Modifier.clickable {
                                 assetNameInput = crypto.name
-                                val price = if (isRial) priceToman * 10 else priceToman
+                                val price = if (isRial) priceToman.multiply(BigDecimal("10")) else priceToman
                                 sellPriceInput = price.toLong().toString()
                                 showLiveSelector = false
                             }

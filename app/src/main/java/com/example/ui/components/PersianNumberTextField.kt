@@ -26,6 +26,7 @@ fun PersianNumberTextField(
     label: String,
     modifier: Modifier = Modifier,
     suffix: String? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     isDecimalAllowed: Boolean = false,
     imeAction: ImeAction = ImeAction.Next
 ) {
@@ -69,6 +70,7 @@ fun PersianNumberTextField(
         },
         label = { Text(label) },
         suffix = suffix?.let { { Text(it) } },
+        trailingIcon = trailingIcon,
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = if (isDecimalAllowed) KeyboardType.Decimal else KeyboardType.Number,
