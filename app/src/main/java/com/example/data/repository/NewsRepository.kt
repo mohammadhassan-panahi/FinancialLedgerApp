@@ -14,6 +14,13 @@ class NewsRepository(
 ) {
     fun getNews(category: String): Flow<List<NewsEntity>> = newsDao.getNewsByCategory(category)
 
+    suspend fun updateNewsSummary(newsId: String, summary: String) {
+        val existing = newsDao.getNewsById(newsId)
+        if (existing != null) {
+            newsDao.insertNews(listOf(existing.copy(aiSummary = summary)))
+        }
+    }
+
     /**
      * Aggregates crypto news from multiple Iranian sources (ArzDigital, Zoomit, Ramzarz News, iSignal)
      * and deduplicates them based on normalized titles.

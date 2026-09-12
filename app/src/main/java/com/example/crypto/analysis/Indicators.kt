@@ -3,6 +3,7 @@ package com.example.crypto.analysis
 import com.example.util.safeDiv
 import com.example.util.sumOf
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 object Indicators {
 
@@ -10,7 +11,7 @@ object Indicators {
      * Calculates Exponential Moving Average (EMA) for the entire series.
      */
     fun calculateEMA(values: List<BigDecimal>, period: Int): List<BigDecimal> {
-        if (values.size < period) return emptyList()
+        if (values.size < period) return List(values.size) { BigDecimal.ZERO }
         val emaList = mutableListOf<BigDecimal>()
         val multiplier = BigDecimal("2").safeDiv(BigDecimal.valueOf((period + 1).toLong()))
         
@@ -23,7 +24,7 @@ object Indicators {
             emaList.add(currentEma)
         }
         
-        // Pad the beginning with nulls or zeros to match the input size
+        // Pad the beginning with zeros to match the input size
         val padding = List(period - 1) { BigDecimal.ZERO }
         return padding + emaList
     }
@@ -32,7 +33,7 @@ object Indicators {
      * Calculates Relative Strength Index (RSI) for the entire series.
      */
     fun calculateRSI(values: List<BigDecimal>, period: Int): List<BigDecimal> {
-        if (values.size <= period) return emptyList()
+        if (values.size <= period) return List(values.size) { BigDecimal.valueOf(50) }
         val rsiList = mutableListOf<BigDecimal>()
         val changes = values.zipWithNext { a, b -> b.subtract(a) }
         
@@ -59,8 +60,62 @@ object Indicators {
             rsiList.add(computeRsi(avgGain, avgLoss))
         }
 
-        // Pad to match original values size (period + 1 values used for first RSI)
         val padding = List(period) { BigDecimal.valueOf(50) }
         return padding + rsiList
     }
+
+    /**
+     * Moving Average Convergence Divergence (MACD).
+     */
+    fun calculateMACD(values: List<BigDecimal>): MacdResult {
+        val ema12 = calculateEMA(values, 12)
+        val ema26 = calculateEMA(values, 26)
+        
+        val macdLine = ema12.zip(ema26) { fast, slow ->
+            if (fast == BigDecimal.ZERO || slow == BigDecimal.ZERO) BigDecimal.ZERO 
+            else fast.subtract(slow)
+        }
+        
+        val signalLine = calculateEMA(macdLine, 9)
+        val histogram = macdLine.zip(signalLine) { m, s -> m.subtract(s) }
+        
+        return MacdResult(macdLine, signalLine, histogram)
+    }
+
+    /**
+     * Bollinger Bands calculation.
+     */
+    fun calculateBollingerBands(values: List<BigDecimal>, period: Int = 20, multiplier: BigDecimal = BigDecimal("2")): BollingerResult {
+        if (values.size < period) return BollingerResult(emptyList(), emptyList(), emptyList())
+        
+        val middle = mutableListOf<BigDecimal>()
+        val upper = mutableListOf<BigDecimal>()
+        val lower = mutableListOf<BigDecimal>()
+        
+        for (i in 0 until values.size) {
+            if (i < period - 1) {
+                middle.add(BigDecimal.ZERO)
+                upper.add(BigDecimal.ZERO)
+                lower.add(BigDecimal.ZERO)
+                continue
+            }
+            
+            val window = values.subList(i - period + 1, i + 1)
+            val avg = window.sumOf { it }.safeDiv(BigDecimal.valueOf(period.toLong()))
+            
+            // Standard Deviation
+            val variance = window.map { it.subtract(avg).pow(2) }.sumOf { it }
+                .safeDiv(BigDecimal.valueOf(period.toLong()))
+            val stdDev = Math.sqrt(variance.toDouble()).toBigDecimal().setScale(8, RoundingMode.HALF_UP)
+            
+            middle.add(avg)
+            upper.add(avg.add(stdDev.multiply(multiplier)))
+            lower.add(avg.subtract(stdDev.multiply(multiplier)))
+        }
+        
+        return BollingerResult(middle, upper, lower)
+    }
 }
+
+data class MacdResult(val macd: List<BigDecimal>, val signal: List<BigDecimal>, val histogram: List<BigDecimal>)
+data class BollingerResult(val middle: List<BigDecimal>, val upper: List<BigDecimal>, val lower: List<BigDecimal>)

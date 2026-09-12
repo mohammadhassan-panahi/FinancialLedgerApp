@@ -10,10 +10,6 @@ object TechnicalAnalysisEngine {
 
     /**
      * Performs a comprehensive multi-factor market analysis.
-     * @param symbol The asset symbol (e.g. BTC)
-     * @param candles Historical price data
-     * @param asset Current market listing data
-     * @param btcContext The current state of BTC (Market Leader)
      */
     fun analyze(
         symbol: String,
@@ -39,7 +35,7 @@ object TechnicalAnalysisEngine {
         val reasons = mutableListOf<String>()
         val warnings = mutableListOf<String>()
         
-        // --- 1. TREND ANALYSIS (20 pts) ---
+        // --- 1. TREND & EMA (20 pts) ---
         var trendScore = 0
         val ema20List = Indicators.calculateEMA(closes, 20)
         val ema50List = Indicators.calculateEMA(closes, 50)
@@ -52,160 +48,113 @@ object TechnicalAnalysisEngine {
         val isBullishEMA = currentPrice > ema20 && ema20 > ema50 && ema50 > ema200
         val isBearishEMA = currentPrice < ema20 && ema20 < ema50 && ema50 < ema200
         
-        // Detection of HH/HL (Higher High / Higher Low)
-        val last3Highs = candles.takeLast(60).chunked(20).mapNotNull { chunk -> chunk.maxOfOrNull { it.high } }
-        val last3Lows = candles.takeLast(60).chunked(20).mapNotNull { chunk -> chunk.minOfOrNull { it.low } }
-        val isHH = last3Highs.size >= 3 && last3Highs[2] > last3Highs[1] && last3Highs[1] > last3Highs[0]
-        val isHL = last3Lows.size >= 3 && last3Lows[2] > last3Lows[1] && last3Lows[1] > last3Lows[0]
-        
-        if (isBullishEMA) trendScore += 15
-        if (isHH && isHL) trendScore += 5
+        if (isBullishEMA) trendScore += 20
+        else if (currentPrice > ema200) trendScore += 10
         
         val trendText = when {
-            isBullishEMA -> "صعودی (قوی)"
-            isBearishEMA -> "نزولی (قوی)"
+            isBullishEMA -> "صعودی قدرتمند"
+            isBearishEMA -> "نزولی قدرتمند"
             currentPrice > ema200 -> "صعودی میان‌مدت"
             else -> "رنج / نزولی"
         }
 
-        // --- 2. VOLUME ANALYSIS (20 pts) ---
-        var volumeScore = 0
-        val volumes = candles.map { it.volume }
-        val avgVol20 = calculateAverage(volumes.takeLast(20))
-        val currentVol = volumes.last()
-        val priceChange = currentPrice.subtract(closes[closes.size - 2])
+        // --- 2. MACD (15 pts) ---
+        var macdScore = 0
+        val macdResult = Indicators.calculateMACD(closes)
+        val lastMacd = macdResult.macd.last()
+        val lastSignal = macdResult.signal.last()
+        val isMacdBullish = lastMacd > lastSignal
         
-        val volTrendText = when {
-            currentVol > avgVol20.multiply(BigDecimal("2.5")) -> {
-                volumeScore += 15
-                "جهش ناگهانی (Spike)"
-            }
-            currentVol > avgVol20.multiply(BigDecimal("1.2")) && priceChange > BigDecimal.ZERO -> {
-                volumeScore += 20
-                "تقاضای رو به رشد"
-            }
-            currentVol > avgVol20.multiply(BigDecimal("1.2")) && priceChange < BigDecimal.ZERO -> {
-                volumeScore -= 10
-                "فشار فروش سنگین"
-            }
-            else -> "معمولی"
+        if (isMacdBullish) {
+            macdScore += 10
+            if (lastMacd < BigDecimal.ZERO) macdScore += 5 
+            reasons.add("تایید روند با تقاطع صعودی MACD")
         }
-        if (currentVol > avgVol20.multiply(BigDecimal("1.2")) && priceChange > BigDecimal.ZERO) reasons.add("تایید صعود با حجم معاملات بالا")
 
-        // --- 3. RSI & TECHNICALS (15 pts) ---
+        // --- 3. Bollinger Bands (15 pts) ---
+        var bbScore = 0
+        val bbResult = Indicators.calculateBollingerBands(closes)
+        val upper = bbResult.upper.last()
+        val lower = bbResult.lower.last()
+        val bbWidth = if (bbResult.middle.last().compareTo(BigDecimal.ZERO) != 0) 
+            (upper.subtract(lower)).safeDiv(bbResult.middle.last()) 
+            else BigDecimal.ZERO
+        
+        if (currentPrice < lower.multiply(BigDecimal("1.01"))) {
+            bbScore += 15
+            reasons.add("اشباع فروش در باند پایینی بولینگر")
+        } else if (currentPrice > upper.multiply(BigDecimal("0.99"))) {
+            bbScore -= 10
+            warnings.add("برخورد به سقف باند بولینگر (احتمال اصلاح)")
+        }
+        
+        if (bbWidth.compareTo(BigDecimal.ZERO) != 0 && bbWidth < BigDecimal("0.05")) {
+            warnings.add("فشردگی شدید قیمت: احتمال جهش یا سقوط ناگهانی")
+        }
+
+        // --- 4. RSI & Technicals (15 pts) ---
         var technicalScore = 0
         val rsiList = Indicators.calculateRSI(closes, 14)
         val rsi = rsiList.lastOrNull() ?: BigDecimal.valueOf(50)
         when {
-            rsi < BigDecimal("30") -> { technicalScore += 15; reasons.add("اشباع فروش (قیمت جذاب)") }
-            rsi > BigDecimal("70") -> { technicalScore -= 5; warnings.add("اشباع خرید (احتمال اصلاح)") }
+            rsi < BigDecimal("30") -> { technicalScore += 15; reasons.add("اشباع فروش RSI (قیمت جذاب)") }
+            rsi > BigDecimal("70") -> { technicalScore -= 5; warnings.add("اشباع خرید RSI (ریسک اصلاح)") }
             rsi >= BigDecimal("40") && rsi <= BigDecimal("60") -> technicalScore += 5
         }
 
-        // --- 4. SUPPORT / RESISTANCE (15 pts) ---
-        var srScore = 0
+        // --- 5. Support / Resistance (15 pts) ---
         val (support, resistance) = findSupportResistance(candles)
-        val distToSupport = (currentPrice.subtract(support)).safeDiv(currentPrice)
-        val distToResistance = (resistance.subtract(currentPrice)).safeDiv(currentPrice)
-        
+        val distToSupport = if (currentPrice.compareTo(BigDecimal.ZERO) != 0) (currentPrice.subtract(support)).safeDiv(currentPrice) else BigDecimal.ZERO
         if (distToSupport < BigDecimal("0.03")) {
-            srScore += 15
-            reasons.add("نزدیکی به کف حمایتی معتبر")
-        } else if (distToResistance < BigDecimal("0.02")) {
-            srScore -= 10
-            warnings.add("نزدیکی به سقف مقاومتی (ریسک برخورد)")
+            technicalScore += 10
+            reasons.add("نزدیکی به سطح حمایتی معتبر")
         }
 
-        // --- 5. LIQUIDITY (10 pts) ---
-        var liqScore = 0
-        val dailyVolumeUsd = asset.volume24hUsd ?: BigDecimal.ZERO
-        val liquidityText = when {
-            dailyVolumeUsd > BigDecimal("100000000") -> { liqScore = 10; "بسیار بالا" }
-            dailyVolumeUsd > BigDecimal("10000000") -> { liqScore = 7; "مناسب" }
-            else -> { liqScore = 2; "پایین (پرریسک)" }
+        // --- 6. Volume & Liquidity (20 pts) ---
+        var volScore = 0
+        val volumes = candles.map { it.volume }
+        val avgVol20 = calculateAverage(volumes.takeLast(20))
+        val currentVol = volumes.last()
+        
+        if (currentVol > avgVol20.multiply(BigDecimal("1.5"))) {
+            volScore += 10
+            reasons.add("افزایش چشمگیر حجم معاملات")
         }
-        if (liqScore < 5) warnings.add("نقدشوندگی پایین: خطر لغزش قیمت")
+        
+        val dailyVolume = asset.volume24hUsd ?: BigDecimal.ZERO
+        val liquidityText = if (dailyVolume > BigDecimal("10000000")) "مناسب" else "پایین"
 
-        // --- 6. MARKET CONDITION (10 pts) ---
-        var marketScore = 5
-        btcContext?.let {
-            if (it.isBullish) marketScore += 5 else marketScore -= 5
-            if (it.volatility > BigDecimal("0.05")) warnings.add("بازار متلاطم: احتیاط در ورود")
-        }
-
-        // --- 7. RISK CALCULATION (10 pts) ---
-        val atr = calculateATR(candles, 14)
-        val volatility = atr.safeDiv(currentPrice)
-        var riskPoint = 0
-        if (volatility < BigDecimal("0.03")) riskPoint += 5
-        if (distToResistance > BigDecimal("0.10")) riskPoint += 5
-        val riskScoreTotal = (100 - (riskPoint * 10)).coerceIn(0, 100)
-
-        // --- FINAL OPPORTUNITY SCORE ---
-        var finalScore = trendScore + volumeScore + technicalScore + srScore + liqScore + marketScore + riskPoint
+        // --- FINAL CALCULATION ---
+        var finalScore = trendScore + macdScore + bbScore + technicalScore + volScore
         finalScore = finalScore.coerceIn(0, 100)
         
-        // --- LOGIC RULES ---
-        var signal = when {
+        val signal = when {
             finalScore >= 80 -> AnalysisSignal.STRONG_BUY
             finalScore >= 65 -> AnalysisSignal.BUY_ON_PULLBACK
-            finalScore >= 55 -> AnalysisSignal.BREAKOUT_WATCH
-            finalScore >= 45 -> AnalysisSignal.HOLD
+            finalScore >= 50 -> AnalysisSignal.HOLD
             finalScore >= 30 -> AnalysisSignal.WAIT
-            finalScore >= 15 -> AnalysisSignal.SELL_PARTIAL
             else -> AnalysisSignal.SELL
         }
-
-        // Custom Overrides
-        if (rsi > BigDecimal("80") && distToResistance < BigDecimal("0.02")) {
-            warnings.add("⚠️ هشدار FOMO: قیمت در حباب موقت است.")
-            if (finalScore > 60) finalScore = 50 // Reduce score
-        }
-        if (isBearishEMA && priceChange < currentPrice.multiply(BigDecimal("-0.10"))) {
-            warnings.add("⚠️ هشدار FALLING KNIFE: سقوط آزاد قیمت.")
-            signal = AnalysisSignal.WAIT
-        }
-
-        // Entry, SL, TP Calculation
-        val entryZone = if (signal.name.contains("BUY")) Pair(currentPrice.multiply(BigDecimal("0.99")), currentPrice.multiply(BigDecimal("1.01"))) else null
-        val stopLoss = if (entryZone != null) support.multiply(BigDecimal("0.98")) else null
-        val takeProfit = if (entryZone != null) resistance.multiply(BigDecimal("0.98")) else null
-        val rrRatio = if (stopLoss != null && takeProfit != null && currentPrice > stopLoss) {
-            (takeProfit.subtract(currentPrice)).safeDiv(currentPrice.subtract(stopLoss))
-        } else null
 
         return TechnicalAnalysisResult(
             symbol = symbol,
             price = currentPrice,
             trend = trendText,
-            volumeTrend = volTrendText,
+            volumeTrend = if (currentVol > avgVol20) "رو به رشد" else "ثابت",
             rsi = rsi,
             support = support,
             resistance = resistance,
             liquidity = liquidityText,
-            riskScore = riskScoreTotal,
+            riskScore = (100 - finalScore).coerceIn(0, 100),
             opportunityScore = finalScore,
             signal = signal,
-            entryZone = entryZone,
-            stopLoss = stopLoss,
-            takeProfit = takeProfit,
-            riskReward = rrRatio,
+            entryZone = if (finalScore > 60) Pair(currentPrice.multiply(BigDecimal("0.98")), currentPrice.multiply(BigDecimal("1.02"))) else null,
+            stopLoss = if (finalScore > 60) support.multiply(BigDecimal("0.97")) else null,
+            takeProfit = if (finalScore > 60) resistance.multiply(BigDecimal("0.97")) else null,
+            riskReward = null,
             warnings = warnings,
             reasons = reasons
         )
-    }
-
-    private fun calculateATR(candles: List<CandleStick>, period: Int): BigDecimal {
-        val trs = mutableListOf<BigDecimal>()
-        for (i in 1 until candles.size) {
-            val h = candles[i].high
-            val l = candles[i].low
-            val pc = candles[i-1].close
-            // max(h - l, max(abs(h - pc), abs(l - pc)))
-            val tr = (h.subtract(l)).max((h.subtract(pc)).abs()).max((l.subtract(pc)).abs())
-            trs.add(tr)
-        }
-        return if (trs.size >= period) calculateAverage(trs.takeLast(period)) else BigDecimal.ZERO
     }
 
     private fun findSupportResistance(candles: List<CandleStick>): Pair<BigDecimal, BigDecimal> {

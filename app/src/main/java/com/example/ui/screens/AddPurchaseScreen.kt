@@ -16,139 +16,153 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.PortfolioAssetType
-import com.example.ui.LocalIsRial
 import com.example.ui.components.DaraGlassCard
-import com.example.ui.components.PersianNumberTextField
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
-import com.example.util.PersianDateUtils
-import com.example.util.PersianNumberUtils
-import com.example.util.formatRial
-import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPurchaseScreen(
     viewModel: PortfolioViewModel,
-    onNextStep: (com.example.data.local.PortfolioAssetType) -> Unit = {}
+    onBack: () -> Unit,
+    onNextStep: (com.example.data.local.PortfolioAssetType) -> Unit,
+    onDirectAssetSelect: (String, com.example.data.local.PortfolioAssetType) -> Unit = { _, _ -> }
 ) {
-    var currentStep by remember { mutableIntStateOf(1) }
-    var selectedType by remember { mutableStateOf<com.example.data.local.PortfolioAssetType?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
     
-    // State for Step 2
-    var assetCode by remember { mutableStateOf("") }
-    var assetName by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var unitPrice by remember { mutableStateOf("") }
-    var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
-    val purchaseDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-
-    if (showDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = { TextButton(onClick = { showDatePicker = false }) { Text("تأیید") } },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("انصراف") } }
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
-
-    val allMarketRates by viewModel.marketRates.collectAsStateWithLifecycle()
-    val cryptoAssets by viewModel.cryptoAssets.collectAsStateWithLifecycle()
-    val mutualFunds by viewModel.mutualFunds.collectAsStateWithLifecycle()
-
-    val marketRates = allMarketRates.filter { !it.isOfflineRate || it.currency == "تومان" }
-    val usdRateToman = marketRates.find { it.assetCode == "USD" }?.priceToman ?: BigDecimal("65000")
-
-    fun autoFillPrice() {
-        val type = selectedType ?: return
-        val rialPerToman = BigDecimal("10")
-        val livePriceRial = when (type) {
-            PortfolioAssetType.GOLD -> {
-                val rate = marketRates.find { it.assetCode == assetCode || it.name.contains(assetName) }
-                rate?.priceToman?.let { it.multiply(rialPerToman) }
-            }
-            PortfolioAssetType.USD -> {
-                val rate = marketRates.find { it.assetCode == assetCode || it.assetCode == "USD" }
-                rate?.priceToman?.let { it.multiply(rialPerToman) }
-            }
-            PortfolioAssetType.CRYPTO -> cryptoAssets.find { it.symbol == assetCode }?.priceUsd?.let { it.multiply(usdRateToman).multiply(rialPerToman) }
-            PortfolioAssetType.FUND -> mutualFunds.find { it.id == assetCode }?.navToman?.let { it.multiply(rialPerToman) }
-            else -> null
-        }
-        if (livePriceRial != null) unitPrice = livePriceRial.toLong().toString()
-    }
+    val allCrypto by viewModel.cryptoAssets.collectAsStateWithLifecycle()
+    val allStocks by viewModel.watchlist.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = ObsidianSlate900,
         topBar = {
-            AddAssetHeader(
-                currentStep = currentStep,
-                onBack = { if (currentStep > 1) currentStep-- }
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+                color = ObsidianSlate900.copy(alpha = 0.8f)
+            ) {
+                Row(
+                    modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Slate50)
+                        }
+                        Text("ثبت دارایی جدید", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                    }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.Close, null, tint = Slate400)
+                    }
+                }
+            }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            AnimatedContent(
-                targetState = currentStep,
-                transitionSpec = {
-                    if (targetState > initialState) {
-                        slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut()
-                    } else {
-                        slideInHorizontally { it } + fadeIn() togetherWith slideOutHorizontally { -it } + fadeOut()
-                    }
-                },
-                label = "step_transition"
-            ) { step ->
-                if (step == 1) {
-                    AssetTypeSelectionStep(
-                        selectedType = selectedType,
-                        onTypeSelected = { 
-                            selectedType = it
-                            onNextStep(it)
-                        },
-                        onContinue = { currentStep = 2 }
-                    )
-                } else {
-                    AssetDetailsFormStep(
-                        assetType = selectedType!!,
-                        assetCode = assetCode,
-                        onAssetCodeChange = { assetCode = it; assetName = it },
-                        assetName = assetName,
-                        quantity = quantity,
-                        onQuantityChange = { quantity = it },
-                        unitPrice = unitPrice,
-                        onUnitPriceChange = { unitPrice = it },
-                        purchaseDate = purchaseDate,
-                        onPickDate = { showDatePicker = true },
-                        onAutoFill = { autoFillPrice() },
-                        onSubmit = {
-                            val q = PersianNumberUtils.parseAmount(quantity)
-                            val p = PersianNumberUtils.parseAmount(unitPrice)
-                            viewModel.addPurchase(
-                                assetType = selectedType!!,
-                                assetCode = assetCode,
-                                assetName = assetName,
-                                quantity = q,
-                                unitPriceRial = p,
-                                purchaseDate = purchaseDate
-                            )
-                            // Reset and go back or show success
-                            currentStep = 1
-                            quantity = ""
-                            unitPrice = ""
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text("چه دارایی جدیدی ثبت می‌کنید؟", style = DaraTypography.headlineMedium, color = Slate50, fontWeight = FontWeight.Black)
+            
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("جستجوی نماد (مثلاً BTC یا فولاد)...") },
+                leadingIcon = { Icon(Icons.Default.Search, null, tint = Slate400) },
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = IndigoElectric,
+                    unfocusedBorderColor = ObsidianSlate700
+                )
+            )
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (searchQuery.isNotEmpty()) {
+                    // Search Results
+                    val cryptoResults = allCrypto.filter { it.symbol.contains(searchQuery, true) || it.name.contains(searchQuery, true) }.take(5)
+                    val stockResults = allStocks.filter { it.symbol.contains(searchQuery, true) || it.fullName.contains(searchQuery, true) }.take(5)
+                    
+                    if (cryptoResults.isNotEmpty()) {
+                        item { Text("رمزارزها", style = DaraTypography.labelSmall, color = Slate400) }
+                        items(cryptoResults) { crypto ->
+                            SearchResultItem(name = crypto.name, symbol = crypto.symbol, color = IndigoElectric, icon = Icons.Default.CurrencyBitcoin) {
+                                onDirectAssetSelect(crypto.symbol, PortfolioAssetType.CRYPTO)
+                            }
                         }
+                    }
+                    
+                    if (stockResults.isNotEmpty()) {
+                        item { Text("بورس تهران", style = DaraTypography.labelSmall, color = Slate400) }
+                        items(stockResults) { stock ->
+                            SearchResultItem(name = stock.fullName, symbol = stock.symbol, color = Color(0xFF8B5CF6), icon = Icons.Default.Analytics) {
+                                onDirectAssetSelect(stock.symbol, PortfolioAssetType.STOCK)
+                            }
+                        }
+                    }
+                    
+                    item { HorizontalDivider(color = ObsidianSlate700, modifier = Modifier.padding(vertical = 8.dp)) }
+                }
+
+                // General Types
+                item { Text("دسته‌بندی‌ها", style = DaraTypography.labelSmall, color = Slate400) }
+                item {
+                    AssetTypeSelectCard(
+                        item = AssetTypeItem(PortfolioAssetType.GOLD, "طلا و مسکوکات", "سکه، شمش، طلای ۱۸ عیار و ...", Icons.Default.BrightnessLow, RefinedAmberGold),
+                        onClick = { onNextStep(PortfolioAssetType.GOLD) }
+                    )
+                }
+                item {
+                    AssetTypeSelectCard(
+                        item = AssetTypeItem(PortfolioAssetType.USD, "ارزهای خارجی", "دلار، یورو، درهم و اسکناس نقد", Icons.Default.Payments, EmeraldCore),
+                        onClick = { onNextStep(PortfolioAssetType.USD) }
+                    )
+                }
+                item {
+                    AssetTypeSelectCard(
+                        item = AssetTypeItem(PortfolioAssetType.CRYPTO, "رمزارزها", "بیت‌کوین، تتر و دارایی‌های دیجیتال", Icons.Default.CurrencyBitcoin, IndigoElectric),
+                        onClick = { onNextStep(PortfolioAssetType.CRYPTO) }
+                    )
+                }
+                item {
+                    AssetTypeSelectCard(
+                        item = AssetTypeItem(PortfolioAssetType.STOCK, "بورس تهران", "سهام، حق تقدم و صندوق‌های ETF", Icons.Default.QueryStats, Color(0xFF8B5CF6)),
+                        onClick = { onNextStep(PortfolioAssetType.STOCK) }
+                    )
+                }
+                item {
+                    AssetTypeSelectCard(
+                        item = AssetTypeItem(PortfolioAssetType.REAL_ESTATE, "املاک و مستغلات", "مسکونی، تجاری و زمین", Icons.Default.Home, Color(0xFFF97316)),
+                        onClick = { onNextStep(PortfolioAssetType.REAL_ESTATE) }
+                    )
+                }
+                item {
+                    AssetTypeSelectCard(
+                        item = AssetTypeItem(PortfolioAssetType.VEHICLE, "خودرو", "ماشین‌های داخلی و وارداتی", Icons.Default.DirectionsCar, Color(0xFF6B7280)),
+                        onClick = { onNextStep(PortfolioAssetType.VEHICLE) }
+                    )
+                }
+            }
+            
+            DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(Icons.Default.AutoAwesome, null, tint = IndigoElectric)
+                    Text(
+                        "با ثبت دارایی‌های خود، دارا می‌تواند تنوع سبد سرمایه‌گذاری شما را تحلیل کرده و ریسک‌های احتمالی را هشدار دهد.",
+                        style = DaraTypography.bodySmall,
+                        color = Slate400,
+                        lineHeight = 18.sp
                     )
                 }
             }
@@ -157,138 +171,39 @@ fun AddPurchaseScreen(
 }
 
 @Composable
-fun AddAssetHeader(currentStep: Int, onBack: () -> Unit) {
+fun SearchResultItem(name: String, symbol: String, color: Color, icon: ImageVector, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().statusBarsPadding(),
-        color = ObsidianSlate900.copy(alpha = 0.8f),
-        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.06f))
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = ObsidianSlate800.copy(alpha = 0.5f)
     ) {
-        Row(
-            modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconButton(onClick = onBack, enabled = currentStep > 1) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = if (currentStep > 1) Slate50 else Slate600)
-                }
-                Column {
-                    Text("ثبت دارایی جدید", style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Box(modifier = Modifier.width(if (currentStep == 1) 20.dp else 10.dp).height(4.dp).clip(CircleShape).background(if (currentStep == 1) IndigoElectric else Slate600))
-                        Box(modifier = Modifier.width(if (currentStep == 2) 20.dp else 10.dp).height(4.dp).clip(CircleShape).background(if (currentStep == 2) IndigoElectric else Slate600))
-                        Text("گام $currentStep از ۲", style = DaraTypography.labelSmall, color = Slate400)
-                    }
-                }
-            }
-            IconButton(onClick = { /* Close */ }) {
-                Icon(Icons.Default.Close, null, tint = Slate400)
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
+            Column {
+                Text(name, style = DaraTypography.bodyMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(symbol, style = DaraTypography.labelSmall, color = Slate400)
             }
         }
     }
 }
 
-@Composable
-fun AssetTypeSelectionStep(
-    selectedType: PortfolioAssetType?,
-    onTypeSelected: (PortfolioAssetType) -> Unit,
-    onContinue: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        Text("چه دارایی جدیدی ثبت می‌کنید؟", style = DaraTypography.headlineLarge, color = Slate50)
-        
-        // Search Bar Placeholder
-        DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(Icons.Default.Search, null, tint = Slate400)
-                Text("جستجوی نماد، ارز یا طلا...", style = DaraTypography.bodyMedium, color = Slate600)
-            }
-        }
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                AssetTypeCard(
-                    type = PortfolioAssetType.GOLD,
-                    title = "طلا، مسکوکات و آبشده",
-                    desc = "طلای ۱۸ و ۲۴ عیار، سکه امامی، نیم و ربع",
-                    icon = Icons.Default.MonetizationOn,
-                    color = RefinedAmberGold,
-                    isSelected = selectedType == PortfolioAssetType.GOLD,
-                    onClick = { onTypeSelected(PortfolioAssetType.GOLD) }
-                )
-            }
-            item {
-                AssetTypeCard(
-                    type = PortfolioAssetType.USD,
-                    title = "ارز نقدی و اسکناس",
-                    desc = "دلار، یورو، درهم و سایر اسعار بازار آزاد",
-                    icon = Icons.Default.Payments,
-                    color = EmeraldCore,
-                    isSelected = selectedType == PortfolioAssetType.USD,
-                    onClick = { onTypeSelected(PortfolioAssetType.USD) }
-                )
-            }
-            item {
-                AssetTypeCard(
-                    type = PortfolioAssetType.CRYPTO,
-                    title = "رمزارز و استیبل‌کوین",
-                    desc = "تتر، بیت‌کوین، اتریوم و دارایی‌های دیجیتال",
-                    icon = Icons.Default.CurrencyBitcoin,
-                    color = IndigoElectric,
-                    isSelected = selectedType == PortfolioAssetType.CRYPTO,
-                    onClick = { onTypeSelected(PortfolioAssetType.CRYPTO) }
-                )
-            }
-            item {
-                AssetTypeCard(
-                    type = PortfolioAssetType.STOCK,
-                    title = "بورس و فرابورس ایران",
-                    desc = "سهام، صندوق‌های اهرمی و اوراق بهادار",
-                    icon = Icons.Default.QueryStats,
-                    color = Color(0xFF8B5CF6),
-                    isSelected = selectedType == PortfolioAssetType.STOCK,
-                    onClick = { onTypeSelected(PortfolioAssetType.STOCK) }
-                )
-            }
-        }
-
-        Button(
-            onClick = onContinue,
-            enabled = selectedType != null,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = IndigoElectric)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("ادامه و ورود جزئیات", style = DaraTypography.titleMedium, fontWeight = FontWeight.Bold)
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(20.dp))
-            }
-        }
-    }
-}
+data class AssetTypeItem(
+    val type: PortfolioAssetType,
+    val title: String,
+    val desc: String,
+    val icon: ImageVector,
+    val color: Color
+)
 
 @Composable
-fun AssetTypeCard(
-    type: PortfolioAssetType,
-    title: String,
-    desc: String,
-    icon: ImageVector,
-    color: Color,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
+fun AssetTypeSelectCard(item: AssetTypeItem, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) ObsidianSlate600 else ObsidianSlate800,
-        border = BorderStroke(1.dp, if (isSelected) IndigoElectric else Color.Transparent)
+        color = ObsidianSlate800,
+        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -296,150 +211,16 @@ fun AssetTypeCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Box(
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(color.copy(alpha = 0.15f)),
+                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(item.color.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+                Icon(item.icon, null, tint = item.color, modifier = Modifier.size(26.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = DaraTypography.titleMedium, color = if (isSelected) color else Slate50, fontWeight = FontWeight.Bold)
-                Text(desc, style = DaraTypography.bodySmall, color = Slate400, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(item.title, style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
+                Text(item.desc, style = DaraTypography.labelSmall, color = Slate600, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (isSelected) {
-                Icon(Icons.Default.CheckCircle, null, tint = color, modifier = Modifier.size(20.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun AssetDetailsFormStep(
-    assetType: PortfolioAssetType,
-    assetCode: String,
-    onAssetCodeChange: (String) -> Unit,
-    assetName: String,
-    quantity: String,
-    onQuantityChange: (String) -> Unit,
-    unitPrice: String,
-    onUnitPriceChange: (String) -> Unit,
-    purchaseDate: Long,
-    onPickDate: () -> Unit,
-    onAutoFill: () -> Unit,
-    onSubmit: () -> Unit
-) {
-    val isRial = LocalIsRial.current
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Text("جزئیات خرید ${assetType.name}", style = DaraTypography.headlineLarge, color = Slate50)
-
-        DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                // Asset Search/Code
-                OutlinedTextField(
-                    value = assetCode,
-                    onValueChange = onAssetCodeChange,
-                    label = { Text("نام یا نماد دارایی") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Slate50,
-                        unfocusedTextColor = Slate50,
-                        focusedBorderColor = IndigoElectric,
-                        unfocusedBorderColor = ObsidianSlate600
-                    )
-                )
-
-                // Quantity
-                PersianNumberTextField(
-                    value = quantity,
-                    onValueChange = onQuantityChange,
-                    label = "مقدار / تعداد",
-                    isDecimalAllowed = true
-                )
-
-                // Unit Price
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("قیمت واحد (خرید)", style = DaraTypography.labelMedium, color = Slate400)
-                        TextButton(onClick = onAutoFill, contentPadding = PaddingValues(0.dp)) {
-                            Icon(Icons.Default.AutoAwesome, null, tint = EmeraldCore, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("قیمت زنده", style = DaraTypography.labelSmall, color = EmeraldCore)
-                        }
-                    }
-                    PersianNumberTextField(
-                        value = unitPrice,
-                        onValueChange = onUnitPriceChange,
-                        label = "قیمت به ریال",
-                        suffix = "ریال"
-                    )
-                }
-
-                // Purchase Date
-                Column {
-                    Text("تاریخ خرید", style = DaraTypography.labelMedium, color = Slate400)
-                    Surface(
-                        onClick = onPickDate,
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        color = ObsidianSlate600.copy(alpha = 0.5f),
-                        border = BorderStroke(1.dp, ObsidianSlate600)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                PersianDateUtils.formatJalaliDate(java.util.Date(purchaseDate)),
-                                style = DaraTypography.bodyMedium,
-                                color = Slate50
-                            )
-                            Icon(Icons.Default.CalendarMonth, null, tint = IndigoElectric, modifier = Modifier.size(20.dp))
-                        }
-                    }
-                }
-
-                // Total Calculation
-                val q = PersianNumberUtils.parseAmount(quantity)
-                val p = PersianNumberUtils.parseAmount(unitPrice)
-                val total = q.multiply(p)
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = ObsidianSlate600.copy(alpha = 0.5f)
-                ) {
-                    Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("مجموع پرداخت شده:", style = DaraTypography.bodyMedium, color = Slate400)
-                        Text(formatRial(total, isRial = isRial), style = DaraTypography.titleMedium, color = Slate50, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Button(
-                    onClick = onSubmit,
-                    enabled = q.compareTo(BigDecimal.ZERO) > 0 && p.compareTo(BigDecimal.ZERO) > 0 && assetCode.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = IndigoElectric)
-                ) {
-                    Text("ثبت در پورتفوی دارا", style = DaraTypography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-        
-        // AI Advice box
-        DaraGlassCard(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(Icons.Default.Info, null, tint = RefinedAmberGold, modifier = Modifier.size(20.dp))
-                Text(
-                    "با ثبت دقیق تاریخ خرید، دارا می‌تواند نرخ تورم را از سود شما کسر کرده و سود واقعی (Real Return) را محاسبه کند.",
-                    style = DaraTypography.bodySmall,
-                    color = Slate400,
-                    lineHeight = 18.sp
-                )
-            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Slate600, modifier = Modifier.size(20.dp))
         }
     }
 }

@@ -157,7 +157,7 @@ class MainActivity : FragmentActivity() {
             newsDao = database.newsDao(),
             rssService = rssService
         )
-        val newsFactory = com.example.ui.viewmodel.NewsViewModelFactory(newsRepository)
+        val newsFactory = com.example.ui.viewmodel.NewsViewModelFactory(newsRepository, aiRepository)
         val newsViewModel = ViewModelProvider(this, newsFactory)[com.example.ui.viewmodel.NewsViewModel::class.java]
 
         com.example.worker.PriceAlertScheduler.schedule(applicationContext)

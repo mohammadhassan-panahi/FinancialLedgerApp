@@ -20,7 +20,6 @@ import com.example.domain.model.Holding
 import com.example.ui.dashboard.DaraDashboardScreen
 import com.example.ui.dashboard.MarketScannerScreen
 import com.example.ui.dashboard.MarketScannerViewModel
-import com.example.ui.screens.news.NewsHubScreen
 import com.example.ui.tools.ToolsScreen
 import com.example.ui.viewmodel.CryptoViewModel
 import kotlinx.coroutines.launch
@@ -31,10 +30,10 @@ object Screen {
     const val Onboarding = "onboarding"
     const val PinEntry = "pin_entry"
     const val Dashboard = "dashboard"
-    const val NewsDetail = "news_detail"
     const val Market = "market"
     const val Portfolio = "portfolio"
     const val NewsHub = "news_hub"
+    const val NewsDetail = "news_detail"
     const val AiMentor = "ai_mentor"
     const val Tools = "tools"
     const val MarketScanner = "market_scanner"
@@ -225,6 +224,27 @@ fun NavGraph(
             )
         }
 
+        composable(Screen.NewsHub) {
+            com.example.ui.screens.news.NewsHubScreen(
+                viewModel = newsViewModel,
+                onNewsClick = { news ->
+                    newsViewModel.selectNews(news)
+                    navController.navigate(Screen.NewsDetail)
+                }
+            )
+        }
+
+        composable(Screen.NewsDetail) {
+            val news by newsViewModel.selectedNews.collectAsStateWithLifecycle()
+            news?.let {
+                com.example.ui.screens.news.NewsDetailScreen(
+                    news = it,
+                    onBack = { navController.popBackStack() },
+                    onChatWithAi = { navController.navigate(Screen.AiMentor) }
+                )
+            }
+        }
+
         composable(Screen.CryptoDetail) {
             val asset by cryptoViewModel.selectedAsset.collectAsStateWithLifecycle()
             val usdRateToman = BigDecimal("65000") // In a real app, fetch from repository
@@ -264,27 +284,6 @@ fun NavGraph(
                 viewModel = aiAnalysisViewModel,
                 onBack = { navController.popBackStack() }
             )
-        }
-
-        composable(Screen.NewsHub) {
-            NewsHubScreen(
-                viewModel = newsViewModel,
-                onNewsClick = { news ->
-                    newsViewModel.selectNews(news)
-                    navController.navigate(Screen.NewsDetail)
-                }
-            )
-        }
-
-        composable(Screen.NewsDetail) {
-            val news by newsViewModel.selectedNews.collectAsStateWithLifecycle()
-            news?.let {
-                com.example.ui.screens.news.NewsDetailScreen(
-                    news = it,
-                    onBack = { navController.popBackStack() },
-                    onChatWithAi = { navController.navigate(Screen.AiMentor) }
-                )
-            }
         }
 
         composable(Screen.Tools) {
@@ -329,21 +328,35 @@ fun NavGraph(
         composable(Screen.AddPurchase) {
             com.example.ui.screens.AddPurchaseScreen(
                 viewModel = viewModel,
+                onBack = { navController.popBackStack() },
                 onNextStep = { type ->
                     navController.navigate("${Screen.AddAssetForm}/${type.name}")
+                },
+                onDirectAssetSelect = { symbol, type ->
+                    navController.navigate("${Screen.AddAssetForm}/${type.name}?assetName=${symbol}")
                 }
             )
         }
 
         composable(
-            route = "${Screen.AddAssetForm}/{assetType}",
-            arguments = listOf(androidx.navigation.navArgument("assetType") { type = androidx.navigation.NavType.StringType })
+            route = "${Screen.AddAssetForm}/{assetType}?assetName={assetName}",
+            arguments = listOf(
+                androidx.navigation.navArgument("assetType") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("assetName") { 
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
             val typeStr = backStackEntry.arguments?.getString("assetType")
+            val prefilledName = backStackEntry.arguments?.getString("assetName")
             val assetType = try { com.example.data.local.PortfolioAssetType.valueOf(typeStr ?: "") } catch(e: Exception) { com.example.data.local.PortfolioAssetType.CASH }
             
             com.example.ui.screens.AddAssetFormScreen(
+                viewModel = viewModel,
                 assetType = assetType,
+                prefilledName = prefilledName,
                 onBack = { navController.popBackStack() },
                 onSubmit = { name, qty, price, purchaseDate ->
                     viewModel.addPurchase(assetType, name, name, qty, price, purchaseDate, "Manual")

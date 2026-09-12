@@ -92,6 +92,21 @@ class AiRepository(private val apiKey: String) {
     }
 
     /**
+     * Summarizes a news article title and description into a concise TL;DR.
+     */
+    suspend fun summarizeNews(title: String, description: String?): String = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext "خطا: کلید AI تنظیم نشده است."
+        try {
+            val prompt = "Summarize this financial news article into a very concise 1-2 sentence TL;DR in Persian (Farsi). " +
+                    "Focus on the market impact if any. \n\nTitle: $title\nDescription: ${description ?: "No description"}"
+            val response = generativeModel.generateContent(content { text(prompt) })
+            response.text ?: "امکان خلاصه سازی وجود ندارد."
+        } catch (e: Exception) {
+            "خطا در تحلیل هوشمند: ${e.message}"
+        }
+    }
+
+    /**
      * Translates a batch of (English) news headlines into Persian in a single call.
      * Uses a stateless generateContent call (not the shared chat session) so this doesn't
      * pollute the AI-mentor conversation history. On any failure, or if the model's response
