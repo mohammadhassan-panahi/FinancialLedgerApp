@@ -148,6 +148,15 @@ class MainActivity : FragmentActivity() {
         )
         val settingsViewModel = ViewModelProvider(this, settingsFactory)[com.example.ui.viewmodel.SettingsViewModel::class.java]
 
+        val financialRepository = com.example.data.repository.FinancialRepository(
+            transactionDao = database.transactionDao(),
+            bankAccountDao = database.bankAccountDao(),
+            marketDao = database.marketDao(),
+            apiKey = BuildConfig.BRSAPI_KEY
+        )
+        val marketPortfolioFactory = com.example.ui.viewmodel.MarketPortfolioViewModelFactory(financialRepository)
+        val marketPortfolioViewModel = ViewModelProvider(this, marketPortfolioFactory)[com.example.ui.viewmodel.MarketPortfolioViewModel::class.java]
+
         val aiReportUseCase = GetCryptoAIReportUseCase(aiRepository)
         val marketScannerFactory = MarketScannerViewModelFactory(cryptoRepository, aiReportUseCase)
         val marketScannerViewModel = ViewModelProvider(this, marketScannerFactory)[MarketScannerViewModel::class.java]
@@ -171,6 +180,7 @@ class MainActivity : FragmentActivity() {
                     PortfolioApp(
                         viewModel = viewModel,
                         cryptoViewModel = cryptoViewModel,
+                        marketPortfolioViewModel = marketPortfolioViewModel,
                         marketScannerViewModel = marketScannerViewModel,
                         calculatorViewModel = calculatorViewModel,
                         aiAnalysisViewModel = aiAnalysisViewModel,

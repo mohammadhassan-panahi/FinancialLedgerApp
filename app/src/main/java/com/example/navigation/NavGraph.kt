@@ -50,6 +50,12 @@ object Screen {
     const val CryptoDetail = "crypto_detail"
     const val AdvancedWatchlist = "advanced_watchlist"
     const val AddAssetForm = "add_asset_form"
+    const val MultiConverter = "multi_converter"
+    const val GoldFx = "gold_fx"
+    const val StockMarket = "stock_market"
+    const val CryptoMarket = "crypto_market"
+    const val CarsMarket = "cars_market"
+    const val RealEstateMarket = "real_estate_market"
 
     // Previously unreachable screens — now wired in.
     const val AddPurchase = "add_purchase"
@@ -78,6 +84,7 @@ fun NavGraph(
     navController: NavHostController,
     viewModel: com.example.ui.viewmodel.PortfolioViewModel,
     cryptoViewModel: CryptoViewModel,
+    marketPortfolioViewModel: com.example.ui.viewmodel.MarketPortfolioViewModel,
     calculatorViewModel: com.example.ui.viewmodel.CalculatorViewModel,
     aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
     riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
@@ -154,8 +161,51 @@ fun NavGraph(
             com.example.ui.screens.MarketHubScreen(
                 portfolioViewModel = viewModel,
                 cryptoViewModel = cryptoViewModel,
-                onNavigateToIntelligence = { navController.navigate(Screen.CryptoIntelligence) }
+                onNavigateToIntelligence = { navController.navigate(Screen.CryptoIntelligence) },
+                onNavigateToSection = { section ->
+                    when (section) {
+                        "stock" -> navController.navigate(Screen.StockMarket)
+                        "gold_fx" -> navController.navigate(Screen.GoldFx)
+                        "crypto" -> navController.navigate(Screen.CryptoMarket)
+                        "multi_converter" -> navController.navigate(Screen.MultiConverter)
+                        "cars" -> navController.navigate(Screen.CarsMarket)
+                        "real_estate" -> navController.navigate(Screen.RealEstateMarket)
+                    }
+                }
             )
+        }
+
+        composable(Screen.MultiConverter) {
+            com.example.ui.screens.MultiCurrencyConverterScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.GoldFx) {
+            com.example.ui.screens.GoldDollarScreen(
+                viewModel = viewModel
+            )
+        }
+
+        composable(Screen.StockMarket) {
+            com.example.ui.screens.StockMarketScreen(
+                viewModel = viewModel
+            )
+        }
+
+        composable(Screen.CryptoMarket) {
+            com.example.ui.screens.CryptoScreen(
+                viewModel = cryptoViewModel
+            )
+        }
+
+        composable(Screen.CarsMarket) {
+            com.example.ui.screens.CarsMarketScreen(viewModel = viewModel)
+        }
+
+        composable(Screen.RealEstateMarket) {
+            com.example.ui.screens.RealEstateMarketScreen(viewModel = viewModel)
         }
 
         composable(Screen.FinancialHealth) {

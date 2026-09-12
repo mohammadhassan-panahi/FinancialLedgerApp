@@ -25,6 +25,7 @@ import com.example.ui.components.DaraBottomBar
 fun PortfolioApp(
     viewModel: PortfolioViewModel,
     cryptoViewModel: CryptoViewModel,
+    marketPortfolioViewModel: com.example.ui.viewmodel.MarketPortfolioViewModel,
     marketScannerViewModel: MarketScannerViewModel,
     calculatorViewModel: com.example.ui.viewmodel.CalculatorViewModel,
     aiAnalysisViewModel: com.example.ui.viewmodel.AiAnalysisViewModel,
@@ -83,6 +84,7 @@ fun PortfolioApp(
                 navController = navController,
                 viewModel = viewModel,
                 cryptoViewModel = cryptoViewModel,
+                marketPortfolioViewModel = marketPortfolioViewModel,
                 calculatorViewModel = calculatorViewModel,
                 aiAnalysisViewModel = aiAnalysisViewModel,
                 riskAssessmentViewModel = riskAssessmentViewModel,
