@@ -81,6 +81,7 @@ class NewsRepository(
 
                         val normalizedTitle = normalizeText(item.title)
                         if (!aggregatedNews.containsKey(normalizedTitle)) {
+                            val existing = newsDao.getNewsById(item.link.hashCode().toString())
                             val entity = NewsEntity(
                                 id = item.link.hashCode().toString(),
                                 title = item.title,
@@ -90,10 +91,13 @@ class NewsRepository(
                                 imageUrl = null,
                                 publishedAt = parseRssDate(item.pubDate),
                                 category = category,
-                                importance = "MEDIUM",
-                                sentiment = "NEUTRAL",
+                                importance = classifyImportance(item.title, item.description),
+                                sentiment = classifySentiment(item.title, item.description),
                                 relatedAssets = null,
-                                aiSummary = null
+                                // A background refresh must never wipe an AI summary the user
+                                // already generated for this article (REPLACE overwrites the
+                                // whole row) — carry it over from the existing record if present.
+                                aiSummary = existing?.aiSummary
                             )
                             aggregatedNews[normalizedTitle] = entity
                         }
@@ -133,6 +137,45 @@ class NewsRepository(
     private fun isEconomicNews(title: String, description: String?): Boolean {
         val text = "$title ${description.orEmpty()}"
         return economicKeywords.any { text.contains(it) }
+    }
+
+    private val urgentKeywords = listOf(
+        "فوری", "هشدار", "بحران", "شوک", "بی‌سابقه", "تاریخی", "فوق‌العاده", "اضطراری", "لحظه‌ای"
+    )
+
+    private val positiveKeywords = listOf(
+        "رشد", "افزایش", "صعود", "جهش", "رکورد", "سود", "بهبود", "تقویت", "رونق", "صعودی"
+    )
+
+    private val negativeKeywords = listOf(
+        "کاهش", "سقوط", "ریزش", "افت", "ضرر", "رکود", "تحریم", "خطر", "بحران", "نزولی", "زیان"
+    )
+
+    /**
+     * Simple, transparent keyword classification — not a claim of real sentiment-analysis AI.
+     * Every article used to be hardcoded to the same "MEDIUM" importance regardless of content
+     * (every card in the feed showed an identical badge) — this at least reflects the article's
+     * own text instead of a constant.
+     */
+    private fun classifyImportance(title: String, description: String?): String {
+        val text = "$title ${description.orEmpty()}"
+        val economicHits = economicKeywords.count { text.contains(it) }
+        return when {
+            urgentKeywords.any { text.contains(it) } -> "HIGH"
+            economicHits == 0 -> "LOW"
+            else -> "MEDIUM"
+        }
+    }
+
+    private fun classifySentiment(title: String, description: String?): String {
+        val text = "$title ${description.orEmpty()}"
+        val positiveHits = positiveKeywords.count { text.contains(it) }
+        val negativeHits = negativeKeywords.count { text.contains(it) }
+        return when {
+            positiveHits > negativeHits -> "POSITIVE"
+            negativeHits > positiveHits -> "NEGATIVE"
+            else -> "NEUTRAL"
+        }
     }
 
     private fun parseRssDate(dateStr: String?): Long {

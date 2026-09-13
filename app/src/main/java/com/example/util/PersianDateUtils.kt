@@ -142,6 +142,19 @@ object PersianDateUtils {
             daysToAdd += daysInJalaliMonth(jalaliYear, i)
         }
         cal.add(Calendar.DAY_OF_YEAR, daysToAdd)
+
+        // The March-anchor approximation above lands one day off in roughly half of all
+        // years (verified by round-tripping through gregorianToJalali across 1990-2035).
+        // Self-correct against that trusted forward conversion rather than trust the anchor.
+        repeat(2) {
+            val check = gregorianToJalali(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
+            val checkKey = check.year * 400 + check.month * 31 + check.dayOfMonth
+            val targetKey = jy * 400 + jm * 31 + jd
+            when {
+                checkKey < targetKey -> cal.add(Calendar.DAY_OF_YEAR, 1)
+                checkKey > targetKey -> cal.add(Calendar.DAY_OF_YEAR, -1)
+            }
+        }
         return cal.time
     }
 }

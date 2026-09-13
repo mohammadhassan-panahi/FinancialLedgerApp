@@ -50,10 +50,12 @@ fun MultiCurrencyConverterScreen(
     )
 
     // Current Toman value of the base currency
-    val baseToTomanRate = if (baseCurrencyCode == "TOMAN") {
-        BigDecimal.ONE
-    } else {
-        marketRates.find { it.assetCode == baseCurrencyCode }?.priceToman ?: BigDecimal.ONE
+    val baseRateEntity = marketRates.find { it.assetCode == baseCurrencyCode }
+    val baseRateAvailable = baseCurrencyCode == "TOMAN" || baseRateEntity != null
+    val baseToTomanRate = when {
+        baseCurrencyCode == "TOMAN" -> BigDecimal.ONE
+        baseRateEntity != null -> baseRateEntity.priceToman
+        else -> BigDecimal.ZERO
     }
 
     val amount = PersianNumberUtils.parseAmount(inputAmount)
@@ -99,6 +101,15 @@ fun MultiCurrencyConverterScreen(
                                 Text(baseCurrencyCode, style = DaraTypography.titleMedium, color = IndigoElectric, fontWeight = FontWeight.Bold)
                             }
                         }
+                    }
+
+                    if (!baseRateAvailable) {
+                        Text(
+                            "نرخ زنده‌ی $baseCurrencyCode هنوز دریافت نشده — لطفاً کمی صبر کنید یا ارز پایه را عوض کنید.",
+                            style = DaraTypography.labelSmall,
+                            color = RoseCoral,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
                 }
             }
