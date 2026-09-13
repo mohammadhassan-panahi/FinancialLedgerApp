@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -50,8 +51,20 @@ class PortfolioViewModel(
     val portfolioSummary: StateFlow<PortfolioSummary?> = getPortfolioSummaryUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val snapshots: StateFlow<List<PortfolioSnapshotEntity>> = repository.snapshots
+    private val _selectedTimeframeDays = MutableStateFlow(30) // Default 1 month
+    val selectedTimeframeDays: StateFlow<Int> = _selectedTimeframeDays.asStateFlow()
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val snapshots: StateFlow<List<PortfolioSnapshotEntity>> = _selectedTimeframeDays
+        .flatMapLatest { days ->
+            if (days == -1) repository.snapshots // "All"
+            else repository.getSnapshotsSince(days)
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun setTimeframe(days: Int) {
+        _selectedTimeframeDays.value = days
+    }
 
     val bankAccounts: StateFlow<List<BankAccountEntity>> = repository.bankAccounts
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

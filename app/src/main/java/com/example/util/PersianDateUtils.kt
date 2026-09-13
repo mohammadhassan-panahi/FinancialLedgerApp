@@ -104,4 +104,44 @@ object PersianDateUtils {
             else -> PersianNumberUtils.toPersianDigits("$days روز پیش")
         }
     }
+
+    /**
+     * Finds the day of the week for a Jalali date.
+     * 0: Shanbe, 1: Yekshanbe, ..., 6: Jomeh
+     */
+    fun getDayOfWeek(jy: Int, jm: Int, jd: Int): Int {
+        val gDate = jalaliToGregorian(jy, jm, jd)
+        val cal = GregorianCalendar()
+        cal.time = gDate
+        val day = cal.get(Calendar.DAY_OF_WEEK)
+        // Gregorian: SUNDAY=1, MONDAY=2, ..., SATURDAY=7
+        // Jalali: SATURDAY=0, SUNDAY=1, MONDAY=2, TUESDAY=3, WEDNESDAY=4, THURSDAY=5, FRIDAY=6
+        return when (day) {
+            Calendar.SATURDAY -> 0
+            Calendar.SUNDAY -> 1
+            Calendar.MONDAY -> 2
+            Calendar.TUESDAY -> 3
+            Calendar.WEDNESDAY -> 4
+            Calendar.THURSDAY -> 5
+            Calendar.FRIDAY -> 6
+            else -> 0
+        }
+    }
+
+    fun jalaliToGregorian(jy: Int, jm: Int, jd: Int): Date {
+        var jalaliMonth = jm
+        var jalaliYear = jy
+        val marchDay = 21
+        val isLeap = isJalaliLeapYear(jalaliYear - 1)
+        val marchDate = if (isLeap) marchDay - 1 else marchDay
+        
+        val cal = GregorianCalendar(jalaliYear + 621, 2, marchDate) // March 21 (or 20)
+        // Simple day addition for calculation
+        var daysToAdd = jd - 1
+        for (i in 1 until jalaliMonth) {
+            daysToAdd += daysInJalaliMonth(jalaliYear, i)
+        }
+        cal.add(Calendar.DAY_OF_YEAR, daysToAdd)
+        return cal.time
+    }
 }

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,10 +38,12 @@ data class BenchmarkPoint(
 @Composable
 fun BenchmarkPerformanceChart(
     points: List<BenchmarkPoint>,
+    selectedTimeframeDays: Int,
+    onTimeframeChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (points.size < 2) {
-        EmptyBenchmarkState()
+        EmptyBenchmarkState(selectedTimeframeDays, onTimeframeChange, modifier)
         return
     }
 
@@ -70,10 +73,18 @@ fun BenchmarkPerformanceChart(
         border = BorderStroke(0.5.dp, SlateBorderLight)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.AutoMirrored.Filled.CompareArrows, null, tint = CredifyIndigo, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("از طلا و دلار جلو زدی؟", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.AutoMirrored.Filled.CompareArrows, null, tint = CredifyIndigo, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("عملکرد در برابر بازار", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+                }
+                
+                TimeframeSelector(selectedTimeframeDays, onTimeframeChange)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -90,16 +101,33 @@ fun BenchmarkPerformanceChart(
                     val range = if (maxV == minV) 1f else maxV - minV
 
                     fun getOffset(valPercent: Double, index: Int): Offset {
-                        val x = (w / (normalizedPoints.size - 1)) * index
+                        val x = if (normalizedPoints.size > 1) (w / (normalizedPoints.size - 1)) * index else 0f
                         val norm = (valPercent.toFloat() - minV) / range
                         val y = h - padding - (norm * (h - 2 * padding))
                         return Offset(x, y)
                     }
 
                     clipRect(right = w * animProgress.value) {
-                        drawBenchmarkLine(normalizedPoints.mapIndexed { i, p -> getOffset(p.portfolioValue, i) }, CredifyIndigo, this)
+                        // Draw Gradient for Portfolio
+                        val portfolioOffsets = normalizedPoints.mapIndexed { i, p -> getOffset(p.portfolioValue, i) }
+                        drawPortfolioGradient(portfolioOffsets, size, this)
+                        
+                        drawBenchmarkLine(portfolioOffsets, CredifyIndigo, this)
                         drawBenchmarkLine(normalizedPoints.mapIndexed { i, p -> getOffset(p.goldValue, i) }, GoldColor, this)
                         drawBenchmarkLine(normalizedPoints.mapIndexed { i, p -> getOffset(p.usdValue, i) }, UsdColor, this)
+                        
+                        // Min/Max Markers for Portfolio
+                        val maxPoint = normalizedPoints.maxByOrNull { it.portfolioValue }
+                        val minPoint = normalizedPoints.minByOrNull { it.portfolioValue }
+                        
+                        maxPoint?.let { 
+                            val offset = getOffset(it.portfolioValue, normalizedPoints.indexOf(it))
+                            drawCircle(color = EmeraldProfit, radius = 4.dp.toPx(), center = offset)
+                        }
+                        minPoint?.let { 
+                            val offset = getOffset(it.portfolioValue, normalizedPoints.indexOf(it))
+                            drawCircle(color = RoseLoss, radius = 4.dp.toPx(), center = offset)
+                        }
                     }
                 }
             }
@@ -132,6 +160,60 @@ fun BenchmarkPerformanceChart(
     }
 }
 
+@Composable
+fun TimeframeSelector(selectedDays: Int, onTimeframeChange: (Int) -> Unit) {
+    val timeframes = listOf(
+        7 to "7D",
+        30 to "1M",
+        365 to "1Y",
+        -1 to "ALL"
+    )
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(ObsidianSlate700)
+            .padding(2.dp)
+    ) {
+        timeframes.forEach { (days, label) ->
+            val isSelected = selectedDays == days
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isSelected) IndigoElectric else Color.Transparent)
+                    .clickable { onTimeframeChange(days) }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) Color.White else Slate400
+                )
+            }
+        }
+    }
+}
+
+fun drawPortfolioGradient(points: List<Offset>, size: androidx.compose.ui.geometry.Size, scope: DrawScope) {
+    if (points.size < 2) return
+    val path = Path().apply {
+        moveTo(points.first().x, points.first().y)
+        points.forEach { lineTo(it.x, it.y) }
+        lineTo(points.last().x, size.height)
+        lineTo(points.first().x, size.height)
+        close()
+    }
+    scope.drawPath(
+        path = path,
+        brush = Brush.verticalGradient(
+            colors = listOf(CredifyIndigo.copy(alpha = 0.2f), Color.Transparent),
+            startY = points.minOf { it.y },
+            endY = size.height
+        )
+    )
+}
+
 fun drawBenchmarkLine(points: List<Offset>, color: Color, scope: DrawScope) {
     if (points.size < 2) return
     val path = Path().apply {
@@ -153,13 +235,21 @@ fun LegendItem(label: String, color: Color) {
 }
 
 @Composable
-fun EmptyBenchmarkState() {
+fun EmptyBenchmarkState(selectedDays: Int, onTimeframeChange: (Int) -> Unit, modifier: Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary)
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSlateSecondary),
+        border = BorderStroke(0.5.dp, SlateBorderLight)
     ) {
-        Box(modifier = Modifier.padding(32.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text("برای نمایش مقایسه عملکرد، به داده‌های تاریخی بیشتری نیاز است.", fontSize = 11.sp, color = TextMuted)
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("عملکرد در برابر بازار", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = TextPrimary)
+                TimeframeSelector(selectedDays, onTimeframeChange)
+            }
+            Box(modifier = Modifier.padding(32.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("برای نمایش مقایسه عملکرد در این بازه، به داده‌های تاریخی بیشتری نیاز است.", fontSize = 11.sp, color = TextMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
         }
     }
 }

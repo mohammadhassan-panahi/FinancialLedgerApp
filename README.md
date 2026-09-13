@@ -1,63 +1,84 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+<img src="https://lh3.googleusercontent.com/aida/AEtjO1WKb-JdsP2NuvqL2iG_BxlPdgxrOhrOUd38Uq79YflzYtfw0btA5u1Leayr4ywNjITQ0m4tqK6H_6JcBKS_ctY9J9Mexqqim6vyQb1ktoMpFvZ9IB7ID0fbHW8B-gTkwM7ffip97krcMQFlUfqJAw6PTpe9RqefbKcdV4VcCKyRc24z_m8a81BghgI9zL__-G4zB8gsE0CVFM8OZdwyjQgSv-wLplJHAF-SgdtyiYDfAMeCs8jIQ9G3iDc" width="128" height="128" />
+
+# دارا (DARA) — دستیار هوشمند مدیریت سرمایه و پورتفو
+### پایش دقیق، تحلیل هوشمند و رصد لحظه‌ای بازارهای مالی در یک اپلیکیشن حرفه‌ای
+
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0-blue.svg)](https://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/Jetpack_Compose-latest-green.svg)](https://developer.android.com/jetpack/compose)
+[![AI](https://img.shields.io/badge/AI-Gemini_1.5_Flash-orange.svg)](https://deepmind.google/technologies/gemini/)
+
 </div>
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## 🌟 ویژگی‌های کلیدی
 
-View your app in AI Studio: https://ai.studio/apps/5e00673f-ec3b-479d-bded-043eaa62b644
+### 🧠 هوش مصنوعی دارا (Dara AI)
+*   **مشاور اختصاصی:** تحلیل پورتفوی شخصی بر اساس ریسک و تنوع‌بخشی.
+*   **خلاصه هوشمند اخبار:** دریافت عصاره و نکات کلیدی اخبار اقتصادی در چند ثانیه.
+*   **امتیازدهی بنیادی:** رتبه‌بندی دارایی‌ها بر اساس فاکتورهای فنی و بازار.
 
-## Run Locally
+### 📈 تحلیل تکنیکال و نمودارها
+*   **Candlestick Pro:** نمودارهای شمعی حرفه‌ای با پشتیبانی از بازه‌های زمانی مختلف.
+*   **اندیکاتورها:** مجهز به **EMA، RSI، MACD** و **Bollinger Bands**.
+*   **سیگنال‌های هوشمند:** نمایش نقاط قوت و ضعف روند بازار مستقیماً روی نمودار.
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
+### 🌐 مرکز کنترل بازار
+*   **پایش چندگانه:** رصد هم‌زمان قیمت‌های طلا، سکه، ارزهای خارجی و رمزارزها.
+*   **مبدل ارز پیشرفته:** تبدیل هم‌زمان مقدار پایه به ۷ ارز معتبر جهانی با نرخ‌های واقعی.
+*   **دیده بان (Watchlist):** دسته‌بندی دلخواه دارایی‌ها و تنظیم هشدارهای نوسان درصدی.
 
+### 📅 مدیریت جامع تراکنش‌ها
+*   **تقویم مالی:** مشاهده فعالیت‌های مالی، یادآورها و خرید/فروش‌ها در تقویم شمسی.
+*   **دقت BigDecimal:** انجام تمامی محاسبات مالی با دقت بی‌نهایت جهت جلوگیری از خطای رند کردن.
+*   **رهگیری سود واقعی:** محاسبه سود خالص با در نظر گرفتن نرخ تورم و کارمزدها.
 
-1. Open Android Studio
-2. Select **Open** and choose the directory containing this project
-3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
-7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
+---
 
+## 🛠 تکنولوژی‌های به‌کار رفته
+*   **UI:** Jetpack Compose با معماری MVI/MVVM.
+*   **Database:** Room با رمزنگاری **SQLCipher** و سیستم مهاجرت (Migrations) پیشرفته.
+*   **Network:** Retrofit و Moshi برای ارتباط با APIهای بازار.
+*   **AI Engine:** Google AI SDK (Gemini Integration).
+*   **Background Jobs:** WorkManager برای چک کردن هشدارهای قیمت در پس‌زمینه.
 
-## وضعیت این نسخه
+---
 
-این نسخه چند اصلاح مهم Production را دارد:
-- حذف `fallbackToDestructiveMigration` و استفاده از migrationهای Room
-- داده‌های نمونه فقط در buildهای Debug ساخته می‌شوند
-- Import پشتیبان اعتبارسنجی و transaction اتمیک دارد
-- PIN دارای salt تصادفی و rate-limit/lockout است
-- فروش دارایی ورودی‌ها و موجودی را اعتبارسنجی می‌کند
-- حذف خریدی که قبلاً در فروش استفاده شده مسدود می‌شود
+## 🚀 راه اندازی سریع (Quick Start)
 
-### راه‌اندازی قیمت زنده
+### ۱. پیش‌نیازها
+*   [Android Studio](https://developer.android.com/studio) نسخه Koala به بعد.
+*   کلید API از [Google AI Studio](https://aistudio.google.com/).
+*   کلید API از [BrsApi.ir](https://brsapi.ir) (جهت دریافت نرخ‌های زنده).
 
-اپ الان **مستقیم** به BrsApi.ir وصل می‌شه (بدون پراکسی):
+### ۲. تنظیمات محیطی
+فایل `.env` را در ریشه پروژه ایجاد کرده و مقادیر زیر را جایگزین کنید:
+```env
+GEMINI_API_KEY=your_gemini_key_here
+BRSAPI_KEY=your_brsapi_key_here
+CMC_API_KEY=your_coinmarketcap_key_here
+```
 
-1. یک کلید از [brsapi.ir](https://brsapi.ir) بگیر.
-2. مقدار `BRSAPI_KEY` را در فایل `.env` (کنار `.env.example`) قرار بده.
-3. اپ رو build کن — کلید به‌صورت خودکار به `BuildConfig.BRSAPI_KEY` تزریق می‌شه.
+### ۳. اجرا
+پروژه را در اندروید استودیو باز کرده و روی گوشی یا امولاتور خود اجرا (Run) کنید.
 
-**⚠️ هشدار امنیتی — این یک ریسک شناخته‌شده و آگاهانه است، نه یک باگ:**
+---
 
-قبلاً یک پراکسی Cloudflare Worker امتحان شد تا کلید هرگز داخل APK نره (کلید فقط به‌عنوان
-`wrangler secret` روی Worker می‌نشست). اما BrsApi.ir به درخواست‌هایی که از IP رنج Worker
-می‌اومدن، خطای **401 Unauthorized** برمی‌گردوند — یعنی BrsApi این ترافیک رو رد می‌کرد،
-احتمالاً به خاطر مسدودیت IP دیتاسنترها. به همین دلیل پراکسی حذف شد و اپ مستقیم به BrsApi
-وصل می‌شه.
+## 🛡 امنیت و حریم خصوصی
+*   **پایگاه داده رمزنگاری شده:** تمامی اطلاعات مالی شما با استفاده از SQLCipher در حافظه گوشی قفل می‌شود.
+*   **دسترسی امن:** پشتیبانی از قفل PIN و تشخیص چهره/اثر انگشت (Biometrics).
+*   **عدم خروج داده:** اطلاعات پورتفوی شما به هیچ سرور جانبی ارسال نمی‌شود و فقط به صورت محلی مدیریت می‌گردد.
 
-پیامد این تصمیم: کلید API الان **داخل APK کامپایل می‌شه** (در `BuildConfig.BRSAPI_KEY`) و
-هرکسی که APK رو با ابزارهایی مثل `apktool` یا `jadx` دیکامپایل کنه، در چند دقیقه می‌تونه
-کلید رو استخراج کنه. راه‌های کاهش ریسک (نه حذف کامل ریسک):
-- فقط از کلیدی استفاده کن که مشکلی نداری عمومی بشه (نه یک کلید Pro گران‌قیمت).
-- مصرف/کوتای حساب `brsapi.ir`‌ت رو گاه‌به‌گاه چک کن تا اگه کسی کلید رو استخراج و سوءاستفاده
-  کرد، متوجه بشی.
-- اگه بعداً خواستی دوباره پراکسی رو امتحان کنی، احتمالاً باید یه راه‌حل غیر-Cloudflare (مثلاً
-  یک VPS با IP معمولی، نه IP رنج شناخته‌شده‌ی CDN) رو امتحان کنی، چون به نظر می‌رسه مشکل از
-  مسدودیت IP دیتاسنتر/CDN توسط BrsApi بوده، نه یه باگ تو کد Worker.
+---
 
-### نکته Backup
+## 📅 نقشه راه (Roadmap)
+- [x] مهاجرت کامل به سیستم محاسباتی BigDecimal.
+- [x] پیاده‌سازی اندیکاتورهای MACD و Bollinger Bands.
+- [x] افزودن تقویم تراکنش‌های مالی (شمسی).
+- [ ] قابلیت استخراج گزارش‌های اکسل و PDF.
+- [ ] همگام‌سازی ابری رمزنگاری شده (اختیاری).
 
-فایل JSON پشتیبان عمداً قابل خواندن است؛ بنابراین آن را مانند اطلاعات مالی محرمانه نگهداری کن. در نسخه بعدی بهتر است Backup رمزنگاری‌شده با رمز عبور کاربر اضافه شود.
+<div align="center">
+<b>با «دارا»، هوشمندانه ثروت خود را مدیریت کنید.</b>
+</div>

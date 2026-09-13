@@ -169,6 +169,9 @@ class MainActivity : FragmentActivity() {
         val newsFactory = com.example.ui.viewmodel.NewsViewModelFactory(newsRepository, aiRepository)
         val newsViewModel = ViewModelProvider(this, newsFactory)[com.example.ui.viewmodel.NewsViewModel::class.java]
 
+        val calendarFactory = com.example.ui.viewmodel.CalendarViewModelFactory(repository, financialRepository)
+        val calendarViewModel = ViewModelProvider(this, calendarFactory)[com.example.ui.viewmodel.CalendarViewModel::class.java]
+
         com.example.worker.PriceAlertScheduler.schedule(applicationContext)
 
         val biometricAuthManager = BiometricAuthManager(this)
@@ -187,6 +190,7 @@ class MainActivity : FragmentActivity() {
                         riskAssessmentViewModel = riskAssessmentViewModel,
                         settingsViewModel = settingsViewModel,
                         newsViewModel = newsViewModel,
+                        calendarViewModel = calendarViewModel,
                         userPreferencesRepository = userPreferencesRepository,
                         biometricAuthManager = biometricAuthManager,
                         pinManager = pinManager,

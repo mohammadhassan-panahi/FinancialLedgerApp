@@ -62,6 +62,11 @@ class PortfolioRepository(
     val snapshots: Flow<List<PortfolioSnapshotEntity>> = snapshotDao.getAllSnapshots()
     val watchlistCategories: Flow<List<WatchlistCategoryEntity>> = watchlistDao.getAllCategories()
 
+    fun getSnapshotsSince(days: Int): Flow<List<PortfolioSnapshotEntity>> {
+        val startTime = System.currentTimeMillis() - (days.toLong() * 24 * 60 * 60 * 1000)
+        return snapshotDao.getSnapshotsSince(startTime)
+    }
+
     val totalDebtRial: Flow<BigDecimal> = debtCreditDao.getTotalDebtFlow().map { it.sumOf { it } }
     val totalCreditRial: Flow<BigDecimal> = debtCreditDao.getTotalCreditFlow().map { it.sumOf { it } }
     val totalRealizedPnlRial: Flow<BigDecimal> = sales.map { list -> list.sumOf { it.realizedPnlRial } }

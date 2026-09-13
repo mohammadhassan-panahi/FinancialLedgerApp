@@ -132,7 +132,8 @@ fun PortfolioHomeScreen(
 
             // --- Performance Benchmark ---
             item {
-                if (snapshots.isNotEmpty()) {
+                val timeframeDays by viewModel.selectedTimeframeDays.collectAsStateWithLifecycle()
+                if (snapshots.isNotEmpty() || timeframeDays != 30) {
                     val points = snapshots.map {
                         BenchmarkPoint(
                             date = PersianDateUtils.formatJalaliDate(java.util.Date(it.timestamp)),
@@ -141,9 +142,12 @@ fun PortfolioHomeScreen(
                             usdValue = it.usdPriceRial.toDouble()
                         )
                     }
-                    DaraGlassCard(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        BenchmarkPerformanceChart(points = points, modifier = Modifier.padding(16.dp))
-                    }
+                    BenchmarkPerformanceChart(
+                        points = points,
+                        selectedTimeframeDays = timeframeDays,
+                        onTimeframeChange = { viewModel.setTimeframe(it) },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
 

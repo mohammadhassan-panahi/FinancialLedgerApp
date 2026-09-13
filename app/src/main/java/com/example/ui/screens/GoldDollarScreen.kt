@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -25,8 +26,12 @@ import com.example.util.formatPercentSigned
 import com.example.util.formatRial
 import com.example.util.priceRial
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GoldDollarScreen(viewModel: com.example.ui.viewmodel.PortfolioViewModel) {
+fun GoldDollarScreen(
+    viewModel: com.example.ui.viewmodel.PortfolioViewModel,
+    onBack: () -> Unit
+) {
     val allRates by viewModel.marketRates.collectAsStateWithLifecycle()
     val isOffline by viewModel.isOfflineMode.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -36,53 +41,57 @@ fun GoldDollarScreen(viewModel: com.example.ui.viewmodel.PortfolioViewModel) {
     val rates = (if (hasLiveRates) allRates.filter { !it.isOfflineRate } else allRates)
         .filter { it.isOfflineRate || it.currency == "تومان" }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("طلا، سکه و ارز", style = DaraTypography.titleLarge, color = Slate50, fontWeight = FontWeight.Bold)
-                IconButton(
-                    onClick = { viewModel.refreshAll() },
-                    enabled = !isRefreshing
-                ) { 
-                    if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = IndigoElectric, strokeWidth = 2.dp)
-                    else Icon(Icons.Default.Refresh, null, tint = IndigoElectric)
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            TopAppBar(
+                title = { Text("طلا، سکه و ارز", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { viewModel.refreshAll() },
+                        enabled = !isRefreshing
+                    ) { 
+                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = IndigoElectric, strokeWidth = 2.dp)
+                        else Icon(Icons.Default.Refresh, null, tint = IndigoElectric)
+                    }
                 }
-            }
+            )
         }
-        
-        if (isOffline) {
-            item {
-                Surface(
-                    color = RoseCoral.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, RoseCoral.copy(alpha = 0.2f))
-                ) {
-                    Text(
-                        "اتصال برقرار نیست — نرخ‌های آخرین بروزرسانی نمایش داده می‌شوند.",
-                        modifier = Modifier.padding(12.dp),
-                        style = DaraTypography.bodySmall,
-                        color = RoseCoral
-                    )
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (isOffline) {
+                item {
+                    Surface(
+                        color = RoseCoral.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, RoseCoral.copy(alpha = 0.2f))
+                    ) {
+                        Text(
+                            "اتصال برقرار نیست — نرخ‌های آخرین بروزرسانی نمایش داده می‌شوند.",
+                            modifier = Modifier.padding(12.dp),
+                            style = DaraTypography.bodySmall,
+                            color = RoseCoral
+                        )
+                    }
                 }
             }
-        }
-        
-        if (rates.isEmpty()) {
-            item {
-                Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = IndigoElectric)
+            
+            if (rates.isEmpty()) {
+                item {
+                    Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = IndigoElectric)
+                    }
                 }
+            } else {
+                items(rates) { rate -> RateCard(rate, onSetAlert = { alertTarget = rate }) }
             }
-        } else {
-            items(rates) { rate -> RateCard(rate, onSetAlert = { alertTarget = rate }) }
         }
     }
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,8 +25,13 @@ import com.example.util.formatPercentSigned
 import com.example.util.formatUsd
 import java.math.BigDecimal
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: BigDecimal = BigDecimal.valueOf(65000.0)) {
+fun CryptoScreen(
+    viewModel: CryptoViewModel,
+    onBack: () -> Unit,
+    usdRateToman: BigDecimal = BigDecimal.valueOf(65000.0)
+) {
     val allAssets by viewModel.allAssets.collectAsStateWithLifecycle()
     val watchlist by viewModel.watchlist.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -47,30 +53,47 @@ fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: BigDecimal = BigDecim
         return
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("بازار کریپتوکارنسی", style = DaraTypography.titleLarge, color = Slate50, fontWeight = FontWeight.Bold)
-                IconButton(onClick = { viewModel.refreshMarketData() }, enabled = !isRefreshing) {
-                    if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = IndigoElectric)
-                    else Icon(Icons.Default.Refresh, null, tint = IndigoElectric)
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            TopAppBar(
+                title = { Text("بازار کریپتوکارنسی", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refreshMarketData() }, enabled = !isRefreshing) {
+                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = IndigoElectric)
+                        else Icon(Icons.Default.Refresh, null, tint = IndigoElectric)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (watchlist.isNotEmpty()) {
+                item {
+                    Text("واچ‌لیست من", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                }
+                items(watchlist) { asset ->
+                    CryptoAssetCardPremium(
+                        asset,
+                        usdRateToman = usdRateToman,
+                        onToggleWatchlist = { viewModel.toggleWatchlist(asset) },
+                        onClick = { viewModel.selectAsset(asset) }
+                    )
                 }
             }
-        }
 
-        if (watchlist.isNotEmpty()) {
             item {
-                Text("واچ‌لیست من", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
+                Text("برترین‌های بازار", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
             }
-            items(watchlist) { asset ->
+
+            items(allAssets) { asset ->
                 CryptoAssetCardPremium(
                     asset,
                     usdRateToman = usdRateToman,
@@ -78,22 +101,9 @@ fun CryptoScreen(viewModel: CryptoViewModel, usdRateToman: BigDecimal = BigDecim
                     onClick = { viewModel.selectAsset(asset) }
                 )
             }
+            
+            item { Spacer(modifier = Modifier.height(100.dp)) }
         }
-
-        item {
-            Text("برترین‌های بازار", style = DaraTypography.titleSmall, color = Slate50, fontWeight = FontWeight.Bold)
-        }
-
-        items(allAssets) { asset ->
-            CryptoAssetCardPremium(
-                asset,
-                usdRateToman = usdRateToman,
-                onToggleWatchlist = { viewModel.toggleWatchlist(asset) },
-                onClick = { viewModel.selectAsset(asset) }
-            )
-        }
-        
-        item { Spacer(modifier = Modifier.height(100.dp)) }
     }
 }
 

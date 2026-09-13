@@ -49,6 +49,7 @@ object Screen {
     const val CryptoIntelligence = "crypto_intelligence"
     const val CryptoDetail = "crypto_detail"
     const val AdvancedWatchlist = "advanced_watchlist"
+    const val Calendar = "calendar"
     const val AddAssetForm = "add_asset_form"
     const val MultiConverter = "multi_converter"
     const val GoldFx = "gold_fx"
@@ -90,6 +91,7 @@ fun NavGraph(
     riskAssessmentViewModel: com.example.ui.viewmodel.RiskAssessmentViewModel,
     settingsViewModel: com.example.ui.viewmodel.SettingsViewModel,
     newsViewModel: com.example.ui.viewmodel.NewsViewModel,
+    calendarViewModel: com.example.ui.viewmodel.CalendarViewModel,
     marketScannerViewModel: MarketScannerViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     biometricAuthManager: BiometricAuthManager,
@@ -168,6 +170,7 @@ fun NavGraph(
                         "gold_fx" -> navController.navigate(Screen.GoldFx)
                         "crypto" -> navController.navigate(Screen.CryptoMarket)
                         "multi_converter" -> navController.navigate(Screen.MultiConverter)
+                        "calendar" -> navController.navigate(Screen.Calendar)
                         "cars" -> navController.navigate(Screen.CarsMarket)
                         "real_estate" -> navController.navigate(Screen.RealEstateMarket)
                     }
@@ -184,28 +187,37 @@ fun NavGraph(
 
         composable(Screen.GoldFx) {
             com.example.ui.screens.GoldDollarScreen(
-                viewModel = viewModel
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.StockMarket) {
             com.example.ui.screens.StockMarketScreen(
-                viewModel = viewModel
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.CryptoMarket) {
             com.example.ui.screens.CryptoScreen(
-                viewModel = cryptoViewModel
+                viewModel = cryptoViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 
         composable(Screen.CarsMarket) {
-            com.example.ui.screens.CarsMarketScreen(viewModel = viewModel)
+            com.example.ui.screens.CarsMarketScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.RealEstateMarket) {
-            com.example.ui.screens.RealEstateMarketScreen(viewModel = viewModel)
+            com.example.ui.screens.RealEstateMarketScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.FinancialHealth) {
@@ -252,6 +264,13 @@ fun NavGraph(
                 },
                 onNavigateToScanner = { navController.navigate(Screen.MarketScanner) },
                 onNavigateToWatchlist = { navController.navigate(Screen.AdvancedWatchlist) }
+            )
+        }
+
+        composable(Screen.Calendar) {
+            com.example.ui.screens.CalendarScreen(
+                viewModel = calendarViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 

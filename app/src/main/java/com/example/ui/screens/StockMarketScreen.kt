@@ -5,13 +5,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,14 +33,17 @@ import com.example.data.local.MarketIndexEntity
 import com.example.data.local.PriceAlertEntity
 import com.example.data.local.StockSymbolEntity
 import com.example.ui.LocalIsRial
-import com.example.ui.components.PriceAlertDialog
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.util.formatPercentSigned
 import com.example.util.formatRial
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StockMarketScreen(viewModel: PortfolioViewModel) {
+fun StockMarketScreen(
+    viewModel: PortfolioViewModel,
+    onBack: () -> Unit
+) {
     val indices by viewModel.indices.collectAsStateWithLifecycle()
     val watchlist by viewModel.watchlist.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -45,7 +53,6 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
     var showIpoSheet by remember { mutableStateOf(false) }
     var showCodalSheet by remember { mutableStateOf(false) }
     
-    // Breadth analysis (for simulated heatmap feel)
     val advancedStats = remember(watchlist) {
         if (watchlist.isEmpty()) null else {
             val gainers = watchlist.count { it.changePercent.signum() > 0 }
@@ -60,120 +67,134 @@ fun StockMarketScreen(viewModel: PortfolioViewModel) {
     var alertTarget by remember { mutableStateOf<StockSymbolEntity?>(null) }
     var removeTarget by remember { mutableStateOf<StockSymbolEntity?>(null) }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("بورس ایران", style = MaterialTheme.typography.titleMedium)
-                Button(
-                    onClick = { viewModel.refreshAll(watchlistSymbols = watchlist.map { it.symbol }) },
-                    enabled = !isRefreshing
-                ) { Text(if (isRefreshing) "در حال بروزرسانی..." else "بروزرسانی") }
-            }
+    Scaffold(
+        containerColor = ObsidianSlate900,
+        topBar = {
+            TopAppBar(
+                title = { Text("بورس تهران", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { viewModel.refreshAll(watchlistSymbols = watchlist.map { it.symbol }) },
+                        enabled = !isRefreshing
+                    ) { 
+                        if (isRefreshing) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = IndigoElectric)
+                        else Icon(Icons.Default.Refresh, null, tint = IndigoElectric)
+                    }
+                }
+            )
         }
-        item {
-            val mainIndex = indices.find { it.indexCode == "TOTAL_INDEX" || it.name.contains("کل") }
-            if (mainIndex != null) {
-                MainIndexHero(mainIndex)
-            } else if (indices.isNotEmpty()) {
-                MiniIndexCard(indices.first())
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                val mainIndex = indices.find { it.indexCode == "TOTAL_INDEX" || it.name.contains("کل") }
+                if (mainIndex != null) {
+                    MainIndexHero(mainIndex)
+                } else if (indices.isNotEmpty()) {
+                    MiniIndexCard(indices.first())
+                }
             }
-        }
-        
-        item {
-            if (indices.size > 1) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    indices.filter { it.indexCode != "TOTAL_INDEX" && !it.name.contains("کل") }.take(2).forEach { secondaryIndex ->
-                        Box(modifier = Modifier.weight(1f)) {
-                            MiniIndexCard(secondaryIndex)
+            
+            item {
+                if (indices.size > 1) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        indices.filter { it.indexCode != "TOTAL_INDEX" && !it.name.contains("کل") }.take(2).forEach { secondaryIndex ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                MiniIndexCard(secondaryIndex)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        advancedStats?.let { stats ->
-            item {
-                MarketBreadthCard(stats)
-            }
-            
-            item {
-                MarketInsightsCard()
-            }
+            advancedStats?.let { stats ->
+                item {
+                    MarketBreadthCard(stats)
+                }
+                
+                item {
+                    MarketInsightsCard()
+                }
 
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(
-                        onClick = { showIpoSheet = true },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = CredifyIndigo)
-                    ) {
-                        Icon(Icons.Default.Flag, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("عرضه اولیه", fontSize = 12.sp)
-                    }
-                    Button(
-                        onClick = { showCodalSheet = true },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = CredifyViolet)
-                    ) {
-                        Icon(Icons.Default.NotificationsActive, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("پیام‌های کدال", fontSize = 12.sp)
+                item {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(
+                            onClick = { showIpoSheet = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CredifyIndigo)
+                        ) {
+                            Icon(Icons.Default.Flag, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("عرضه اولیه", fontSize = 12.sp)
+                        }
+                        Button(
+                            onClick = { showCodalSheet = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = CredifyViolet)
+                        ) {
+                            Icon(Icons.Default.NotificationsActive, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("پیام‌های کدال", fontSize = 12.sp)
+                        }
                     }
                 }
             }
-        }
 
-        item {
-            Text(
-                "واچ‌لیست من",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = newSymbol,
-                    onValueChange = { newSymbol = it },
-                    label = { Text("نماد بورسی (مثلاً فولاد)") },
-                    modifier = Modifier.weight(1f)
+            item {
+                Text(
+                    "واچ‌لیست من",
+                    style = DaraTypography.titleMedium,
+                    color = Slate50,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
-                Button(onClick = {
-                    if (newSymbol.isNotBlank()) {
-                        viewModel.addSymbolToWatchlist(newSymbol.trim(), newSymbol.trim())
-                        viewModel.refreshAll(watchlistSymbols = watchlist.map { it.symbol } + newSymbol.trim())
-                        newSymbol = ""
-                    }
-                }) { Text("افزودن") }
             }
-        }
-        if (watchlist.isEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        "نمادی به واچ‌لیست اضافه نکردی.",
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = newSymbol,
+                        onValueChange = { newSymbol = it },
+                        label = { Text("نماد بورسی (مثلاً فولاد)") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = IndigoElectric, unfocusedBorderColor = ObsidianSlate700)
                     )
+                    IconButton(
+                        onClick = {
+                            if (newSymbol.isNotBlank()) {
+                                viewModel.addSymbolToWatchlist(newSymbol.trim(), newSymbol.trim())
+                                viewModel.refreshAll(watchlistSymbols = watchlist.map { it.symbol } + newSymbol.trim())
+                                newSymbol = ""
+                            }
+                        },
+                        modifier = Modifier.background(IndigoElectric, CircleShape)
+                    ) { Icon(Icons.Default.Add, null, tint = Color.White) }
                 }
             }
-        } else {
-            items(watchlist) { symbol ->
-                StockCard(symbol, onSetAlert = { alertTarget = symbol }, onRemove = { removeTarget = symbol })
+            if (watchlist.isEmpty()) {
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            "نمادی به واچ‌لیست اضافه نکردی.",
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                items(watchlist) { symbol ->
+                    StockCard(symbol, onSetAlert = { alertTarget = symbol }, onRemove = { removeTarget = symbol })
+                }
             }
         }
     }
@@ -469,7 +490,7 @@ private fun StockCard(symbol: StockSymbolEntity, onSetAlert: () -> Unit, onRemov
                             color = EmeraldProfit
                         )
                     }
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
+                    Column(horizontalAlignment = Alignment.End) {
                         Text("قیمت فروش", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             if (symbol.sellPriceRial.signum() > 0) formatRial(symbol.sellPriceRial, isRial = isRial) else "—",

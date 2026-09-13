@@ -35,8 +35,8 @@ fun MarketDashboardScreen(
 ) {
     val marketRates by viewModel.marketRates.collectAsStateWithLifecycle()
     
-    val usdRate = marketRates.find { it.assetCode == "USD" }?.priceToman ?: BigDecimal("65000")
-    val goldRate = marketRates.find { it.assetCode.contains("GOLD_18K") || it.name.contains("۱۸") }?.priceToman ?: BigDecimal("3500000")
+    val usdRate = marketRates.find { it.assetCode == "USD" }?.priceToman
+    val goldRate = marketRates.find { it.assetCode.contains("GOLD_18K") || it.name.contains("۱۸") }?.priceToman
 
     Column(
         modifier = Modifier
@@ -59,15 +59,17 @@ fun MarketDashboardScreen(
         ) {
             MarketSummaryMiniCard(
                 label = "دلار بازار آزاد",
-                price = formatRial(usdRate.multiply(BigDecimal("10")), isRial = false),
+                price = usdRate?.let { formatRial(it.multiply(BigDecimal("10")), isRial = false) } ?: "در حال دریافت…",
                 color = EmeraldCore,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigateToSection("gold_fx") }
             )
             MarketSummaryMiniCard(
                 label = "طلای ۱۸ عیار",
-                price = formatRial(goldRate.multiply(BigDecimal("10")), isRial = false),
+                price = goldRate?.let { formatRial(it.multiply(BigDecimal("10")), isRial = false) } ?: "در حال دریافت…",
                 color = RefinedAmberGold,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigateToSection("gold_fx") }
             )
         }
 
@@ -87,6 +89,7 @@ fun MarketDashboardScreen(
             MarketShortcut("طلا و ارز", Icons.Default.MonetizationOn, RefinedAmberGold, "gold_fx"),
             MarketShortcut("رمزارزها", Icons.Default.CurrencyBitcoin, IndigoElectric, "crypto"),
             MarketShortcut("مبدل پیشرفته", Icons.Default.CurrencyExchange, EmeraldCore, "multi_converter"),
+            MarketShortcut("تقویم مالی", Icons.Default.CalendarMonth, Color(0xFFF43F5E), "calendar"),
             MarketShortcut("قیمت خودرو", Icons.Default.DirectionsCar, Color(0xFF6B7280), "cars"),
             MarketShortcut("املاک", Icons.Default.Home, Color(0xFFF97316), "real_estate")
         )
@@ -105,8 +108,8 @@ fun MarketDashboardScreen(
 }
 
 @Composable
-fun MarketSummaryMiniCard(label: String, price: String, color: Color, modifier: Modifier) {
-    DaraGlassCard(modifier = modifier) {
+fun MarketSummaryMiniCard(label: String, price: String, color: Color, modifier: Modifier, onClick: () -> Unit) {
+    DaraGlassCard(modifier = modifier.clickable { onClick() }) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(label, style = DaraTypography.labelSmall, color = Slate400)
             Spacer(modifier = Modifier.height(4.dp))
