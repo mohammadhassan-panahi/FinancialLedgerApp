@@ -142,9 +142,10 @@ class FinancialRepository(
     private suspend fun ensureDefaultFundsSeeded() {
         if (marketDao.getMutualFundCount() == 0) {
             val defaultFunds = listOf(
-                MutualFundEntity("FARABI", "صندوق اکسیر فارابی", BigDecimal("2450000"), BigDecimal("24.5"), "متوسط", "کارگزاری فارابی"),
-                MutualFundEntity("MOFID", "صندوق پیشتاز مفید", BigDecimal("1890000"), BigDecimal("28.1"), "پرریسک", "کارگزاری مفید"),
-                MutualFundEntity("ETEMAD", "صندوق اعتماد ملی", BigDecimal("3120000"), BigDecimal("21.0"), "کم‌ریسک", "سرمایه‌گذاری اعتماد")
+                MutualFundEntity("FARABI", "صندوق اکسیر فارابی", BigDecimal("2450000"), BigDecimal("24.5"), "متوسط", "کارگزاری فارابی", com.example.data.local.MutualFundType.ETF, "۱۳۹۰/۰۲/۱۵", BigDecimal("500000000000")),
+                MutualFundEntity("MOFID", "صندوق پیشتاز مفید", BigDecimal("1890000"), BigDecimal("28.1"), "پرریسک", "کارگزاری مفید", com.example.data.local.MutualFundType.ETF, "۱۳۸۷/۱۱/۲۰", BigDecimal("1200000000000")),
+                MutualFundEntity("ETEMAD", "صندوق اعتماد ملی", BigDecimal("3120000"), BigDecimal("21.0"), "کم‌ریسک", "سرمایه‌گذاری اعتماد", com.example.data.local.MutualFundType.ISSUANCE_REDEMPTION, "۱۳۹۵/۰۶/۰۱", BigDecimal("300000000000")),
+                MutualFundEntity("AGAH", "صندوق مشترک آگاه", BigDecimal("4500000"), BigDecimal("31.2"), "پرریسک", "سبدگردان آگاه", com.example.data.local.MutualFundType.ISSUANCE_REDEMPTION, "۱۳۸۸/۰۳/۱۵", BigDecimal("2500000000000"))
             )
             marketDao.insertMutualFunds(defaultFunds)
         }

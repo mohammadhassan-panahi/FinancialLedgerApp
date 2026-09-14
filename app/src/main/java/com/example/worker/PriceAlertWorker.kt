@@ -42,6 +42,7 @@ class PriceAlertWorker(
             realEstateDao = database.realEstateDao(),
             snapshotDao = database.portfolioSnapshotDao(),
             watchlistDao = database.watchlistDao(),
+            pendingTransactionDao = database.pendingTransactionDao(),
             apiKey = apiKey
         )
 

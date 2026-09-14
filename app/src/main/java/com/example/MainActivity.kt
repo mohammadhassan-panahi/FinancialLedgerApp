@@ -14,10 +14,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.data.local.AppDatabase
-import com.example.data.repository.BackupRepository
-import com.example.data.repository.CryptoRepository
-import com.example.data.repository.PortfolioRepository
-import com.example.data.repository.UserPreferencesRepository
+import com.example.data.repository.*
 import com.example.security.BiometricAuthManager
 import com.example.security.PinManager
 import com.example.ui.PortfolioApp
@@ -26,7 +23,6 @@ import com.example.ui.viewmodel.PortfolioViewModel
 import com.example.ui.viewmodel.PortfolioViewModelFactory
 import com.example.ui.dashboard.MarketScannerViewModel
 import com.example.ui.dashboard.MarketScannerViewModelFactory
-import com.example.data.repository.AiRepository
 import com.example.domain.usecase.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -45,7 +41,6 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Registration MUST happen before or during onCreate
         exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             if (uri == null) return@registerForActivityResult
             lifecycleScope.launch {
@@ -94,12 +89,15 @@ class MainActivity : FragmentActivity() {
             realEstateDao = database.realEstateDao(),
             snapshotDao = database.portfolioSnapshotDao(),
             watchlistDao = database.watchlistDao(),
+            pendingTransactionDao = database.pendingTransactionDao(),
             apiKey = BuildConfig.BRSAPI_KEY
         )
+        
         val cryptoRepository = CryptoRepository(
             cryptoDao = database.cryptoDao(),
             apiKey = BuildConfig.CMC_API_KEY
         )
+        
         backupRepository = BackupRepository(
             purchaseDao = database.assetPurchaseDao(),
             saleDao = database.assetSaleDao(),
@@ -109,13 +107,24 @@ class MainActivity : FragmentActivity() {
             database = database
         )
 
-        // Portfolio UseCases
+        val financialRepository = FinancialRepository(
+            transactionDao = database.transactionDao(),
+            bankAccountDao = database.bankAccountDao(),
+            marketDao = database.marketDao(),
+            apiKey = BuildConfig.BRSAPI_KEY
+        )
+
+        val aiRepository = AiRepository(BuildConfig.GEMINI_API_KEY)
+        val nexFinRepository = NexFinRepository(database.nexFinDao(), aiRepository)
+
+        // Portfolio ViewModels
         val getHoldingsUseCase = GetHoldingsUseCase(repository)
         val getPortfolioSummaryUseCase = GetPortfolioSummaryUseCase(repository)
         val addAssetPurchaseUseCase = AddAssetPurchaseUseCase(repository)
 
         val portfolioFactory = PortfolioViewModelFactory(
             repository,
+            financialRepository,
             getHoldingsUseCase,
             getPortfolioSummaryUseCase,
             addAssetPurchaseUseCase
@@ -127,9 +136,6 @@ class MainActivity : FragmentActivity() {
 
         val calculatorFactory = com.example.ui.viewmodel.CalculatorViewModelFactory(database.calculationHistoryDao())
         val calculatorViewModel = ViewModelProvider(this, calculatorFactory)[com.example.ui.viewmodel.CalculatorViewModel::class.java]
-
-        val aiRepository = AiRepository(BuildConfig.GEMINI_API_KEY)
-        val nexFinRepository = com.example.data.repository.NexFinRepository(database.nexFinDao(), aiRepository)
 
         val aiAnalysisFactory = com.example.ui.viewmodel.AiAnalysisViewModelFactory(aiRepository, repository)
         val aiAnalysisViewModel = ViewModelProvider(this, aiAnalysisFactory)[com.example.ui.viewmodel.AiAnalysisViewModel::class.java]
@@ -148,12 +154,6 @@ class MainActivity : FragmentActivity() {
         )
         val settingsViewModel = ViewModelProvider(this, settingsFactory)[com.example.ui.viewmodel.SettingsViewModel::class.java]
 
-        val financialRepository = com.example.data.repository.FinancialRepository(
-            transactionDao = database.transactionDao(),
-            bankAccountDao = database.bankAccountDao(),
-            marketDao = database.marketDao(),
-            apiKey = BuildConfig.BRSAPI_KEY
-        )
         val marketPortfolioFactory = com.example.ui.viewmodel.MarketPortfolioViewModelFactory(financialRepository)
         val marketPortfolioViewModel = ViewModelProvider(this, marketPortfolioFactory)[com.example.ui.viewmodel.MarketPortfolioViewModel::class.java]
 
@@ -162,7 +162,7 @@ class MainActivity : FragmentActivity() {
         val marketScannerViewModel = ViewModelProvider(this, marketScannerFactory)[MarketScannerViewModel::class.java]
 
         val rssService = com.example.data.remote.RssService()
-        val newsRepository = com.example.data.repository.NewsRepository(
+        val newsRepository = NewsRepository(
             newsDao = database.newsDao(),
             rssService = rssService
         )

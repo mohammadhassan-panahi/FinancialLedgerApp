@@ -31,6 +31,7 @@ import com.example.crypto.ScoringEngine
 import com.example.crypto.analysis.*
 import com.example.ui.components.CandleStickChart
 import com.example.ui.components.CryptoIcon
+import com.example.ui.components.DaraAnalysisCard
 import com.example.ui.components.DaraGlassCard
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.CryptoViewModel
@@ -87,6 +88,13 @@ fun CryptoDetailScreen(
                 riskScore = riskScore.score,
                 techScore = techAnalysis.opportunityScore,
                 signal = techAnalysis.signal.name
+            )
+
+            // New Dara AI Analysis Card (Phase 8)
+            DaraAnalysisCard(
+                score = fundScore.score,
+                reason = fundScore.reason,
+                liquidity = if (asset.volume24hUsd ?: BigDecimal.ZERO > BigDecimal("10000000")) "بالا" else "متوسط"
             )
 
             // Technical Details (Phase 4)

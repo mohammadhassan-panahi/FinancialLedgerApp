@@ -66,6 +66,15 @@ fun StockMarketScreen(
     var newSymbol by remember { mutableStateOf("") }
     var alertTarget by remember { mutableStateOf<StockSymbolEntity?>(null) }
     var removeTarget by remember { mutableStateOf<StockSymbolEntity?>(null) }
+    
+    var selectedFilter by remember { mutableStateOf("همه") }
+    val filteredWatchlist = remember(watchlist, selectedFilter) {
+        when (selectedFilter) {
+            "بیشترین رشد" -> watchlist.sortedByDescending { it.changePercent }
+            "صف خرید" -> watchlist.filter { it.buyPriceRial > BigDecimal.ZERO }.sortedByDescending { it.buyPriceRial }
+            else -> watchlist
+        }
+    }
 
     Scaffold(
         containerColor = ObsidianSlate900,
@@ -159,6 +168,26 @@ fun StockMarketScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
+            
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("همه", "بیشترین رشد", "صف خرید").forEach { filter ->
+                        FilterChip(
+                            selected = selectedFilter == filter,
+                            onClick = { selectedFilter = filter },
+                            label = { Text(filter, fontSize = 10.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = IndigoElectric,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+            }
+
             item {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -181,18 +210,18 @@ fun StockMarketScreen(
                     ) { Icon(Icons.Default.Add, null, tint = Color.White) }
                 }
             }
-            if (watchlist.isEmpty()) {
+            if (filteredWatchlist.isEmpty()) {
                 item {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            "نمادی به واچ‌لیست اضافه نکردی.",
+                            if (selectedFilter == "همه") "نمادی به واچ‌لیست اضافه نکردی." else "نمادی با این فیلتر یافت نشد.",
                             modifier = Modifier.padding(16.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             } else {
-                items(watchlist) { symbol ->
+                items(filteredWatchlist) { symbol ->
                     StockCard(symbol, onSetAlert = { alertTarget = symbol }, onRemove = { removeTarget = symbol })
                 }
             }

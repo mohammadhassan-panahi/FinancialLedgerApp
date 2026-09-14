@@ -25,6 +25,8 @@ data class MarketRateEntity(
     val isOfflineRate: Boolean = false
 )
 
+enum class MutualFundType { ETF, ISSUANCE_REDEMPTION }
+
 /**
  * Encrypted Room Entity for Investment Funds NAV & Performance Metrics.
  */
@@ -39,5 +41,8 @@ data class MutualFundEntity(
     val navToman: BigDecimal,
     val returnPercent: BigDecimal, // Monthly/Annual return
     val riskLevel: String, // Low, Medium, High
-    val manager: String
+    val manager: String,
+    val fundType: MutualFundType = MutualFundType.ETF,
+    val inceptionDate: String = "",
+    val totalAssetsToman: BigDecimal = BigDecimal.ZERO
 )

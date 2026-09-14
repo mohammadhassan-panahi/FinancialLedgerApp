@@ -49,6 +49,7 @@ object Screen {
     const val CryptoIntelligence = "crypto_intelligence"
     const val CryptoDetail = "crypto_detail"
     const val AdvancedWatchlist = "advanced_watchlist"
+    const val MutualFundDetail = "fund_detail"
     const val Calendar = "calendar"
     const val AddAssetForm = "add_asset_form"
     const val MultiConverter = "multi_converter"
@@ -544,8 +545,33 @@ fun NavGraph(
         composable(Screen.MutualFunds) {
             com.example.ui.screens.MutualFundsScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onFundClick = { fund ->
+                    viewModel.selectFund(fund)
+                    navController.navigate(Screen.MutualFundDetail)
+                }
             )
+        }
+
+        composable(Screen.MutualFundDetail) {
+            val fund by viewModel.selectedFund.collectAsStateWithLifecycle()
+            fund?.let {
+                com.example.ui.screens.MutualFundDetailScreen(
+                    viewModel = viewModel,
+                    fund = it,
+                    onBack = { 
+                        navController.popBackStack()
+                        viewModel.clearSelectedFund()
+                    },
+                    onBuyClick = {
+                        navController.navigate("${Screen.AddAssetForm}/${com.example.data.local.PortfolioAssetType.FUND.name}?assetName=${it.name}")
+                    },
+                    onSellClick = {
+                        // For simplicity, navigate to Portfolio or a generic sell dialog
+                        navController.navigate(Screen.Portfolio)
+                    }
+                )
+            }
         }
 
         composable(Screen.OcrScanner) {

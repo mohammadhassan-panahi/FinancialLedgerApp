@@ -9,11 +9,29 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b1516b4c-618a-4e67-845a-22cf41644b2f" name="Changes" comment="">
+    <list default="true" id="b1516b4c-618a-4e67-845a-22cf41644b2f" name="Changes" comment="update fixing a bug">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PendingTransactionDao.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/PendingTransactionEntities.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/receiver/BankSmsReceiver.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/components/DaraAnalysisCard.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MutualFundDetailScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/SmsInboxScannerScreen.kt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/SmsParser.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/NewsRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/NewsRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MultiCurrencyConverterScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MultiCurrencyConverterScreen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/util/PersianDateUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/util/PersianDateUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/ScoringEngine.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/crypto/ScoringEngine.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/AppDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/AppDatabase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/MarketRateEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/MarketRateEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/Migrations.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/local/Migrations.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/FinancialRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/FinancialRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/PortfolioRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/data/repository/PortfolioRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/navigation/NavGraph.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/navigation/NavGraph.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoDetailScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/CryptoDetailScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MutualFundsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/MutualFundsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/StockMarketScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/screens/StockMarketScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/PortfolioViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/ui/viewmodel/PortfolioViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/worker/PriceAlertWorker.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/worker/PriceAlertWorker.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -424,7 +442,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789261232201</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="update fixing a bug">
+      <option name="closed" value="true" />
+      <created>1789264624021</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1789264624021</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -450,19 +476,20 @@
     <MESSAGE value="update &#10;add feature apply faz 4 ,5" />
     <MESSAGE value="update &#10;add feature" />
     <MESSAGE value="update &#10;fixed bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="update &#10;fixed bug" />
+    <MESSAGE value="update fixing a bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="update fixing a bug" />
   </component>
   <component name="play_dynamic_filters_status">
     <option name="appIdToCheckInfo">
       <map>
         <entry key="com.aistudio.financialledger.rxkqz">
           <value>
-            <CheckInfo lastCheckTimestamp="1787433240286" />
+            <CheckInfo lastCheckTimestamp="1789339598742" />
           </value>
         </entry>
         <entry key="com.aistudio.financialledger.rxkqz.test">
           <value>
-            <CheckInfo lastCheckTimestamp="1787433240286" />
+            <CheckInfo lastCheckTimestamp="1789339598741" />
           </value>
         </entry>
       </map>

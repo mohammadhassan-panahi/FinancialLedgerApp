@@ -1,6 +1,7 @@
 package com.example.crypto
 
 import com.example.data.local.CryptoAssetEntity
+import com.example.data.local.StockSymbolEntity
 import com.example.util.safeDiv
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -105,6 +106,34 @@ object ScoringEngine {
 
         if (weight.compareTo(BigDecimal.ZERO) == 0) return ScoreResult(50, "داده‌ی کافی برای محاسبه در دسترس نیست — مقدار پیش‌فرض")
         return ScoreResult(risk.safeDiv(weight, 0).toInt().coerceIn(0, 100), reasons.joinToString(" • "))
+    }
+
+    /**
+     * Bourse Score: Simple scoring for TSE stocks based on price change and buy/sell pressure.
+     */
+    fun bourseScore(symbol: StockSymbolEntity): ScoreResult {
+        val reasons = mutableListOf<String>()
+        var score = 50 // Base score
+
+        if (symbol.changePercent > BigDecimal.ZERO) {
+            score += 10
+            reasons += "روند قیمتی مثبت"
+        } else if (symbol.changePercent < BigDecimal.ZERO) {
+            score -= 10
+            reasons += "روند قیمتی منفی"
+        }
+
+        if (symbol.buyPriceRial > symbol.lastPriceRial && symbol.buyPriceRial > BigDecimal.ZERO) {
+            score += 20
+            reasons += "تقاضای خرید بالا (صف خرید احتمالی)"
+        }
+        
+        if (symbol.sellPriceRial < symbol.lastPriceRial && symbol.sellPriceRial > BigDecimal.ZERO) {
+            score -= 15
+            reasons += "فشار فروش"
+        }
+
+        return ScoreResult(score.coerceIn(0, 100), if (reasons.isEmpty()) "وضعیت متعادل بازار" else reasons.joinToString(" • "))
     }
 
     private fun formatSigned(v: BigDecimal): String {

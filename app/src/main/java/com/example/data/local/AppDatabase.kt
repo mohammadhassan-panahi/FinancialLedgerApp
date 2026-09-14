@@ -41,9 +41,10 @@ import java.math.BigDecimal
         PortfolioSnapshotEntity::class,
         GlobalMetricsEntity::class,
         WatchlistCategoryEntity::class,
-        WatchlistAssetEntity::class
+        WatchlistAssetEntity::class,
+        PendingTransactionEntity::class
     ],
-    version = 19,
+    version = 21,
     exportSchema = false
 )
 @TypeConverters(BigDecimalConverter::class)
@@ -68,6 +69,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun portfolioSnapshotDao(): PortfolioSnapshotDao
     abstract fun newsDao(): NewsDao
     abstract fun watchlistDao(): WatchlistDao
+    abstract fun pendingTransactionDao(): PendingTransactionDao
 
     companion object {
         @Volatile

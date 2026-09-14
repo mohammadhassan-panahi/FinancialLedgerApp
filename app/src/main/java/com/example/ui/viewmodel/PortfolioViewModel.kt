@@ -27,6 +27,7 @@ import java.math.BigDecimal
 
 class PortfolioViewModel(
     private val repository: PortfolioRepository,
+    private val financialRepository: com.example.data.repository.FinancialRepository,
     private val getHoldingsUseCase: GetHoldingsUseCase,
     private val getPortfolioSummaryUseCase: GetPortfolioSummaryUseCase,
     private val addAssetPurchaseUseCase: AddAssetPurchaseUseCase
@@ -121,7 +122,13 @@ class PortfolioViewModel(
     val codalNotices = repository.codalNotices
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _selectedFund = MutableStateFlow<MutualFundEntity?>(null)
+    val selectedFund: StateFlow<MutualFundEntity?> = _selectedFund.asStateFlow()
+
     val watchlistCategories = repository.watchlistCategories
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val pendingTransactions = repository.pendingTransactions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val totalDebtRial: StateFlow<BigDecimal> = repository.totalDebtRial
@@ -264,6 +271,14 @@ class PortfolioViewModel(
 
     fun getWatchlistAssets(categoryId: Long) = repository.getAssetsForCategory(categoryId)
 
+    fun selectFund(fund: MutualFundEntity) {
+        _selectedFund.value = fund
+    }
+
+    fun clearSelectedFund() {
+        _selectedFund.value = null
+    }
+
     // Debt & Credit
     fun addDebtCredit(personName: String, amountRial: BigDecimal, type: com.example.data.local.DebtCreditType, description: String = "") {
         viewModelScope.launch {
@@ -312,10 +327,72 @@ class PortfolioViewModel(
         }
     }
     fun deleteGoal(entity: com.example.data.local.GoalEntity) = viewModelScope.launch { repository.deleteGoal(entity) }
+
+    // Pending Transactions
+    fun confirmPendingTransaction(pending: PendingTransactionEntity) {
+        viewModelScope.launch {
+            financialRepository.addTransaction(
+                TransactionEntity(
+                    title = pending.title,
+                    amount = pending.amount,
+                    type = pending.type,
+                    category = pending.category
+                )
+            )
+            repository.deletePendingTransaction(pending)
+        }
+    }
+
+    fun dismissPendingTransaction(pending: PendingTransactionEntity) {
+        viewModelScope.launch {
+            repository.deletePendingTransaction(pending)
+        }
+    }
+
+    fun scanSmsInbox(context: android.content.Context) {
+        viewModelScope.launch {
+            val resolver = context.contentResolver
+            val cursor = resolver.query(
+                android.net.Uri.parse("content://sms/inbox"),
+                arrayOf("body", "address", "date"),
+                null, null, "date DESC LIMIT 100"
+            )
+            
+            cursor?.use {
+                val bodyIdx = it.getColumnIndex("body")
+                val addrIdx = it.getColumnIndex("address")
+                val dateIdx = it.getColumnIndex("date")
+                
+                while (it.moveToNext()) {
+                    val body = it.getString(bodyIdx)
+                    val sender = it.getString(addrIdx)
+                    val timestamp = it.getLong(dateIdx)
+                    
+                    val parsed = com.example.util.SmsParser.parse(body, sender)
+                    if (parsed != null) {
+                        // Check if already exist or just add (Dao handles REPLACE if needed, 
+                        // but we might want to avoid duplicates by checking content hash or date)
+                        repository.addPendingTransaction(
+                            PendingTransactionEntity(
+                                title = "تراکنش ${parsed.bankName}",
+                                amount = parsed.amount,
+                                type = if (parsed.type == com.example.util.BankTransactionType.DEPOSIT) TransactionType.DEPOSIT else TransactionType.EXPENSE,
+                                category = "بانکی",
+                                timestamp = timestamp,
+                                rawSmsContent = body,
+                                bankName = parsed.bankName
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 class PortfolioViewModelFactory(
     private val repository: PortfolioRepository,
+    private val financialRepository: com.example.data.repository.FinancialRepository,
     private val getHoldingsUseCase: GetHoldingsUseCase,
     private val getPortfolioSummaryUseCase: GetPortfolioSummaryUseCase,
     private val addAssetPurchaseUseCase: AddAssetPurchaseUseCase
@@ -325,6 +402,7 @@ class PortfolioViewModelFactory(
         if (modelClass.isAssignableFrom(PortfolioViewModel::class.java)) {
             return PortfolioViewModel(
                 repository,
+                financialRepository,
                 getHoldingsUseCase,
                 getPortfolioSummaryUseCase,
                 addAssetPurchaseUseCase

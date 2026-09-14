@@ -35,6 +35,7 @@ class PortfolioRepository(
     private val realEstateDao: RealEstateDao,
     private val snapshotDao: PortfolioSnapshotDao,
     private val watchlistDao: WatchlistDao,
+    private val pendingTransactionDao: PendingTransactionDao,
     private val apiKey: String = "",
     private val marketApiService: MarketApiService? = if (apiKey.isNotBlank()) MarketApiService.create() else null,
     private val tsetmcApiService: TsetmcApiClient? = if (apiKey.isNotBlank()) TsetmcApiClient(TsetmcApiService.create(), apiKey) else null
@@ -61,6 +62,7 @@ class PortfolioRepository(
     val codalNotices: Flow<List<CodalEntity>> = bourseDao.getAllCodalNotices()
     val snapshots: Flow<List<PortfolioSnapshotEntity>> = snapshotDao.getAllSnapshots()
     val watchlistCategories: Flow<List<WatchlistCategoryEntity>> = watchlistDao.getAllCategories()
+    val pendingTransactions: Flow<List<PendingTransactionEntity>> = pendingTransactionDao.getAllPending()
 
     fun getSnapshotsSince(days: Int): Flow<List<PortfolioSnapshotEntity>> {
         val startTime = System.currentTimeMillis() - (days.toLong() * 24 * 60 * 60 * 1000)
@@ -371,6 +373,12 @@ class PortfolioRepository(
         watchlistDao.addAssetToWatchlist(WatchlistAssetEntity(categoryId, assetCode, assetType))
     suspend fun removeAssetFromWatchlistCategory(categoryId: Long, assetCode: String) = 
         watchlistDao.removeAssetFromWatchlist(categoryId, assetCode)
+
+    suspend fun deletePendingTransaction(pending: PendingTransactionEntity) = 
+        pendingTransactionDao.deletePending(pending)
+
+    suspend fun addPendingTransaction(pending: PendingTransactionEntity) = 
+        pendingTransactionDao.insertPending(pending)
 
     suspend fun refreshGoldAndDollar(): Boolean {
         val response = try { marketApiService?.getGoldCurrency(apiKey) } catch(e: Exception) { null }
